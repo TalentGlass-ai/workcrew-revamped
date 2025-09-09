@@ -1,8 +1,7 @@
-// src/styles/tokens.ts
 export const tokens = {
   colors: {
     // Brand
-    primary: "#4D31EC",      // confirmed Figma HEX for "Start hiring" button
+    primary: "#4D31EC",      
     primaryFg: "#FFFFFF",
     secondary: "#6366F1",    // lighter violet (used in gradients / hover)
     secondaryFg: "#FFFFFF",
@@ -43,8 +42,8 @@ export const tokens = {
       bold: 700,
     },
     headings: {
-      h1: { size: 56, lh: 64, ls: -0.5 },  // Hero
-      h2: { size: 40, lh: 48, ls: -0.25 }, // Sections
+      h1: { size: 56, lh: 64, ls: -0.5 },  
+      h2: { size: 40, lh: 48, ls: -0.25 }, 
       h3: { size: 32, lh: 40, ls: -0.2 },
       h4: { size: 24, lh: 32, ls: -0.1 },
       h5: { size: 20, lh: 28, ls: 0 },
@@ -52,7 +51,7 @@ export const tokens = {
     },
     body: {
       sm: { size: 14, lh: 20 },
-      md: { size: 16, lh: 24 },  // paragraphs, form fields
+      md: { size: 16, lh: 24 },  
       lg: { size: 18, lh: 28 },
     },
     button: {
@@ -70,7 +69,7 @@ export const tokens = {
   lg: 12,
   xl: 16,
   pill: 999,
-  xxl: 30, // ← matches Button
+  xxl: 30,
 },
 
   shadows: {

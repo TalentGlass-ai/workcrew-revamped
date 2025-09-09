@@ -4,7 +4,7 @@ import { container, sectionBg } from "../../styles/theme";
 type SectionProps = React.HTMLAttributes<HTMLElement> & {
   as?: React.ElementType;
   size?: "sm" | "md" | "lg";
-  background?: keyof typeof sectionBg; // "default" | "subtle" | "tinted"
+  background?: keyof typeof sectionBg; 
   withContainer?: boolean;
 };
 

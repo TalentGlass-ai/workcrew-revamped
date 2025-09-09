@@ -1,14 +1,11 @@
-/* styles/globals.css */
 
-/* --- CSS Reset (minimal) --- */
 * { box-sizing: border-box; }
 html, body { padding: 0; margin: 0; }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 
-/* --- Global tokens --- */
 :root{
-  --wc-accent:#5046E6;         /* purple accent from figma */
+  --wc-accent:#5046E6;         
   --wc-tab-bg: rgba(223,219,251,.20);  /* greyish tab */
   --wc-tab-border: rgba(255,255,255,.60);
   --wc-text:#0f172a;           /* slate-900 */
@@ -17,9 +14,9 @@ img { display: block; max-width: 100%; }
   --wc-grad: linear-gradient(90deg, #5046E6, #36AEEB);
 }
 
-/* --- Sticky Header --- */
+/*  Sticky Header  */
 .wc-header{
-  position: sticky; top: 0; z-index: 50; /* stays visible while scrolling */
+  position: sticky; top: 0; z-index: 50; 
   backdrop-filter: blur(2px);
 }
 .wc-header-wrap{
@@ -54,7 +51,7 @@ img { display: block; max-width: 100%; }
   font-weight: 600; font-size: 18px; line-height: 1;
 }
 
-/* --- Profile shimmer chip --- */
+/*  shimmer chip  */
 .wc-chip{
   display:flex; align-items:center; gap:12px;
   border-radius:12px; border:1px solid rgba(255,255,255,.7);
@@ -79,14 +76,14 @@ img { display: block; max-width: 100%; }
   100% { background-position: -200% 0; }
 }
 
-/* --- Hero section (matches your screenshot specs) --- */
+/* Hero section  */
 .wc-main{ color: var(--wc-text); }
 .wc-hero{ padding: 56px 16px 24px; }
 .wc-hero-inner{ max-width: 1152px; margin: 0 auto; }
 .wc-hero-title{
   max-width: 580px;
   font-size: 48px; line-height: 62px; letter-spacing: .01em;
-  font-weight: 600; /* figma showed ~540; 600 matches visually */
+  font-weight:540;
 }
 .wc-hero-sub{
   margin-top: 12px; max-width: 520px; color: var(--wc-text-sub); font-size: 16px;

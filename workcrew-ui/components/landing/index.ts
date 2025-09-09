@@ -5,3 +5,5 @@ export { default as NewFeaturedJob } from "./NewFeaturedJob";
 export { default as NewBottomSection } from "./NewBottomSection";
 export { default as NewNavbar } from "./NewNavbar";
 export { default as NewFooter } from "./NewFooter";
+export { default as LogoMarquee } from "./LogoMarquee";
+export { default as FeatureShowcase } from "./FeatureShowcase";

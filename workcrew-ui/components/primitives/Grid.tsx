@@ -5,7 +5,7 @@ import { mq } from "../../styles/theme";
 type ResponsiveCols = { base?: number; md?: number; lg?: number; xl?: number };
 
 type GridProps = React.HTMLAttributes<HTMLDivElement> & {
-  cols?: ResponsiveCols; // e.g., { base:1, md:2, lg:3 }
+  cols?: ResponsiveCols; // e.g { base:1, md:2, lg:3 }
   gap?: number;          // px
 };
 

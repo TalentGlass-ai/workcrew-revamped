@@ -2,7 +2,7 @@ import { tokens } from "./tokens";
 
 // pixels + spacing
 export const px = (n: number) => `${n}px`;
-export const space = (n: number) => px(n); // you’re using raw numbers in tokens.spacing
+export const space = (n: number) => px(n); 
 
 // media queries
 export const mq = (bp: keyof typeof tokens.breakpoints) =>

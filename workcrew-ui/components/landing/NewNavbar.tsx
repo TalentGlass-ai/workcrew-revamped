@@ -25,10 +25,10 @@ const NewNavbar: React.FC = () => {
         <Container>
           <div className="row">
             <a className="brand" href="/" aria-label="WorkCrew.ai">
-              {/* Put your logo file at /public/brand/logo.svg (or .png) */}
+              {/* Put your logo file at /public/brand/logo.png */}
               <span className="logoWrap">
                 <Image
-                  src="/brand/logo.svg"
+                  src="/logo.png"
                   alt="WorkCrew.ai"
                   width={132}
                   height={28}

@@ -1,22 +1,17 @@
 "use client";
 import * as React from "react";
-import { Section, Container, Grid, Card, Text } from "../primitives";
+import { Section } from "../primitives";
+import LogoMarquee from "./LogoMarquee";
 
 type Props = { jobs?: any[] };
 
 const Employers: React.FC<Props> = () => {
   return (
-    <Section size="md" background="default">
-      <Container>
-        <Grid cols={{ base:2, md:4, lg:6 }} gap={16}>
-          {["azul","linarc","canpepus","azul","linarc","canpepus"].map((n,i)=>(
-            <Card key={i} padding="sm" elevation="none" bordered>
-              <Text as="span">{n.toUpperCase()}</Text>
-            </Card>
-          ))}
-        </Grid>
-      </Container>
+    //  spacing can match of the page
+    <Section size="sm" background="default" withContainer={false}>
+      <LogoMarquee speed={22} />
     </Section>
   );
 };
+
 export default Employers;

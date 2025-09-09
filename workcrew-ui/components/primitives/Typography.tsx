@@ -17,8 +17,8 @@ export const Heading: React.FC<HeadingProps> = ({
   className,
   ...props
 }) => {
-  const key = (`h${as}` as const);                    // "h1".."h6"
-  const Tag = key as unknown as React.ElementType;    // <- no JSX namespace needed
+  const key = (`h${as}` as const);                    
+  const Tag = key as unknown as React.ElementType;    
   const base = text(key as any);
 
   return (

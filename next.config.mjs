@@ -3,7 +3,6 @@ import path from "path";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config) => {
-    // Keep existing aliases, then add ours
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       "@/components": path.resolve(__dirname, "workcrew-ui/components"),

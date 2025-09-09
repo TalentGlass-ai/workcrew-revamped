@@ -6,13 +6,14 @@ import { useState } from "react";
 import {
   NewNavbar,
   HeroSection,
+  LogoMarquee,
+  FeatureShowcase,
   Employers,
   NewRecruitmentCompany,
   NewFeaturedJob,
   NewBottomSection,
   NewFooter,
-} from "../workcrew-ui/components/landing";
-
+  } from "../workcrew-ui/components/landing";
 import {
   Section,
   Container,
@@ -26,6 +27,8 @@ import {
 } from "../workcrew-ui/components/primitives";
 
 import { tokens } from "../workcrew-ui/styles/tokens"; // this one is okay
+
+{process.env.NODE_ENV === "development" && <div style={{position:'fixed',top:8,right:8,background:'#ffe58f',padding:6,zIndex:9999}}>BUILD: {Date.now()}</div>}
 
 export default function HomePage() {
   const [jobs, setJobs] = useState<any[]>([]);

@@ -6,14 +6,13 @@ import { useState } from "react";
 import {
   NewNavbar,
   HeroSection,
-  LogoMarquee,
-  FeatureShowcase,
-  Employers,
+  LogoMarquee,            // ✅ use the marquee here
   NewRecruitmentCompany,
   NewFeaturedJob,
   NewBottomSection,
   NewFooter,
-  } from "../workcrew-ui/components/landing";
+} from "../workcrew-ui/components/landing";
+
 import {
   Section,
   Container,
@@ -26,15 +25,25 @@ import {
   Badge,
 } from "../workcrew-ui/components/primitives";
 
-import { tokens } from "../workcrew-ui/styles/tokens"; // this one is okay
+import { tokens } from "../workcrew-ui/styles/tokens";
 
-{process.env.NODE_ENV === "development" && <div style={{position:'fixed',top:8,right:8,background:'#ffe58f',padding:6,zIndex:9999}}>BUILD: {Date.now()}</div>}
+// Dev-only build badge moved inside the component (top-level JSX is invalid)
+function DevBuildBadge() {
+  if (process.env.NODE_ENV !== "development") return null;
+  return (
+    <div style={{ position: "fixed", top: 8, right: 8, background: "#ffe58f", padding: 6, zIndex: 9999 }}>
+      BUILD: {Date.now()}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const [jobs, setJobs] = useState<any[]>([]);
 
   return (
     <main>
+      <DevBuildBadge />
+
       {/* Top nav */}
       <Section size="sm" background="default" withContainer={false}>
         <Container>
@@ -49,10 +58,10 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      {/* Logos / social proof */}
+      {/* Logos / social proof (replaces Employers) */}
       <Section size="md" background="default">
         <Container>
-          <Employers />
+          <LogoMarquee />
         </Container>
       </Section>
 
@@ -103,7 +112,7 @@ export default function HomePage() {
               <Input label="Description" placeholder="Tell us more about your hiring needs" />
 
               <div style={{ height: 16 }} />
-              <Button variant="primary">Get in touch</Button>
+              <Button tone="primary" variant="solid">Get started</Button>
             </Card>
 
             {/* highlights */}
@@ -125,7 +134,7 @@ export default function HomePage() {
                 </div>
               </Grid>
               <div style={{ height: 16 }} />
-              <Button variant="secondary">See pricing</Button>
+              <Button tone="secondary" variant="outline">Learn more</Button>
             </Card>
           </Grid>
         </Container>

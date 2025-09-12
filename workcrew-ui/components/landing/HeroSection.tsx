@@ -1,380 +1,270 @@
 "use client";
-import * as React from "react";
-import { Container, Heading, Text, Button, Card } from "../primitives";
 
-const HeroSection: React.FC = () => {
+import Image from "next/image";
+import React from "react";
+import LogoMarquee from "./LogoMarquee"; 
+
+export default function HeroSection() {
   return (
-    <section className="hero">
-      <Container>
-        
-        <div className="hero-grid">
-          {/* LEFT */}
-          <div className="left">
-            <div className="chip">
-              <span>⚡</span> The future of hiring is here
+    <section className="relative overflow-hidden">
+      {/* subtle grid & the soft top gradient stuff */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(236,239,255,0.6),transparent_40%),linear-gradient(90deg,rgba(255,255,255,0.6),transparent_30%),radial-gradient(600px_200px_at_50%_-80px,#E7E9FF_0%,transparent_60%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 [background-image:linear-gradient(#edf0ff_1px,transparent_1px),linear-gradient(90deg,#edf0ff_1px,transparent_1px)] [background-size:40px_40px] opacity-40"
+      />
+
+      <div className="mx-auto max-w-6xl px-6 pt-20 pb-10 md:pt-28 md:pb-20">
+        <header className="mb-10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="WorkCrew.ai"
+              width={102}
+              height={26}
+              priority
+              className="h-[26px] w-auto"
+            />
+          </div>
+
+          <nav className="hidden gap-8 text-sm text-slate-600 md:flex">
+            <a className="hover:text-slate-900" href="#">Pricing</a>
+            <a className="hover:text-slate-900" href="#">Find jobs</a>
+            <a className="hover:text-slate-900" href="#">Blogs</a>
+            <a className="hover:text-slate-900" href="#">About us</a>
+            <a className="hover:text-slate-900" href="#">Contact</a>
+          </nav>
+
+          <button className="hidden rounded-full bg-gradient-to-b from-[#6C79FF] to-[#4C43D5] px-6 py-2.5 text-white shadow-[0_6px_24px_rgba(102,96,255,0.35)] ring-1 ring-inset ring-white/30 md:block">
+            Login
+          </button>
+        </header>
+
+        <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
+          {/* Left one */}
+          <div>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D8E0FF] bg-white/60 px-3 py-1 text-xs text-[#5E6AD9] shadow-sm backdrop-blur">
+              <span className="text-base">⚡</span> The future of hiring is here
             </div>
 
-            {/* Figma headline */}
-            <h1 className="headline">
-              “Recruiting &amp; job searching are<br className="hidden-md" />
-              fundamentally broken” – They say.
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-[#4E35F2] md:text-[56px] md:leading-[64px]">
+              Hiring or job hunting?
+              <br />
+              <span className="bg-gradient-to-b from-black to-black/70 bg-clip-text text-transparent">
+                You’re in the right place.
+              </span>
             </h1>
 
-            {/* Purple underlined line */}
-            <a href="#solution" className="purple-line">
-              But we have solved every problem for you
-            </a>
-
-            {/* Thin divider under text (as in Figma) */}
-            <div className="divider" />
-            console.log("HERO renders @", Date.now());
-
-
-            <Text className="sub">
-              An A-powered hiring experience that helps candidates find the
+            <p className="mt-6 max-w-xl text-[15px] leading-7 text-slate-600">
+              An AI-powered hiring experience that helps candidates find the
               right role and recruiters hire faster, smarter, better.
-            </Text>
+            </p>
 
-            <div className="actions">
-              <Button variant="ghost" className="outline">
-                ↗ Find work
-              </Button>
-              <Button variant="primary" className="primary">
-                ↗ Start hiring
-              </Button>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 rounded-full border border-[#D9E2FF] bg-white px-4 py-2 text-sm font-medium text-[#2F46F6] shadow-sm hover:bg-slate-50"
+              >
+                <ArrowNortheast /> Find work
+              </a>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 rounded-full bg-[#5B4BFF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(91,75,255,0.35)] hover:brightness-105"
+              >
+                <ArrowNortheast /> Start hiring
+              </a>
             </div>
 
-            <ul className="stats">
-              <li>
-                <strong>5,000+</strong>
-                <span>Candidates</span>
-              </li>
-              <li>
-                <strong>500+</strong>
-                <span>Recruiters</span>
-              </li>
-              <li>
-                <strong>300+</strong>
-                <span>Companies</span>
-              </li>
-              <li>
-                <strong>400+</strong>
-                <span>Jobs Posted</span>
-              </li>
-            </ul>
+            {/* Stats */}
+            <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
+              <Stat number="5,000+" label="Candidates" />
+              <Stat number="500+" label="Recruiters" />
+              <Stat number="300+" label="Companies" />
+              <Stat number="400+" label="Jobs Posted" />
+            </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="right">
-            <Card elevation="lg" bordered className="panel">
-              <div className="panel-header">
-                <span className="badge">
-                  Work<span className="badge-pill">crew</span>.ai
-                </span>
-                <div className="avatar" />
+          {/* RIGHT: product card */}
+          <div className="relative">
+            <div className="rounded-3xl border border-[#E6E9FF] bg-white/90 p-6 shadow-[0_20px_60px_rgba(76,67,213,0.08)] backdrop-blur">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/logo.png"
+                    alt="WorkCrew.ai"
+                    width={84}
+                    height={22}
+                    className="h-[22px] w-auto"
+                  />
+                  <Image
+                    src="/laptopLadyOnCard.png"
+                    alt="User avatar"
+                    width={45}
+                    height={45}
+                    className="h-[45px] w-[45px] rounded-full object-cover"
+                  />
+                </div>
+                <div className="h-2 w-40 rounded-full bg-[#EDEAFE]" />
               </div>
 
-              <div className="block">
-                <div className="block-title">Profile completion</div>
-                <div className="progress">
-                  <div className="bar" style={{ width: "66%" }} />
+              {/* Profile completion */}
+              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4 shadow-[0_2px_0_rgba(76,67,213,0.05)]">
+                <div className="mb-3 text-sm font-semibold text-slate-800">
+                  Profile completion
                 </div>
+                <Progress value={66} />
               </div>
 
-              <div className="block">
-                <div className="block-title">Job matches</div>
-                <div className="list">
-                  <div className="row">
-                    <div>
-                      <div className="role">Senior Frontend Developer</div>
-                      <div className="meta">TechCorp • Remote • $120k–150k</div>
-                    </div>
-                    <button className="pill-btn">Apply</button>
-                  </div>
-                  <div className="row">
-                    <div>
-                      <div className="role">React Engineer</div>
-                      <div className="meta">StartupXYZ • Hybrid • $100k–130k</div>
-                    </div>
-                    <button className="pill-btn">Apply</button>
-                  </div>
+              {/* Job matches */}
+              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4">
+                <div className="mb-3 text-sm font-semibold text-slate-800">
+                  Job matches
                 </div>
+
+                <JobRow
+                  title="Senior Frontend Developer"
+                  meta="TechCorp • Remote • $120k–150k"
+                />
+                <div className="my-3 h-px bg-[#EEF1FF]" />
+                <JobRow
+                  title="React Engineer"
+                  meta="StartupXYZ • Hybrid • $100k–130k"
+                />
               </div>
 
-              <div className="block">
-                <div className="block-title">Recent Applications</div>
-                <div className="list">
-                  <div className="row">
-                    <div className="role">
-                      Frontend Developer at InnovateLabs
-                    </div>
-                    <span className="chip chip-warn">Under Review</span>
-                  </div>
-                  <div className="row">
-                    <div className="role">React Engineer at DevCorp</div>
-                    <span className="chip chip-good">Interview Scheduled</span>
-                  </div>
+              {/* Recent applications */}
+              <div className="rounded-xl border border-[#E6E9FF] p-4">
+                <div className="mb-3 text-sm font-semibold text-slate-800">
+                  Recent Applications
                 </div>
+
+                <AppRow
+                  title="Frontend Developer at InnovateLabs"
+                  badge={{ label: "Under Review", tone: "amber" }}
+                />
+                <div className="my-3 h-px bg-[#EEF1FF]" />
+                <AppRow
+                  title="React Engineer at DevCorp"
+                  badge={{ label: "Interview Scheduled", tone: "green" }}
+                />
               </div>
-            </Card>
+            </div>
+
+            {/* Floating chatbot avatar (bottom-right of card) */}
+            <Image
+              src="/ChatbotLady.png"
+              alt="Chatbot"
+              width={64}
+              height={64}
+              className="absolute -bottom-8 right-4 h-16 w-16 rounded-full border-4 border-white shadow-[0_10px_24px_rgba(0,0,0,0.15)]"
+            />
           </div>
         </div>
-      </Container>
 
-      <style jsx>{`
-        .hero {
-          padding: 72px 0 56px;
-          background:
-            radial-gradient(120% 120% at 0% 0%, #f2f2ff 0%, #ffffff 70%),
-            linear-gradient(#eaeefe 1px, transparent 1px),
-            linear-gradient(90deg, #eaeefe 1px, transparent 1px);
-          background-size: auto, 40px 40px, 40px 40px;
-          background-position: center top, center top, center top;
-        }
+        {/* ---- LogoMarquee below grid ---- */}
+        <div className="mt-12 md:mt-16">
+          <LogoMarquee />
+        </div>
+        <div className="mx-auto my-10 h-px w-full max-w-3xl bg-[#EEF1FF]" />
 
-        /* ====== layout fix: two columns on >=768px ====== */
-        .hero-grid {
-          display: grid;
-          gap: 24px;
-        }
-        @media (min-width: 768px) {
-          .hero-grid {
-            grid-template-columns: minmax(0, 1fr) minmax(420px, 520px);
-            align-items: center;
-          }
-        }
+        {/* ---- “Recruiting … broken” statement ---- */}
+        <div className="mx-auto max-w-[717px] text-center">
+          <h2 className="mb-6 text-[28px] md:text-[32px] font-extrabold leading-tight tracking-tight text-slate-900">
+            “Recruiting &amp; job searching are fundamentally broken” – They say.
+          </h2>
 
-        .left {
-          max-width: 720px;
-        }
-        .chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 600;
-          color: #335;
-          background: #eef2ff;
-          border: 1px solid rgba(79, 70, 229, 0.25);
-          border-radius: 999px;
-          padding: 6px 10px;
-        }
-
-        /* New headline + purple line (Figma) */
-        .headline {
-          margin: 16px 0 0;
-          line-height: 1.12;
-          letter-spacing: -0.02em;
-          font-weight: 800;
-          color: #0b1020;
-          font-size: 34px;
-        }
-        @media (min-width: 768px) {
-          .headline {
-            font-size: 40px;
-          }
-        }
-        .hidden-md {
-          display: none;
-        }
-        @media (min-width: 768px) {
-          .hidden-md {
-            display: inline;
-          }
-        }
-
-        .purple-line {
-          display: inline-block;
-          margin-top: 8px;
-          font-size: 36px;
-          line-height: 1;
-          font-weight: 540;
-          color: #4d31ec;
-          text-decoration: underline;
-          text-decoration-thickness: 2px;
-          text-underline-offset: 6px;
-        }
-
-        .divider {
-          width: 300px;
-          height: 2px;
-          background: rgba(0, 0, 0, 0.08);
-          border-radius: 999px;
-          margin: 18px auto 0;
-        }
-
-        .sub {
-          margin-top: 14px;
-          font-size: 18px;
-          color: #1e2a3a;
-          opacity: 0.85;
-        }
-
-        .actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 22px;
-        }
-        :global(.outline) {
-          border-radius: 999px !important;
-          padding: 12px 18px !important;
-          border: 2px solid #6956ff !important;
-          color: #4b3fff !important;
-          background: transparent !important;
-        }
-        :global(.primary) {
-          border-radius: 999px !important;
-          padding: 12px 20px !important;
-          background: linear-gradient(
-              135deg,
-              #6d5cf5 0%,
-              #4f46e5 60%,
-              #3b82f6 100%
-            )
-            !important;
-          color: #fff !important;
-          box-shadow: 0 10px 28px rgba(79, 70, 229, 0.35);
-          font-weight: 700;
-        }
-
-        .stats {
-          margin: 22px 0 0;
-          padding: 0;
-          list-style: none;
-          display: grid;
-          grid-template-columns: repeat(4, auto);
-          gap: 18px 28px;
-        }
-        .stats li {
-          color: #616a87;
-        }
-        .stats strong {
-          display: block;
-          color: #2b2f43;
-          font-size: 16px;
-        }
-
-        .right {
-          display: flex;
-          justify-content: flex-end;
-        }
-        .panel {
-          width: 100%;
-          max-width: 520px;
-          border-radius: 18px !important;
-          padding: 20px !important;
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(20, 20, 40, 0.08) !important;
-        }
-        .panel-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 8px;
-        }
-        .badge {
-          font-weight: 800;
-          color: #0b1020;
-        }
-        .badge-pill {
-          padding: 0 6px;
-          border-radius: 6px;
-          color: #fff;
-          background: linear-gradient(135deg, #6d5cf5 0%, #3b82f6 100%);
-        }
-        .avatar {
-          margin-left: auto;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: radial-gradient(
-            120% 120% at 30% 20%,
-            #e6e9ff 0%,
-            #cfd9ff 60%
-          );
-        }
-
-        .block {
-          margin-top: 14px;
-        }
-        .block-title {
-          font-weight: 700;
-          color: #2b2f43;
-          margin-bottom: 8px;
-        }
-        .progress {
-          height: 8px;
-          border-radius: 999px;
-          background: #edf0ff;
-          overflow: hidden;
-        }
-        .bar {
-          height: 100%;
-          background: linear-gradient(90deg, #7c6cff, #3b82f6);
-        }
-
-        .list {
-          display: grid;
-          gap: 10px;
-        }
-        .row {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          align-items: center;
-          padding: 10px 12px;
-          border: 1px solid rgba(20, 20, 40, 0.08);
-          border-radius: 12px;
-          background: #fff;
-        }
-        .role {
-          font-weight: 700;
-          color: #1e233f;
-        }
-        .meta {
-          font-size: 12px;
-          color: #6b7280;
-        }
-        .pill-btn {
-          padding: 8px 14px;
-          border-radius: 999px;
-          border: none;
-          cursor: pointer;
-          color: #fff;
-          background: linear-gradient(135deg, #6d5cf5, #3b82f6);
-          box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
-        }
-
-        .chip-warn {
-          border-radius: 999px;
-          padding: 4px 10px;
-          font-size: 12px;
-          color: #8a5c00;
-          background: #fff7e6;
-          border: 1px solid rgba(255, 183, 0, 0.35);
-        }
-        .chip-good {
-          border-radius: 999px;
-          padding: 4px 10px;
-          font-size: 12px;
-          color: #066a35;
-          background: #e6fff4;
-          border: 1px solid rgba(16, 185, 129, 0.35);
-        }
-
-        @media (max-width: 767px) {
-          .headline {
-            font-size: 32px;
-          }
-          .purple-line {
-            font-size: 30px;
-          }
-          .stats {
-            grid-template-columns: repeat(2, auto);
-          }
-        }
-      `}</style>
+          <a
+            href="#solution"
+            className="text-[18px] md:text-[20px] font-medium text-[#4C43D5] underline decoration-[#5B4BFF] decoration-2 underline-offset-4 hover:opacity-90"
+          >
+            But we have solved every problem for you
+          </a>
+        </div>
+      </div>
     </section>
   );
-};
+}
 
-export default HeroSection;
-console.log("HERO LIVE", Date.now());
+/* ---------- small UI bits ---------- */
+
+function Stat({ number, label }: { number: string; label: string }) {
+  return (
+    <div>
+      <div className="text-lg font-extrabold text-slate-900">{number}</div>
+      <div className="text-xs text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+function Progress({ value }: { value: number }) {
+  return (
+    <div className="h-3 w-full rounded-full bg-[#ECECFA]">
+      <div
+        className="h-3 rounded-full bg-gradient-to-r from-[#7C7BFF] to-[#4C43D5]"
+        style={{ width: `${value}%` }}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={value}
+        role="progressbar"
+      />
+      <div className="mt-1 text-right text-xs font-semibold text-[#5E60FF]">
+        {value}%
+      </div>
+    </div>
+  );
+}
+
+function JobRow({ title, meta }: { title: string; meta: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <div className="text-sm font-semibold text-slate-800">{title}</div>
+        <div className="text-xs text-slate-500">{meta}</div>
+      </div>
+      <button className="rounded-lg bg-[#5B4BFF] px-4 py-1.5 text-sm font-semibold text-white shadow hover:brightness-110">
+        Apply
+      </button>
+    </div>
+  );
+}
+
+function AppRow({
+  title,
+  badge,
+}: {
+  title: string;
+  badge: { label: string; tone: "amber" | "green" };
+}) {
+  const tone =
+    badge.tone === "amber"
+      ? "bg-amber-100 text-amber-700 ring-amber-200"
+      : "bg-emerald-100 text-emerald-700 ring-emerald-200";
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="text-sm text-slate-700">{title}</div>
+      <span
+        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${tone}`}
+      >
+        {badge.label}
+      </span>
+    </div>
+  );
+}
+
+function ArrowNortheast() {
+  return (
+    <svg
+      className="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M7 17L17 7M7 7h10v10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

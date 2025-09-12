@@ -1,27 +1,25 @@
-import path from "path";
+// next.config.mjs
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Re-create __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      "@/components": path.resolve(__dirname, "workcrew-ui/components"),
-      "@/workcrew-ui": path.resolve(__dirname, "workcrew-ui"),
-      "@/styles": path.resolve(__dirname, "workcrew-ui/styles"),
+      "@/app": path.join(process.cwd(), "app"),
+      "@/components": path.join(process.cwd(), "workcrew-ui/components"),
+      "@/workcrew-ui": path.join(process.cwd(), "workcrew-ui"),
+      "@/styles": path.join(process.cwd(), "workcrew-ui/styles"),
     };
     return config;
   },
-
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        "@/app": "./app",
-        "@/workcrew-ui": "./workcrew-ui",
-        "@/components": "./workcrew-ui/components",
-        "@/styles": "./workcrew-ui/styles"
-      }
-    }
-  }
 };
 
 export default nextConfig;

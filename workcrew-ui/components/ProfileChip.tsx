@@ -1,6 +1,7 @@
 // components/ProfileChip.tsx
 export default function ProfileChip() {
   return (
+    
     <div className="wc-chip">
       <img
         src="/images/avatar-lady.png"

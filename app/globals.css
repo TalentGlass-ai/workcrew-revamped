@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* your custom styles… */
+
+
+/* exact 540 weight for Schibsted Grotesk */
+.font-540 {
+  font-variation-settings: "wght" 540;
+}
+
+@supports not (font-variation-settings: normal) {
+  .font-540 { font-weight: 600; }
+}
+
+/* Letter-spacing helpers */
+.tracking-1pct { letter-spacing: .03em; }
+.tracking-2pct { letter-spacing: .02em; }
+.tracking-3pct { letter-spacing: .03em; }

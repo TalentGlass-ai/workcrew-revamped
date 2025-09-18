@@ -2,14 +2,30 @@
 import * as React from "react";
 import { Section } from "../primitives";
 import LogoMarquee from "./LogoMarquee";
+import { usePathname } from "next/navigation";
 
-type Props = { jobs?: any[] };
+type Props = {
+  /** Show this section on the Home ("/") route? Default false. */
+  enabledOnHome?: boolean;
+  speed?: number;
+  height?: number;
+  repeat?: number;
+};
 
-const Employers: React.FC<Props> = () => {
+const Employers: React.FC<Props> = ({
+  enabledOnHome = false,
+  speed = 22,
+  height = 52,
+  repeat = 32,
+}) => {
+  const pathname = usePathname();
+
+  // Hide on home unless explicitly enabled
+  if (pathname === "/" && !enabledOnHome) return null;
+
   return (
-    //  spacing can match of the page
     <Section size="sm" background="default" withContainer={false}>
-      <LogoMarquee speed={22} />
+      <LogoMarquee speed={speed} height={height} repeat={repeat} />
     </Section>
   );
 };

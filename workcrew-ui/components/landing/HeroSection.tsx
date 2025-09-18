@@ -2,49 +2,36 @@
 
 import Image from "next/image";
 import React from "react";
-import LogoMarquee from "./LogoMarquee"; 
+import LogoMarquee from "./LogoMarquee";
+import FeatureSlides from "./FeatureSlides";
 
 export default function HeroSection() {
   return (
     <section className="relative overflow-hidden">
-      {/* subtle grid & the soft top gradient stuff */}
+      {/* ===== Base hero gradient + soft grid ===== */}
+      {/* Base gradient */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(236,239,255,0.6),transparent_40%),linear-gradient(90deg,rgba(255,255,255,0.6),transparent_30%),radial-gradient(600px_200px_at_50%_-80px,#E7E9FF_0%,transparent_60%)]"
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(89.57deg, #EDEAFE 4.96%, #F6F9FE 72.67%)",
+        }}
       />
+      {/* Soft grid */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 [background-image:linear-gradient(#edf0ff_1px,transparent_1px),linear-gradient(90deg,#edf0ff_1px,transparent_1px)] [background-size:40px_40px] opacity-40"
+        className="absolute inset-0 -z-10 opacity-20
+        [background-image:linear-gradient(rgba(237,240,255,0.45)_1px,transparent_1px),
+                            linear-gradient(90deg,rgba(237,240,255,0.45)_1px,transparent_1px)]
+        [background-size:56px_56px]"
       />
 
-      <div className="mx-auto max-w-6xl px-6 pt-20 pb-10 md:pt-28 md:pb-20">
-        <header className="mb-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="WorkCrew.ai"
-              width={102}
-              height={26}
-              priority
-              className="h-[26px] w-auto"
-            />
-          </div>
-
-          <nav className="hidden gap-8 text-sm text-slate-600 md:flex">
-            <a className="hover:text-slate-900" href="#">Pricing</a>
-            <a className="hover:text-slate-900" href="#">Find jobs</a>
-            <a className="hover:text-slate-900" href="#">Blogs</a>
-            <a className="hover:text-slate-900" href="#">About us</a>
-            <a className="hover:text-slate-900" href="#">Contact</a>
-          </nav>
-
-          <button className="hidden rounded-full bg-gradient-to-b from-[#6C79FF] to-[#4C43D5] px-6 py-2.5 text-white shadow-[0_6px_24px_rgba(102,96,255,0.35)] ring-1 ring-inset ring-white/30 md:block">
-            Login
-          </button>
-        </header>
-
+      {/* ====== CONSTRAINED CONTAINER (hero grid only; navbar removed) ====== */}
+      <div className="mx-auto max-w-6xl px-6 pt-12 pb-10 md:pt-16 md:pb-20">
+        {/* Hero grid */}
         <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
-          {/* Left one */}
+          {/* LEFT */}
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D8E0FF] bg-white/60 px-3 py-1 text-xs text-[#5E6AD9] shadow-sm backdrop-blur">
               <span className="text-base">⚡</span> The future of hiring is here
@@ -72,7 +59,7 @@ export default function HeroSection() {
               </a>
               <a
                 href="#"
-                className="inline-flex items-center gap-2 rounded-full bg-[#5B4BFF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(91,75,255,0.35)] hover:brightness-105"
+                className="inline-flex items-center gap-2 rounded-full bg-[#5B4BFF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(91,75,255,0.28)] hover:brightness-105"
               >
                 <ArrowNortheast /> Start hiring
               </a>
@@ -89,7 +76,14 @@ export default function HeroSection() {
 
           {/* RIGHT: product card */}
           <div className="relative">
-            <div className="rounded-3xl border border-[#E6E9FF] bg-white/90 p-6 shadow-[0_20px_60px_rgba(76,67,213,0.08)] backdrop-blur">
+            <div
+              className="rounded-3xl border border-[#E6E9FF] p-6 shadow-[0_20px_60px_rgba(76,67,213,0.08)] backdrop-blur"
+              // IMPORTANT: gradient overlay first, white fill second (so tint is visible)
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(76, 67, 213, 0.11) 0%, rgba(245, 247, 254, 0.11) 100%), linear-gradient(0deg, #FFFFFF, #FFFFFF)",
+              }}
+            >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Image
@@ -111,7 +105,7 @@ export default function HeroSection() {
               </div>
 
               {/* Profile completion */}
-              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4 shadow-[0_2px_0_rgba(76,67,213,0.05)]">
+              <div className="mb-5 rounded-xl border border-[#E6E9FF] bg-white/60 p-4 shadow-[0_2px_0_rgba(76,67,213,0.05)]">
                 <div className="mb-3 text-sm font-semibold text-slate-800">
                   Profile completion
                 </div>
@@ -119,7 +113,7 @@ export default function HeroSection() {
               </div>
 
               {/* Job matches */}
-              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4">
+              <div className="mb-5 rounded-xl border border-[#E6E9FF] bg-white/60 p-4">
                 <div className="mb-3 text-sm font-semibold text-slate-800">
                   Job matches
                 </div>
@@ -136,7 +130,7 @@ export default function HeroSection() {
               </div>
 
               {/* Recent applications */}
-              <div className="rounded-xl border border-[#E6E9FF] p-4">
+              <div className="rounded-xl border border-[#E6E9FF] bg-white/60 p-4">
                 <div className="mb-3 text-sm font-semibold text-slate-800">
                   Recent Applications
                 </div>
@@ -163,27 +157,29 @@ export default function HeroSection() {
             />
           </div>
         </div>
-
-        {/* ---- LogoMarquee below grid ---- */}
-        <div className="mt-12 md:mt-16">
-          <LogoMarquee />
-        </div>
-        <div className="mx-auto my-10 h-px w-full max-w-3xl bg-[#EEF1FF]" />
-
-        {/* ---- “Recruiting … broken” statement ---- */}
-        <div className="mx-auto max-w-[717px] text-center">
-          <h2 className="mb-6 text-[28px] md:text-[32px] font-extrabold leading-tight tracking-tight text-slate-900">
-            “Recruiting &amp; job searching are fundamentally broken” – They say.
-          </h2>
-
-          <a
-            href="#solution"
-            className="text-[18px] md:text-[20px] font-medium text-[#4C43D5] underline decoration-[#5B4BFF] decoration-2 underline-offset-4 hover:opacity-90"
-          >
-            But we have solved every problem for you
-          </a>
-        </div>
       </div>
+
+      {/* ====== FULL-BLEED MARQUEE (outside container) ====== */}
+      <div className="mt-12 md:mt-16">
+        <LogoMarquee height={52} repeat={32} speed={28} />
+      </div>
+
+      {/* Divider + Figma-accurate statement (constrained) */}
+      <div className="mx-auto my-10 h-px w-full max-w-3xl bg-[#EEF1FF]" />
+
+      <div className="mx-auto max-w-[717px] text-center">
+        <h2 className="hero-headline">
+          “Recruiting &amp; job searching are
+          <br className="hidden md:block" />
+          fundamentally broken” – They say.
+        </h2>
+        <p className="hero-subline" style={{ marginTop: 16 }}>
+          But we have solved every problem for you
+        </p>
+      </div>
+
+      {/* ====== FEATURE SLIDES ====== */}
+      <FeatureSlides />
     </section>
   );
 }

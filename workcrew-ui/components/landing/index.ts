@@ -9,3 +9,8 @@ export { default as LogoMarquee } from "./LogoMarquee";
 export { default as FeatureShowcase } from "./FeatureSlides";
 export { default as Button } from "../primitives/Button";
 export { T} from "../primitives/Typography";
+export { default as RethinkingSection } from "./Rethinking";
+export { default as MeetRahiBanner } from "./MeetRahiBanner";
+export { default as WhyTheyLoveUs } from "./WhyTheyLoveUs";
+export { default as WhyLoveUs } from "./WhyLoveUs";
+export { default as ReviewsSection } from "./ReviewsSection";

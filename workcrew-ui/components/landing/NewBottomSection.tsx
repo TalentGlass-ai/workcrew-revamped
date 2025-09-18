@@ -1,15 +1,17 @@
 "use client";
 import * as React from "react";
-import { Section, Container, Heading, Text, Button } from "../primitives";
+import { Section, Container, Button } from "../primitives";
+import { T } from "../primitives/Typography";
+
 
 const NewBottomSection: React.FC = () => {
   return (
     <Section size="md" background="tinted">
       <Container>
-        <Heading as={3}>What our users are saying</Heading>
-        <Text>Testimonials and success stories from real candidates and teams.</Text>
+        <T as="h3">What our users are saying</T>
+        <T>Testimonials and success stories from real candidates and teams.</T>
         <div style={{height:12}}/>
-        <Button variant="primary">Read our blogs</Button>
+        <Button variant="solid" tone="primary">Read our blogs</Button>
       </Container>
     </Section>
   );

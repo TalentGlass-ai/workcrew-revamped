@@ -19,40 +19,57 @@ const MeetRahiBanner: React.FC<Props> = ({
   className,
 }) => {
   return (
-    <section className={`w-full bg-[#4D31EC] ${className ?? ""}`}>
-      {/* Desktop spec: 1280 x 162 */}
-      <div className="relative mx-auto h-[162px] w-full max-w-[1280px] px-6 md:px-8">
-        {/* Text block */}
-        <div className="absolute left-6 right-[168px] top-1/2 -translate-y-1/2 text-white md:left-8 md:right-[184px]">
+    <section className={`relative w-full bg-[#4D31EC] ${className ?? ""}`}>
+      <div className="relative h-[162px] w-full">
+        {/* TEXT: pinned 51px from left edge */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 text-white"
+          style={{ left: 51, right: 400 }}
+        >
           <h3
-            className="text-[32px] font-medium leading-[1] tracking-[0]"
-            style={{ fontFamily: "var(--font-sans)" }} // Archivo
+            className="font-medium tracking-[0] leading-normal"
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 32,
+            }}
           >
             {title}
           </h3>
+
           <p
-            className="mt-3 text-[16px] font-medium leading-[1] tracking-[0] text-white/95"
-            style={{ fontFamily: "var(--font-sans)" }} // Archivo
+            className="mt-2 font-medium tracking-[0] leading-normal text-white/95 whitespace-nowrap"
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 16,
+            }}
+            title={subtitle}
           >
             {subtitle}
           </p>
         </div>
 
-        {/* Avatar block (fixed to the right) */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 md:right-8">
-          {/* soft circular backdrop per Figma */}
+        {/* AVATAR: moved 150px right + Rah.png sized 150×150 */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2"
+          style={{ left: 1173 }} // 1023 + 150
+        >
+          {/* Backdrop circle (106×106) */}
           <div
-            className="absolute -left-4 -top-4 -z-10 h-[145px] w-[145px] rounded-full bg-white/15"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-[106px] w-[106px] rounded-full"
+            style={{ backgroundColor: "rgba(180,165,255,0.45)" }}
             aria-hidden
           />
-          <Image
-            src={avatarSrc}
-            alt="RAHI"
-            width={113}
-            height={113}
-            className="h-[113px] w-[113px] rounded-full object-cover ring-4 ring-white/20"
-            priority
-          />
+          {/* Rah.png (150×150, straight cut bottom) */}
+          <div className="h-[150px] w-[150px] overflow-hidden">
+            <Image
+              src={avatarSrc}
+              alt="RAHI"
+              width={150}
+              height={150}
+              className="h-full w-full object-cover object-top border-0 ring-0 shadow-none"
+              priority
+            />
+          </div>
         </div>
       </div>
     </section>

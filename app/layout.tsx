@@ -1,30 +1,21 @@
+// app/layout.tsx
 import "./globals.css";
+import { Schibsted_Grotesk, Archivo } from "next/font/google";
+import Image from "next/image";
 import * as React from "react";
-import { Schibsted_Grotesk, Archivo, Manrope } from "next/font/google";
-import "./globals.css";
 
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-display",
-  // Use the variable axis so we can set 540 via CSS
-  weight: "variable", // allowed: 400|500|600|700|800|900|variable
+  variable: "--font-schibsted",
+  weight: "variable",
 });
 
 const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-sans",
-  // Archivo supports full range
-  weight: ["100","200","300","400","500","600","700","800","900"],
-});
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-alt",
-  // Manrope supports: 200–800 (and variable on some cuts)
-  weight: ["200","300","400","500","600","700","800"],
+  variable: "--font-archivo",
+  weight: "variable",
 });
 
 export default function RootLayout({
@@ -33,11 +24,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${schibsted.variable} ${archivo.variable} ${manrope.variable}`}
-    >
-      <body>{children}</body>
+    <html lang="en" className={`${schibsted.variable} ${archivo.variable}`}>
+      <body>
+        {/* Page content */}
+        {children}
+
+        {/* ✅ Floating Chatbot visible on all pages */}
+        <button
+          aria-label="Chatbot"
+          className="fixed z-50 right-6 bottom-6 md:right-8 md:bottom-8 
+                     rounded-full ring-[3px] ring-[#4D31EC] 
+                     shadow-[0_10px_30px_rgba(77,49,236,0.25)] 
+                     overflow-hidden hover:scale-[1.03] active:scale-[0.98] transition"
+        >
+          <Image
+            src="/ChatbotLady.png"
+            alt="Assistant"
+            width={64}
+            height={64}
+            className="w-[64px] h-[64px] object-cover"
+            priority
+          />
+        </button>
+      </body>
     </html>
   );
 }

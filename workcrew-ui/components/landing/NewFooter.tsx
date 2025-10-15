@@ -5,19 +5,18 @@ import React from "react";
 
 export default function NewFooter() {
   return (
-    <footer className="px-4 py-12 md:py-16">
-      {/* Outer panel: 1280 × 529 on md+, dark slate */}
-      <div className="mx-auto max-w-[1280px] rounded-md border border-white/10 bg-[#444953] md:h-[529px]">
-        <div className="grid grid-cols-1 gap-10 px-6 py-10 text-white md:grid-cols-5 md:gap-8 md:px-10 md:py-12">
+    <footer className="px-0 py-12 md:py-16">
+      {/* Full-width dark panel */}
+      <div className="w-full border-t border-white/10 bg-[#444953] md:h-[529px]">
+        <div className="mx-auto max-w-[1280px] grid grid-cols-1 gap-10 px-6 py-10 text-white md:grid-cols-5 md:gap-8 md:px-10 md:py-12">
           {/* 1) Brand + tagline */}
           <div className="flex flex-col">
             <div className="mb-4 text-xs/none text-white/80">
               Product of TalentBox Labs
             </div>
 
-            {/* Logo 158×36 (from Figma) */}
+            {/* Logo */}
             <div className="mb-4">
-              {/* Replace with your real logo path */}
               <Image
                 src="/logo.png"
                 alt="WorkCrew.ai"
@@ -47,13 +46,24 @@ export default function NewFooter() {
           {/* 3) For recruiters */}
           <FooterCol
             title="For recruiters"
-            items={["Post jobs", "Find candidates", "Pricing", "Hiring solutions"]}
+            items={[
+              "Post jobs",
+              "Find candidates",
+              "Pricing",
+              "Hiring solutions",
+            ]}
           />
 
           {/* 4) WorkCrew.ai */}
           <FooterCol
             title="WorkCrew.ai"
-            items={["About us", "Blogs", "Terms and conditions", "Help desk", "Query post"]}
+            items={[
+              "About us",
+              "Blogs",
+              "Terms and conditions",
+              "Help desk",
+              "Query post",
+            ]}
           />
 
           {/* 5) Contact + social */}
@@ -83,7 +93,7 @@ export default function NewFooter() {
               </FooterRow>
             </div>
 
-            {/* Social icons row (≈18.75×18.75) */}
+            {/* Social icons row */}
             <div className="mt-6 flex items-center gap-4">
               <SocialLink ariaLabel="Instagram" href="#">
                 <InstagramIcon />
@@ -133,7 +143,6 @@ function FooterCol({ title, items }: { title: string; items: string[] }) {
 }
 
 function FooterLabel({ children }: { children: React.ReactNode }) {
-  // Headings ~16px, SemiBold
   return <h4 className="text-[16px] font-semibold">{children}</h4>;
 }
 
@@ -172,11 +181,18 @@ function SocialLink({
   );
 }
 
-/* ---------------- icons (18–20px) ---------------- */
+/* ---------------- icons ---------------- */
 
 function MailIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M4 6h16v12H4z" />
       <path d="M22 6l-10 7L2 6" />
     </svg>
@@ -184,23 +200,43 @@ function MailIcon() {
 }
 function PhoneIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.9 19.9 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.9 19.9 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.12a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92z" />
     </svg>
   );
 }
 function LocationIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z" />
       <circle cx="12" cy="11" r="2.5" />
     </svg>
   );
 }
-
 function InstagramIcon() {
   return (
-    <svg width="18.75" height="18.75" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg
+      width="18.75"
+      height="18.75"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />

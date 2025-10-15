@@ -1,244 +1,182 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 type Review = {
   name: string;
-  title: string;  // role @ company
+  title: string;
+  company: string;
   quote: string;
-  initials: string; // fallback avatar
+  avatar?: string;
 };
 
-const REVIEWS: Review[] = [
-  {
-    name: "Sarah Rajan",
-    title: "Software Engineer at Google",
-    quote:
-      "Found my dream job within 2 weeks! The platform made it incredibly easy to connect with top-tier companies.",
-    initials: "SR",
-  },
-  {
-    name: "James Carter",
-    title: "Product Manager at Amazon",
-    quote:
-      "The networking opportunities were invaluable, leading me to my ideal role within a month!",
-    initials: "JC",
-  },
-  {
-    name: "Carlos Mendez",
-    title: "Data Analyst at Microsoft",
-    quote:
-      "Support throughout my journey was phenomenal; I secured an offer in just weeks!",
-    initials: "CM",
-  },
-  {
-    name: "Emily Chen",
-    title: "UX Designer at Facebook",
-    quote:
-      "I never thought I'd land a position this quickly; the resources provided were top-notch!",
-    initials: "EC",
-  },
-  {
-    name: "James Lee",
-    title: "ML Engineer at Google",
-    quote:
-      "The collaborative environment here has really elevated my skills and career!",
-    initials: "JL",
-  },
-  {
-    name: "Aisha Patel",
-    title: "Frontend Developer at Amazon",
-    quote:
-      "Working on such innovative projects is a dream come true for me!",
-    initials: "AP",
-  },
-  {
-    name: "Robert Smith",
-    title: "Data Analyst at Microsoft",
-    quote:
-      "The analytical tools and support make tackling complex data a breeze!",
-    initials: "RS",
-  },
-  {
-    name: "Sofia Martinez",
-    title: "Graphic Designer at Adobe",
-    quote:
-      "I love the freedom to express creativity while working with industry leaders!",
-    initials: "SM",
-  },
+const ROW1: Review[] = [
+  { name: "Ananya Gupta", title: "Software Engineer", company: "Google", quote: "Found my dream job within 2 weeks! Matching was super sharp and human.", avatar: "/avatars/1.png" },
+  { name: "Rohan Mehta", title: "Product Manager", company: "Amazon", quote: "The networking opportunities were invaluable—got my offer in a month.", avatar: "/avatars/2.png" },
+  { name: "Maya Iyer", title: "Data Scientist", company: "Microsoft", quote: "Clear process, fast feedback, and real teams. Loved the experience!", avatar: "/avatars/3.png" },
+  { name: "Ishita Rao", title: "UX Designer", company: "Meta", quote: "Resources and guidance were top-notch. Interview felt effortless.", avatar: "/avatars/4.png" },
 ];
 
-function Avatar({ initials }: { initials: string }) {
-  return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white">
-      <span className="text-[14px] font-semibold tracking-wide">{initials}</span>
-    </div>
-  );
-}
+const ROW2: Review[] = [
+  { name: "Arjun Nair", title: "Frontend Developer", company: "Swiggy", quote: "The portfolio tips and role matches were insanely accurate.", avatar: "/avatars/5.png" },
+  { name: "Rahul Sharma", title: "ML Engineer", company: "NVIDIA", quote: "Hands-on projects aligned perfectly with what teams wanted.", avatar: "/avatars/6.png" },
+  { name: "Sara Fernandes", title: "Full-Stack Engineer", company: "Atlassian", quote: "A transparent, fair process—finally feels built for candidates.", avatar: "/avatars/7.png" },
+  { name: "Aarushi Jain", title: "Visual Designer", company: "Adobe", quote: "Loved how fast I could talk to the actual team I’d work with.", avatar: "/avatars/8.png" },
+];
+
+const ROW3: Review[] = [
+  { name: "Priya Menon", title: "Content Designer", company: "Canva", quote: "Real roles, real teams—no spam. I was onboarded in days.", avatar: "/avatars/9.png" },
+  { name: "Kabir Kapoor", title: "iOS Engineer", company: "Apple", quote: "Signal over noise. The best recruiting experience I’ve had.", avatar: "/avatars/10.png" },
+  { name: "Ananya Gupta", title: "Software Engineer", company: "Google", quote: "Found my dream job within 2 weeks! Matching was super sharp and human.", avatar: "/avatars/1.png" },
+  { name: "Rohan Mehta", title: "Product Manager", company: "Amazon", quote: "The networking opportunities were invaluable—got my offer in a month.", avatar: "/avatars/2.png" },
+];
 
 export default function ReviewsSection() {
-  const [hovered, setHovered] = React.useState(false);
-  const [active, setActive] = React.useState<number | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 15%"] });
 
-  const open = (idx: number) => setActive(idx);
-  const close = () => setActive(null);
-  const next = () => setActive((i) => (i === null ? 0 : (i + 1) % REVIEWS.length));
-  const prev = () =>
-    setActive((i) => (i === null ? 0 : (i - 1 + REVIEWS.length) % REVIEWS.length));
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (active === null) return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [active]);
+  // Slower parallax drift
+  const x1 = useTransform(scrollYProgress, [0, 1], ["-10%", "-25%"]);
+  const x2 = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+  const x3 = useTransform(scrollYProgress, [0, 1], ["-10%", "-30%"]);
 
   return (
     <section
-      className="w-full bg-[#4D31EC]"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      ref={ref}
+      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden text-white"
+      style={{
+        paddingTop: 40,
+        paddingBottom: 40,
+        background: "linear-gradient(180deg,#4D31EC 0%,#4a2fe9 50%,#462ae1 100%)",
+      }}
     >
-      <div className="relative mx-auto h-[711px] w-full max-w-[1280px] overflow-hidden px-6 py-10 md:px-10">
-        {/* Title badge in the middle */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-          <div
-            className="rounded-full bg-white px-6 py-3 text-center text-[24px] font-medium leading-none text-[#4D31EC] md:text-[32px]"
-            style={{ fontFamily: "var(--font-display)" }} // Schibsted Grotesk
+      {/* Center headline capsule */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-[100] -translate-x-1/2 -translate-y-1/2">
+        <div
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 765,
+            height: 304,
+            background: `
+              linear-gradient(
+                90deg,
+                rgba(77,49,236,0) 0%,
+                rgba(77,49,236,1) 30%,
+                rgba(77,49,236,1) 70%,
+                rgba(77,49,236,0) 100%
+              )
+            `,
+          }}
+        >
+          <h2
+            className="text-center"
+            style={{
+              fontFamily: "var(--font-schibsted,'Schibsted Grotesk',ui-sans-serif)",
+              fontWeight: 600,
+              fontSize: 38,
+              letterSpacing: "0.01em",
+              lineHeight: 1.2,
+              color: "#ffffff",
+            }}
           >
             What our users are saying
-          </div>
+          </h2>
         </div>
-
-        {/* Grid of review cards */}
-        <div
-          className={`relative z-10 grid grid-cols-1 gap-6 md:grid-cols-3`}
-          aria-hidden={active !== null}
-        >
-          {REVIEWS.map((r, idx) => (
-            <button
-              key={idx}
-              onClick={() => open(idx)}
-              className={[
-                // base card
-                "group relative w-full rounded-[20px] border border-white/25 bg-white/10 p-5 text-left text-white backdrop-blur-sm",
-                "transition-transform duration-300",
-                "md:h-[215px] md:w-[410px]",
-                hovered ? "animate-float" : "",
-                active !== null ? "opacity-30 blur-[1px]" : "opacity-100",
-              ].join(" ")}
-              style={{ animationDelay: hovered ? `${(idx % 5) * 0.2}s` : "0s" }}
-            >
-              {/* subtle vertical divider effect like Figma (optional) */}
-              <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-white/10" />
-
-              <div className="flex items-center gap-3">
-                <Avatar initials={r.initials} />
-                <div>
-                  <div
-                    className="text-[18px] font-medium leading-[23px]"
-                    style={{ fontFamily: "var(--font-sans)" }} // Archivo
-                  >
-                    {r.name}
-                  </div>
-                  <div
-                    className="text-[12px] leading-[16px] opacity-80"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {r.title}
-                  </div>
-                </div>
-              </div>
-
-              <p
-                className="mt-4 line-clamp-4 text-[16px] leading-[23px] opacity-90"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                “{r.quote}”
-              </p>
-
-              {/* hover lift */}
-              <div className="pointer-events-none absolute inset-0 rounded-[20px] transition duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_12px_30px_rgba(0,0,0,0.25)]" />
-            </button>
-          ))}
-        </div>
-
-        {/* Focus overlay */}
-        {active !== null && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 backdrop-blur-sm">
-            <div className="relative w-full max-w-[720px] rounded-3xl border border-white/20 bg-[#3C25D1] p-6 text-white shadow-2xl">
-              {/* Close */}
-              <button
-                onClick={close}
-                className="absolute right-3 top-3 rounded-full bg-white/20 px-3 py-1 text-sm font-semibold hover:bg-white/30"
-              >
-                ✕
-              </button>
-
-              {/* Content */}
-              <div className="flex items-center gap-3">
-                <Avatar initials={REVIEWS[active].initials} />
-                <div>
-                  <div
-                    className="text-[20px] font-medium leading-[23px]"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {REVIEWS[active].name}
-                  </div>
-                  <div
-                    className="text-[13px] leading-[18px] opacity-80"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {REVIEWS[active].title}
-                  </div>
-                </div>
-              </div>
-
-              <p
-                className="mt-5 text-[18px] leading-[26px]"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                “{REVIEWS[active].quote}”
-              </p>
-
-              {/* Controls */}
-              <div className="mt-6 flex items-center justify-between">
-                <button
-                  onClick={prev}
-                  className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/30"
-                >
-                  ← Prev
-                </button>
-                <div className="text-xs opacity-80">
-                  {active + 1} / {REVIEWS.length}
-                </div>
-                <button
-                  onClick={next}
-                  className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/30"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* component-scoped keyframes */}
-      <style jsx>{`
-        @keyframes floatY {
-          0%   { transform: translateY(0px) }
-          50%  { transform: translateY(-8px) }
-          100% { transform: translateY(0px) }
-        }
-        .animate-float {
-          animation: floatY 6s ease-in-out infinite;
-        }
-      `}</style>
+      {/* Rows (more breathing room) */}
+      <div className="relative mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
+        <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
+          {repeatToFill(ROW1, 10).map((r, i) => (
+            <ReviewCard key={`r1-${i}`} r={r} />
+          ))}
+        </motion.div>
+        <motion.div style={{ x: x2 }} className="flex w-[220%] gap-16">
+          {repeatToFill(ROW2, 10).map((r, i) => (
+            <ReviewCard key={`r2-${i}`} r={r} />
+          ))}
+        </motion.div>
+        <motion.div style={{ x: x3 }} className="flex w-[220%] gap-16">
+          {repeatToFill(ROW3, 10).map((r, i) => (
+            <ReviewCard key={`r3-${i}`} r={r} />
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
+}
+
+/* Transparent review card with thin white border */
+function ReviewCard({ r }: { r: Review }) {
+  return (
+    <article
+      className="relative shrink-0"
+      style={{
+        width: 410,
+        height: 215,
+        borderRadius: 24,
+        background: "transparent",
+        border: "1px solid rgba(255,255,255,0.40)",
+        padding: 24,
+      }}
+    >
+      <div className="mb-3.5 flex items-center gap-3">
+        <div
+          className="relative overflow-hidden"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.40)",
+          }}
+        >
+          {r.avatar && (
+            <Image src={r.avatar} alt={r.name} fill sizes="40px" className="object-cover" />
+          )}
+        </div>
+        <div className="leading-none">
+          <div
+            style={{
+              fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
+              fontWeight: 500,
+              fontSize: 24,
+              lineHeight: "23px",
+            }}
+          >
+            {r.name}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
+              fontWeight: 500,
+              fontSize: 14,
+              lineHeight: "23px",
+              opacity: 0.95,
+            }}
+          >
+            {r.title} at {r.company}
+          </div>
+        </div>
+      </div>
+      <blockquote
+        style={{
+          fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
+          fontWeight: 400,
+          fontSize: 16,
+          lineHeight: "23px",
+        }}
+      >
+        {r.quote}
+      </blockquote>
+    </article>
+  );
+}
+
+/* helper */
+function repeatToFill<T>(arr: T[], min: number): T[] {
+  const out: T[] = [];
+  while (out.length < min) out.push(...arr);
+  return out.slice(0, min);
 }

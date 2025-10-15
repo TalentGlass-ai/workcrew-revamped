@@ -1,178 +1,119 @@
 "use client";
 
-import React from "react";
+import * as React from "react";
 
-export default function ContactUs() {
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
-    console.log("Contact form:", data);
-  };
-
+export default function ContactUs(): React.ReactElement {
   return (
-    <section className="px-6 py-16 md:py-24">
-      {/* Heading + subcopy block (max 1106 like Figma) */}
-      <div className="mx-auto max-w-[1106px]">
+    <section id="contact" className="relative">
+      <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
+        {/* ===== Heading (no Typography) ===== */}
         <h2
-          className="text-[48px] leading-[1] tracking-[0.01em]"
-          style={{ fontFamily: "var(--font-display)", fontWeight: 540 }} // Schibsted Grotesk, 540
+          className="mb-4 text-[48px] font-[500] tracking-[0.01em] leading-[normal]"
+          style={{ fontFamily: "'Schibsted Grotesk', sans-serif" }}
         >
-          <span className="text-[#4D31EC]">Contact</span> <span>us</span>
+          <span className="text-[#5A3BFF]">Contact</span>{" "}
+          <span className="text-black">us</span>
         </h2>
 
-        <p
-          className="mt-3 max-w-[980px] text-[20px] leading-[27px] tracking-[0.03em] text-[#475467]"
-          style={{ fontFamily: "var(--font-sans)" }} // Archivo
-        >
+        {/* Subheading */}
+        <p className="mb-8 text-[20px] tracking-[0.01em] text-[#1F2937]">
           Connect with our team to discover how WorkCrew.ai can streamline your
-          company&apos;s talent acquisition and HR operations.
+          company's talent acquisition and HR operations.
         </p>
-      </div>
 
-      {/* Form block (exact 744px width per Figma) */}
-      <div className="mx-auto mt-10 max-w-[744px]">
+        {/* ===== Form ===== */}
         <form
-          className="grid grid-cols-1 gap-[46px] md:grid-cols-2"
-          onSubmit={onSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            // TODO: handle submit
+          }}
         >
           {/* Company name */}
-          <Field label="Company name *" htmlFor="company">
-            <input
-              id="company"
-              name="company"
-              placeholder="Enter your company name"
-              className={inputClass}
-              required
-            />
+          <Field label="Company name" required htmlFor="company">
+            <Input id="company" placeholder="Enter your company name" />
           </Field>
 
           {/* Contact person */}
-          <Field label="Contact person *" htmlFor="contactPerson">
-            <input
-              id="contactPerson"
-              name="contactPerson"
-              placeholder="Your full name"
-              className={inputClass}
-              required
-            />
+          <Field label="Contact person" required htmlFor="contactPerson">
+            <Input id="contactPerson" placeholder="Your full name" />
           </Field>
 
           {/* Business email */}
-          <Field label="Business email *" htmlFor="email">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@company.com"
-              className={inputClass}
-              required
-            />
+          <Field label="Business email" required htmlFor="email">
+            <Input id="email" type="email" placeholder="you@company.com" />
           </Field>
 
           {/* Phone number */}
-          <Field label="Phone number *" htmlFor="phone">
-            <div className="grid grid-cols-[92px,1fr] gap-3">
-              <div className="relative">
-                <select
-                  name="countryCode"
-                  defaultValue="+91"
-                  className={selectClass}
-                  aria-label="Country code"
-                >
-                  <option value="+91">+91</option>
-                  <option value="+1">+1</option>
-                  <option value="+44">+44</option>
-                  <option value="+61">+61</option>
-                </select>
-                <Chevron />
-              </div>
-              <input
-                id="phone"
-                name="phone"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="123456790"
-                className={inputClass}
-                required
+          <Field label="Phone number" required htmlFor="phone">
+            <div className="flex gap-3">
+              <Select
+                aria-label="Country code"
+                className="w-[86px]"
+                defaultValue="+91"
+                options={[
+                  { value: "+91", label: "+91" },
+                  { value: "+1", label: "+1" },
+                  { value: "+44", label: "+44" },
+                  { value: "+61", label: "+61" },
+                ]}
               />
+              <Input id="phone" placeholder="123456790" inputMode="numeric" />
             </div>
           </Field>
 
           {/* Company size */}
-          <Field label="Company size *" htmlFor="companySize">
-            <div className="relative">
-              <select
-                id="companySize"
-                name="companySize"
-                defaultValue=""
-                className={selectClass}
-                required
-              >
-                <option value="" disabled>
-                  Select company size
-                </option>
-                <option>1–10</option>
-                <option>11–50</option>
-                <option>51–200</option>
-                <option>201–1000</option>
-                <option>1000+</option>
-              </select>
-              <Chevron />
-            </div>
-          </Field>
-
-          {/* Your role */}
-          <Field label="Your role *" htmlFor="role">
-            <div className="relative">
-              <select
-                id="role"
-                name="role"
-                defaultValue=""
-                className={selectClass}
-                required
-              >
-                <option value="" disabled>
-                  Select your role
-                </option>
-                <option>HR</option>
-                <option>Recruiter</option>
-                <option>Hiring Manager</option>
-                <option>Founder / CXO</option>
-                <option>Other</option>
-              </select>
-              <Chevron />
-            </div>
-          </Field>
-
-          {/* Description (full width) */}
-          <Field label="Description" htmlFor="desc" className="md:col-span-2">
-            <textarea
-              id="desc"
-              name="description"
-              className={`${inputClass} h-[160px] resize-none`}
-              placeholder="Tell us more about your hiring needs"
+          <Field label="Company size" required htmlFor="companySize">
+            <Select
+              id="companySize"
+              placeholder="Select company size"
+              options={[
+                { value: "1-10", label: "1–10" },
+                { value: "11-50", label: "11–50" },
+                { value: "51-200", label: "51–200" },
+                { value: "201-500", label: "201–500" },
+                { value: "500+", label: "500+" },
+              ]}
             />
           </Field>
 
-          {/* CTA (centered, full width row) */}
-          <div className="md:col-span-2 flex justify-center">
+          {/* Your role */}
+          <Field label="Your role" required htmlFor="role">
+            <Select
+              id="role"
+              placeholder="Select your role"
+              options={[
+                { value: "founder", label: "Founder / CXO" },
+                { value: "hr", label: "HR / TA" },
+                { value: "manager", label: "Hiring Manager" },
+                { value: "other", label: "Other" },
+              ]}
+            />
+          </Field>
+
+          {/* Description */}
+          <div className="md:col-span-2">
+            <Field label="Description" htmlFor="desc">
+              <Textarea
+                id="desc"
+                placeholder="Tell us more about your hiring needs"
+                rows={5}
+              />
+            </Field>
+          </div>
+
+          {/* Submit */}
+          <div className="md:col-span-2 flex justify-center pt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-[#4D31EC] px-6 py-3 text-white"
-              style={{ fontFamily: "var(--font-sans)", fontWeight: 600 }}
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white
+                         bg-[#5A3BFF] hover:bg-[#4F35E6] active:bg-[#442ECC]
+                         shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition"
             >
-              <span>Get in touch</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
+              <span className="font-medium">Get in touch</span>
             </button>
           </div>
         </form>
@@ -181,55 +122,92 @@ export default function ContactUs() {
   );
 }
 
-/* ---------- helpers ---------- */
-
-const inputClass =
-  "block w-full h-[54px] rounded-[10px] bg-[#F5F6FA] px-4 text-[15px] " +
-  "border border-[#E8EAF6] placeholder:text-slate-400 text-slate-800 outline-none " +
-  "focus:border-[#C9C2FF] focus:ring-2 focus:ring-[#DAD6FF] transition";
-
-const selectClass =
-  "appearance-none block w-full h-[54px] rounded-[10px] bg-[#F5F6FA] px-4 pr-10 text-[15px] " +
-  "border border-[#E8EAF6] text-slate-800 outline-none " +
-  "focus:border-[#C9C2FF] focus:ring-2 focus:ring-[#DAD6FF] transition";
+/* ================== Minimal form primitives ================== */
 
 function Field({
   label,
   htmlFor,
-  className = "",
+  required,
   children,
 }: {
   label: string;
-  htmlFor: string;
-  className?: string;
+  htmlFor?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label htmlFor={htmlFor} className={`block ${className}`}>
-      <span
-        className="mb-2 block text-[15px] text-slate-800"
-        style={{ fontFamily: "var(--font-sans)", fontWeight: 600 }}
-      >
-        {label}
-      </span>
+    <div>
+      <label htmlFor={htmlFor} className="block mb-2 text-[#111827]">
+        <span className="font-medium">{label}</span>
+        {required && <span className="text-[#5A3BFF]"> *</span>}
+      </label>
       {children}
-    </label>
+    </div>
   );
 }
 
-function Chevron() {
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const { className, ...rest } = props;
   return (
-    <svg
-      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <input
+      {...rest}
+      className={`w-full h-[52px] rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
+                  px-4 text-[14px] text-[#111827] placeholder:text-[#9CA3AF]
+                  focus:outline-none focus:border-[#5A3BFF] focus:bg-white
+                  focus:ring-4 focus:ring-[#5A3BFF]/15 transition ${className ?? ""}`}
+    />
+  );
+}
+
+function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const { className, ...rest } = props;
+  return (
+    <textarea
+      {...rest}
+      className={`w-full rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
+                  px-4 py-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF]
+                  focus:outline-none focus:border-[#5A3BFF] focus:bg-white
+                  focus:ring-4 focus:ring-[#5A3BFF]/15 transition ${className ?? ""}`}
+    />
+  );
+}
+
+function Select(
+  props: React.SelectHTMLAttributes<HTMLSelectElement> & {
+    options: { value: string; label: string }[];
+    placeholder?: string;
+  }
+) {
+  const { options, placeholder, className, ...rest } = props;
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      <select
+        {...rest}
+        className="w-full h-[52px] appearance-none rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
+                   px-4 pr-10 text-[14px] text-[#111827]
+                   focus:outline-none focus:border-[#5A3BFF] focus:bg-white
+                   focus:ring-4 focus:ring-[#5A3BFF]/15 transition"
+        defaultValue={rest.defaultValue ?? ""}
+      >
+        {placeholder && (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        )}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {/* caret */}
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+        width="16" height="16" viewBox="0 0 24 24" fill="none"
+      >
+        <path d="M6 9l6 6 6-6" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
   );
 }

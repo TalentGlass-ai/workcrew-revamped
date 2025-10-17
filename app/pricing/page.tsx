@@ -42,7 +42,7 @@ const CurvedArrowBackLeft = () => (
   </svg>
 );
 
-/* ======================== Types ========================= */
+/*  Types  */
 type FeatureRow =
   | { label: string; value: string }
   | { label: string; included: boolean };
@@ -256,7 +256,7 @@ export default function PricingPage() {
             </div>
           </Container>
 
-          {/* ===== Cards (3 only) ===== */}
+          {/* Cards (3 only)  */}
           {/* 200px side padding so first and last cards sit 200px from screen edges */}
           <div className="relative z-10 mt-14 px-[200px]">
             <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch">
@@ -408,7 +408,7 @@ export default function PricingPage() {
               })}
             </div>
           </div>
-          {/* ===== /Cards ===== */}
+          {/* /Cards  */}
         </div>
       </Section>
 

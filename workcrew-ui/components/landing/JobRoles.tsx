@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import GlassPill from "../primitives/tags/GlassPill";
+import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ new reusable pill
 
 type Job = {
   _id?: string;
   id?: string;
   title?: string;
   description?: string;
-  type?: string; // Full-time, Internship, etc.
+  type?: string;
   location?: string;
   salaryRange?: string;
   company?: { companyName?: string; name?: string } | string | null;
@@ -23,17 +25,13 @@ export default function JobRoles() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // horizontal scroll track
   const trackRef = useRef<HTMLDivElement | null>(null);
-
-  // per-card expansion state + whether a card actually needs a toggle
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [canExpand, setCanExpand] = useState<Record<string, boolean>>({});
   const descRefs = useRef<Record<string, HTMLParagraphElement | null>>({});
 
   const getId = (j: Job) => String(j._id || j.id || j.title || Math.random());
 
-  // attach a ref to each description and detect overflow vs a 3-line clamp
   const setDescRef =
     (id: string) =>
     (el: HTMLParagraphElement | null): void => {
@@ -42,19 +40,12 @@ export default function JobRoles() {
 
       requestAnimationFrame(() => {
         const original = el.className;
-
-        // remove any clamp to measure full height
         el.className = original.replace(/\bline-clamp-\d+\b/g, "").trim();
         const full = el.scrollHeight;
-
-        // apply clamp-3 and get clamped height
         el.className = `${original} line-clamp-3`.trim();
         const clamped = el.clientHeight;
-
         const overflows = full > clamped + 1;
         setCanExpand((m) => (m[id] === overflows ? m : { ...m, [id]: overflows }));
-
-        // keep collapsed by default
         el.className = `${original} line-clamp-3`.trim();
       });
     };
@@ -81,8 +72,7 @@ export default function JobRoles() {
     };
   }, []);
 
-  const SCROLL = 519 + 24; // card width + gap
-
+  const SCROLL = 519 + 24;
   const scrollBy = (px: number) => {
     const el = trackRef.current;
     if (!el) return;
@@ -96,21 +86,7 @@ export default function JobRoles() {
     <section className="w-full px-0 pt-16 pb-10 overflow-x-hidden relative">
       {/* Header */}
       <header className="mb-10 text-center px-6">
-        <span className="inline-flex h-[38px] w-[154px] items-center justify-center gap-2 rounded-full bg-[#C3D7FF]/[0.32]">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#EEF0FF]">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="text-[#4D31EC] w-[21px] h-[21px]"
-              fill="currentColor"
-            >
-              <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
-            </svg>
-          </span>
-          <span className="font-archivo font-medium text-[14px] leading-normal tracking-[0.03em] text-black">
-            For candidates
-          </span>
-        </span>
+        <GlassPill text="For candidates" iconColor="#2288FE" />
 
         <div className="mx-auto mt-4 w-[663px] max-w-full whitespace-nowrap">
           <h2 className="font-[540] text-[48px] leading-[59px] tracking-[0.01em] text-center">
@@ -165,34 +141,20 @@ export default function JobRoles() {
             </li>
           </ul>
 
-          {/* More jobs pill */}
-          <a href="/jobs" className="mt-10 inline-flex whitespace-nowrap">
-            <span className="inline-flex rounded-full bg-[#C3D7FF]/40 p-2">
-              <span className="inline-flex rounded-full bg-[#9DB6FF]/60 p-1.5">
-                <span className="inline-flex items-center gap-3 rounded-full bg-[#4D31EC] px-8 py-4 text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M7 7h10v10" />
-                  </svg>
-                  <span className="font-archivo font-semibold text-[16px] tracking-[0.02em] whitespace-nowrap">
-                    More jobs
-                  </span>
-                </span>
-              </span>
-            </span>
-          </a>
+          {/* ✅ Reusable More jobs pill */}
+          <div className="mt-10">
+            <LayeredPill
+              href="/jobs"
+              label="More jobs"
+              icon={<ArrowNortheastIcon />}
+              size="md"
+            />
+          </div>
         </aside>
 
         {/* Cards wrapper */}
         <div className="absolute left-[460px] top-0 right-0">
-          <div className="relative overflow-hidden px-6 md:px-0">
-            {/* right fade */}
+          <div className="relative overflow-hidden px-6 md:pl-[40px] md:pr-0">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent"
@@ -202,14 +164,24 @@ export default function JobRoles() {
             <button
               onClick={() => scrollBy(-SCROLL)}
               aria-label="Previous"
-              className="absolute left-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+              className="
+                absolute left-0 top-1/2 hidden h-9 w-9 -translate-y-1/2
+                items-center justify-center rounded-full bg-white ring-1 ring-slate-200
+                hover:bg-slate-50 md:flex z-[2]
+              "
+              title="Previous"
             >
               ‹
             </button>
             <button
               onClick={() => scrollBy(SCROLL)}
               aria-label="Next"
-              className="absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+              className="
+                absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2
+                items-center justify-center rounded-full bg-white ring-1 ring-slate-200
+                hover:bg-slate-50 md:flex z-[2]
+              "
+              title="Next"
             >
               ›
             </button>
@@ -237,7 +209,6 @@ export default function JobRoles() {
                   ))}
 
                 {!loading && err && <div className="text-rose-600">{err}</div>}
-
                 {!loading && !err && jobs.length === 0 && (
                   <div className="text-slate-500">No jobs found.</div>
                 )}
@@ -255,7 +226,6 @@ export default function JobRoles() {
                         key={id}
                         className="flex-none w-[519px] snap-start rounded-2xl border border-[#E7EAFF] bg-white p-6 overflow-hidden flex flex-col"
                       >
-                        {/* header */}
                         <div className="grid grid-cols-[1fr_auto] items-start gap-3">
                           <div className="min-w-0">
                             <div className="text-[20px] leading-[23px] tracking-[0.03em] text-black font-medium break-words">
@@ -267,17 +237,16 @@ export default function JobRoles() {
                           </div>
 
                           {job.type && (
-                            <span className="justify-self-end self-start inline-flex h-[32px] max-w-full shrink-0 items-center rounded-full bg-[#EEF0FF] px-3">
-                              <span className="block whitespace-nowrap font-archivo font-semibold text-[16px] leading-[23px] tracking-[0.03em] text-[#4D31EC]">
+                            <span className="justify-self-end self-start inline-flex h-[32px] items-center rounded-full bg-[#EEF0FF] px-3">
+                              <span className="font-archivo font-semibold text-[16px] leading-[23px] tracking-[0.03em] text-[#4D31EC]">
                                 {job.type}
                               </span>
                             </span>
                           )}
                         </div>
 
-                        {/* body (reserved height keeps CTA aligned) */}
+                        {/* body */}
                         <div className="mt-4 flex flex-col" style={{ minHeight: 180 }}>
-                          {/* description + toggle */}
                           <div>
                             <p
                               id={`desc-${id}`}
@@ -286,7 +255,7 @@ export default function JobRoles() {
                                 "font-archivo text-[16px] leading-[23px] tracking-[0.03em] text-slate-700",
                                 isOpen ? "line-clamp-none" : "line-clamp-3",
                               ].join(" ")}
-                              style={{ minHeight: "46px" }} // 2 lines min
+                              style={{ minHeight: "46px" }}
                             >
                               {job.description ?? "—"}
                             </p>
@@ -304,7 +273,6 @@ export default function JobRoles() {
                             )}
                           </div>
 
-                          {/* meta */}
                           <div className="mt-4 flex items-center gap-6 font-archivo text-[16px] tracking-[0.03em] text-slate-600">
                             {job.location && (
                               <span className="flex items-center gap-1">
@@ -313,7 +281,6 @@ export default function JobRoles() {
                                   viewBox="0 0 24 24"
                                   className="h-4 w-4 text-slate-600"
                                   fill="currentColor"
-                                  aria-hidden="true"
                                 >
                                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                 </svg>
@@ -323,7 +290,6 @@ export default function JobRoles() {
                             {job.salaryRange && <span>₹ {job.salaryRange}</span>}
                           </div>
 
-                          {/* tags */}
                           {!!job.tags?.length && (
                             <div className="mt-4 flex flex-wrap gap-2">
                               {job.tags.slice(0, 6).map((t) => (
@@ -338,7 +304,7 @@ export default function JobRoles() {
                           )}
                         </div>
 
-                        {/* CTA pinned to bottom */}
+                        {/* CTA */}
                         <a
                           href={`/jobs/${job._id || job.id}`}
                           className="mt-auto block w-full rounded-xl bg-[#4D31EC] py-3 text-center font-archivo text-[16px] tracking-[0.03em] text-white hover:brightness-110"

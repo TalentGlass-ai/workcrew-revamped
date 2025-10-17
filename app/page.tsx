@@ -233,9 +233,9 @@ export default function HomePage() {
   );
 }
 
-/* ========================
+/*
    Form primitives
-   ======================== */
+   */
 
 function ContactField({ label, htmlFor, required, children }: any) {
   return (

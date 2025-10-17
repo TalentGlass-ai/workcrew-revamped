@@ -6,7 +6,7 @@ export default function ContactUs(): React.ReactElement {
   return (
     <section id="contact" className="relative">
       <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
-        {/* ===== Heading (no Typography) ===== */}
+        {/*  Heading (no Typography)  */}
         <h2
           className="mb-4 text-[48px] font-[500] tracking-[0.01em] leading-[normal]"
           style={{ fontFamily: "'Schibsted Grotesk', sans-serif" }}
@@ -21,7 +21,7 @@ export default function ContactUs(): React.ReactElement {
           company's talent acquisition and HR operations.
         </p>
 
-        {/* ===== Form ===== */}
+        {/*  Form  */}
         <form
           className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
           onSubmit={(e) => {
@@ -122,7 +122,7 @@ export default function ContactUs(): React.ReactElement {
   );
 }
 
-/* ================== Minimal form primitives ================== */
+/*  Minimal form primitives  */
 
 function Field({
   label,

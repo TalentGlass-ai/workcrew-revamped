@@ -38,7 +38,7 @@ export default function RootLayout({
                      overflow-hidden hover:scale-[1.03] active:scale-[0.98] transition"
         >
           <Image
-            src="/ChatbotLady.png"
+            src="/Rah.png"
             alt="Assistant"
             width={64}
             height={64}

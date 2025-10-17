@@ -1,4 +1,3 @@
-// PATH: app/about/page.tsx
 "use client";
 
 import * as React from "react";
@@ -8,7 +7,7 @@ import { Section, Container, Button } from "../../workcrew-ui/components/primiti
 import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
 
-/* ---------- Pill (140×38) with bolt icon ---------- */
+/*  Pill (140×38) with bolt icon */
 const Pill = ({ label }: { label: string }) => (
   <span
     className="inline-flex items-center justify-center rounded-full bg-[#E9ECFF] text-[#5E6AD2]"
@@ -50,7 +49,7 @@ const CORE_TABS = [
   },
 ];
 
-/* ---------- Journey steps (auto-plays) ---------- */
+/*  Journey steps (auto-plays)  */
 const JOURNEY_STEPS = [
   {
     id: "research",
@@ -99,7 +98,7 @@ const JOURNEY_STEPS = [
   },
 ];
 
-/* ---------- Testimonials data ---------- */
+/* Testimonials data  */
 const TESTIMONIALS = [
   { name: "James Lee", role: "Product Manager at Google", quote: "The collaborative environment here has really elevated my skills and career!" },
   { name: "Priya S", role: "HR Lead at FintechCo", quote: "Rahi helped us screen faster without compromising quality." },
@@ -119,14 +118,14 @@ export default function AboutPage() {
   const [activeTab, setActiveTab] = React.useState(CORE_TABS[0].id);
   const active = CORE_TABS.find((t) => t.id === activeTab)!;
 
-  // Journey auto-advance (2s per slide)
+  // 2s per slide
   const [jIndex, setJIndex] = React.useState(0);
   React.useEffect(() => {
     const id = setInterval(() => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length), 2000);
     return () => clearInterval(id);
   }, []);
 
-  // Testimonials pagination (2 cards visible)
+  // 2 cards visible
   const [tIndex, setTIndex] = React.useState(0);
   const total = TESTIMONIALS.length;
   const visibleCards = [TESTIMONIALS[tIndex % total], TESTIMONIALS[(tIndex + 1) % total]];
@@ -137,7 +136,7 @@ export default function AboutPage() {
     <main className="relative min-h-screen bg-white">
       <NewNavbar />
 
-      {/* =============== HERO =============== */}
+      {/*  HERO */}
       <Section className="relative overflow-hidden">
         <Container className="relative z-10 pt-[96px] pb-20">
           <div className="mx-auto max-w-3xl text-center">
@@ -174,7 +173,7 @@ export default function AboutPage() {
               platform.
             </p>
 
-            {/* Book a demo — login-style pill (no circle behind arrow) */}
+            {/* Book a demo — login-style pill  */}
             <div className="mt-8">
               <Link href="/contact" className="inline-block">
                 <button
@@ -226,7 +225,7 @@ export default function AboutPage() {
         />
       </Section>
 
-      {/* =============== CONVERSATIONS =============== */}
+      {/* CONVERSATIONS  */}
       <Section>
         <Container className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
@@ -254,10 +253,10 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* =============== CORE VALUES (tabs) — parallel layout =============== */}
+      {/*  CORE VALUES (tabs) — parallel layout  */}
       <Section className="pt-2">
         <Container className="flex flex-col lg:flex-row gap-12 px-[80px] items-start justify-between">
-          {/* Tabs (fixed width) */}
+          
           <div className="w-full max-w-[300px] space-y-6">
             {CORE_TABS.map((t) => {
               const activeNow = activeTab === t.id;
@@ -339,7 +338,7 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* =============== OUR JOURNEY (auto-plays) =============== */}
+      {/*OUR JOURNEY (auto-plays)  */}
       <section className="relative">
         <div className="absolute inset-0" style={{ background: "#4D31EC" }} />
         <Container className="relative text-white py-[96px]">
@@ -406,7 +405,7 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      {/* =============== RAHI (spec + animated rings) =============== */}
+      {/* RAHI (spec + animated rings)*/}
       <Section>
         <Container className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10">
           <div className="lg:col-span-7">
@@ -516,7 +515,7 @@ export default function AboutPage() {
         `}</style>
       </Section>
 
-      {/* =============== TESTIMONIALS (2-card grid + arrows) =============== */}
+      {/* TESTIMONIALS (2-card grid + arrows) */}
       <Section>
         <Container>
           <h2 className="text-center font-semibold mb-12" style={{ fontFamily: "var(--font-schibsted)", fontSize: 48, lineHeight: "60px" }}>
@@ -590,7 +589,7 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* =============== CTA (Curious how…) =============== */}
+      {/*  CTA (Curious how…)  */}
       <Section className="pb-20">
         <div className="mx-[100px]">
           <div className="relative overflow-hidden rounded-3xl" style={{ background: "#4D31EC" }}>

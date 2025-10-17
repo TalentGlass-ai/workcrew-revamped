@@ -47,7 +47,7 @@ type TProps = React.HTMLAttributes<HTMLElement> & {
   lineGapPx?: number;
 };
 
-/* -------------------- TOKENS -------------------- */
+/* TOKENS */
 
 const TOKENS = {
   font: {
@@ -78,7 +78,7 @@ const FONT_PX: Record<Variant, number> = {
   statLabel: 14, // 0.875rem
 };
 
-/* -------------------- VARIANTS (role-based) -------------------- */
+/* VARIANTS (role-based) */
 /* Note: colors are intentionally neutral; pass text colors via className when needed. */
 
 const baseByVariant: Record<Variant, string> = {

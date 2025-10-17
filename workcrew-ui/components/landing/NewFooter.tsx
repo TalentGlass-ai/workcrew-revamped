@@ -5,7 +5,8 @@ import React from "react";
 
 export default function NewFooter() {
   return (
-    <footer className="px-0 py-12 md:py-16">
+    // ⬇️ remove outer vertical padding to kill the gap below the dark panel
+    <footer className="px-0 py-0">
       {/* Full-width dark panel */}
       <div className="w-full border-t border-white/10 bg-[#444953] md:h-[529px]">
         <div className="mx-auto max-w-[1280px] grid grid-cols-1 gap-10 px-6 py-10 text-white md:grid-cols-5 md:gap-8 md:px-10 md:py-12">
@@ -123,12 +124,13 @@ export default function NewFooter() {
   );
 }
 
-/* ---------------- helpers ---------------- */
+/*  helpers  */
 
 function FooterCol({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="flex flex-col">
       <FooterLabel>{title}</FooterLabel>
+      {/* Use space-y (no bottom margin on last item) */}
       <ul className="mt-3 space-y-2 text-[14px] leading-[23px] tracking-[0.03em] text-white/90">
         {items.map((it) => (
           <li key={it}>
@@ -181,7 +183,7 @@ function SocialLink({
   );
 }
 
-/* ---------------- icons ---------------- */
+/*  icons  */
 
 function MailIcon() {
   return (

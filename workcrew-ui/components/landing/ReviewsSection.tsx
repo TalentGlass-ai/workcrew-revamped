@@ -37,7 +37,6 @@ export default function ReviewsSection() {
   const ref = React.useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 15%"] });
 
-  // Slower parallax drift
   const x1 = useTransform(scrollYProgress, [0, 1], ["-10%", "-25%"]);
   const x2 = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
   const x3 = useTransform(scrollYProgress, [0, 1], ["-10%", "-30%"]);
@@ -45,29 +44,23 @@ export default function ReviewsSection() {
   return (
     <section
       ref={ref}
-      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden text-white"
+      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden text-white z-10"
       style={{
         paddingTop: 40,
         paddingBottom: 40,
         background: "linear-gradient(180deg,#4D31EC 0%,#4a2fe9 50%,#462ae1 100%)",
       }}
     >
-      {/* Center headline capsule */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-[100] -translate-x-1/2 -translate-y-1/2">
+      {/* === Center headline capsule (stronger radial pill) === */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
         <div
           className="flex items-center justify-center rounded-full"
           style={{
             width: 765,
             height: 304,
-            background: `
-              linear-gradient(
-                90deg,
-                rgba(77,49,236,0) 0%,
-                rgba(77,49,236,1) 30%,
-                rgba(77,49,236,1) 70%,
-                rgba(77,49,236,0) 100%
-              )
-            `,
+            background:
+              "radial-gradient(circle at center, rgba(77,49,236,1) 0%, rgba(77,49,236,1) 35%, rgba(77,49,236,0.75) 55%, rgba(77,49,236,0.4) 70%, rgba(77,49,236,0) 100%)",
+            boxShadow: "0 0 100px rgba(105,81,242,0.65)",
           }}
         >
           <h2
@@ -86,8 +79,8 @@ export default function ReviewsSection() {
         </div>
       </div>
 
-      {/* Rows (more breathing room) */}
-      <div className="relative mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
+      {/* === Rows of reviews === */}
+      <div className="relative mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12 z-10">
         <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
           {repeatToFill(ROW1, 10).map((r, i) => (
             <ReviewCard key={`r1-${i}`} r={r} />
@@ -107,8 +100,7 @@ export default function ReviewsSection() {
     </section>
   );
 }
-
-/* Transparent review card with thin white border */
+/* === Review Card — Crisp stroke with subtle inner white line === */
 function ReviewCard({ r }: { r: Review }) {
   return (
     <article
@@ -118,7 +110,10 @@ function ReviewCard({ r }: { r: Review }) {
         height: 215,
         borderRadius: 24,
         background: "transparent",
-        border: "1px solid rgba(255,255,255,0.40)",
+        // Stronger violet border + inner white line for separation
+        border: "2px solid #6951F2",
+        boxShadow:
+          "inset 0 0 0 1px rgba(255,255,255,0.25), 0 0 12px rgba(105,81,242,0.25)",
         padding: 24,
       }}
     >
@@ -129,7 +124,8 @@ function ReviewCard({ r }: { r: Review }) {
             width: 40,
             height: 40,
             borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,0.40)",
+            border: "2px solid #6951F2",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.25)",
           }}
         >
           {r.avatar && (
@@ -140,7 +136,7 @@ function ReviewCard({ r }: { r: Review }) {
           <div
             style={{
               fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: 24,
               lineHeight: "23px",
             }}
@@ -160,6 +156,7 @@ function ReviewCard({ r }: { r: Review }) {
           </div>
         </div>
       </div>
+
       <blockquote
         style={{
           fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
@@ -174,7 +171,7 @@ function ReviewCard({ r }: { r: Review }) {
   );
 }
 
-/* helper */
+/* === helper === */
 function repeatToFill<T>(arr: T[], min: number): T[] {
   const out: T[] = [];
   while (out.length < min) out.push(...arr);

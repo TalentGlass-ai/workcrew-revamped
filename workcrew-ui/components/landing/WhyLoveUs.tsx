@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import GlassPill from "../primitives/tags/GlassPill"; // ✅ reuse the shared pill
 
 /* ————— Small helpers ————— */
 const SectionTitle: React.FC = () => (
@@ -32,18 +33,6 @@ const SubTitle: React.FC = () => (
     Whether you are hiring or job searching, we help you move forward with
     clarity, speed, and confidence.
   </p>
-);
-
-const PillBolt: React.FC = () => (
-  <svg
-    width="10.01"
-    height="18"
-    viewBox="0 0 256 460"
-    fill="#4D31EC"
-    aria-hidden
-  >
-    <path d="M155 0L0 256h103L78 460l178-300h-94L155 0z" />
-  </svg>
 );
 
 /* ————— First row stat pills ————— */
@@ -221,28 +210,16 @@ export default function WhyLoveUs(): React.ReactElement {
   return (
     <section className="relative w-full py-16">
       <div className="mx-auto w-full max-w-[1094px] px-4 md:px-0">
-        {/* Badge pill */}
+        {/* Badge pill — now using the shared GlassPill */}
         <div className="mb-5 flex justify-center">
-          <span
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#D8E0FF] bg-[#EEF0FF]"
-            style={{
-              width: 208,
-              height: 38,
-              fontFamily: "var(--font-sans)",
-              fontWeight: 500,
-              fontSize: "14px",
-              letterSpacing: "0.03em",
-            }}
-          >
-            <PillBolt /> We’re here for a reason
-          </span>
+          <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
         </div>
 
         {/* Title + subtitle */}
         <SectionTitle />
         <SubTitle />
 
-        {/* ===== Content ===== */}
+        {/*  Content */}
         <div className="relative mt-10 flex flex-col gap-6">
           {/* Box 1: Only real jobs… */}
           <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">

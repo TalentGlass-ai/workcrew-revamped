@@ -5,6 +5,7 @@ import React from "react";
 import LogoMarquee from "./LogoMarquee";
 import FeatureSlides from "./FeatureSlides";
 import { T } from "../primitives/Typography";
+import GlassPill from "../primitives/tags/GlassPill"; // ✅ new import
 
 export default function HeroSection(): React.ReactElement {
   return (
@@ -33,27 +34,9 @@ export default function HeroSection(): React.ReactElement {
         <div className="relative z-10 mx-auto max-w-[1440px] pl-[51px] pr-[51px] pb-24 md:pb-28">
           <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
             <div className="mt-[100px]">
-              {/* Eyebrow pill */}
-              <div
-                className="mb-6 inline-flex items-center gap-2 rounded-full h-[38px] px-4 ring-1 ring-white/60 backdrop-blur-md"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.40) 0%, rgba(245,247,254,0.22) 100%), rgba(195,215,255,0.32)",
-                  boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 24px rgba(77,49,236,0.12)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <BoltSolid className="shrink-0" />
-                <T
-                  as="span"
-                  font="archivo"
-                  weight={500}
-                  className="text-[14px] leading-[10px] tracking-[0.03em] text-[#4D31EC]"
-                >
-                  The future of hiring is here
-                </T>
+              {/* Eyebrow pill replaced with GlassPill */}
+              <div className="mb-6">
+                <GlassPill text="The future of hiring is here" iconColor="#4D31EC" />
               </div>
 
               {/* Headline */}
@@ -126,9 +109,12 @@ export default function HeroSection(): React.ReactElement {
           </div>
         </div>
 
-        {/* RIGHT HERO IMAGE (instead of glass card) */}
+        {/* RIGHT HERO IMAGE */}
         <div className="relative z-10 mx-auto mt-10 w-[510px] max-w-[92vw] md:absolute md:right-6 md:top-1/2 md:mt-0 md:-translate-y-1/2">
-          <div className="relative rounded-[24px] overflow-hidden" style={{ width: "510px" }}>
+          <div
+            className="relative rounded-[24px] overflow-hidden"
+            style={{ width: "510px" }}
+          >
             <div className="min-h-[320px]">
               <Image
                 src="/hero-right.png"
@@ -146,7 +132,7 @@ export default function HeroSection(): React.ReactElement {
       {/* Logo marquee */}
       <div className="mt-6 md:mt-8">
         <LogoMarquee
-          heightMax={64}  // bigger logos
+          heightMax={64}
           heightMin={40}
           heightVw={8}
           repeat={32}
@@ -162,18 +148,21 @@ export default function HeroSection(): React.ReactElement {
             as="div"
             font="schibsted"
             weight={540}
-            className="text-[40px] tracking-[0.01em] text-black leading-[30px]"
+            className="text-[40px] tracking-[0.01em] text-black leading-[52px]"
           >
             “Recruiting &amp; job searching are fundamentally broken” – They say.
           </T>
-          <T
-            as="div"
-            font="schibsted"
-            weight={540}
-            className="mt-6 text-[36px] tracking-[0.01em] text-[#4D31EC] leading-[28px]"
-          >
-            But we have solved every problem for you
-          </T>
+
+          <div style={{ marginTop: "20px" }}>
+            <T
+              as="div"
+              font="schibsted"
+              weight={540}
+              className="text-[36px] tracking-[0.01em] text-[#4D31EC] leading-[28px]"
+            >
+              But we have solved every problem for you
+            </T>
+          </div>
         </div>
         <div className="h-px w-full bg-[#E5E7EB] mt-14 md:mt-16" />
       </div>
@@ -183,14 +172,24 @@ export default function HeroSection(): React.ReactElement {
   );
 }
 
-/* ---------- small UI bits ---------- */
+/*  small UI bits  */
 function Stat({ number, label }: { number: string; label: string }) {
   return (
     <div className="text-center md:text-left">
-      <T as="div" font="schibsted" weight={540} className="text-[20px] tracking-[0.01em] text-black leading-[14px]">
+      <T
+        as="div"
+        font="schibsted"
+        weight={540}
+        className="text-[20px] tracking-[0.01em] text-black leading-[14px]"
+      >
         {number}
       </T>
-      <T as="div" font="schibsted" weight={540} className="text-[14px] tracking-[0.01em] text-[#7B72AF] leading-[10px]">
+      <T
+        as="div"
+        font="schibsted"
+        weight={540}
+        className="text-[14px] tracking-[0.01em] text-[#7B72AF] leading-[10px]"
+      >
         {label}
       </T>
     </div>
@@ -199,23 +198,18 @@ function Stat({ number, label }: { number: string; label: string }) {
 
 function ArrowNortheast() {
   return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M7 17L17 7M7 7h10v10" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function BoltSolid({ className = "" }: { className?: string }) {
-  return (
     <svg
-      width="13.01"
-      height="23.4"
-      viewBox="0 0 11 18"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className + " text-[#4D31EC]"}
-      fill="currentColor"
+      className="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
     >
-      <path d="M6.12 0.5L0.6 9.02c-.23.36.03.83.45.83h3.49l-1.16 6.77c-.08.46.49.75.79.38l6.14-7.51c.26-.32.04-.81-.36-.81H6.92l1.5-6.72c.1-.46-.46-.78-.8-.46z" />
+      <path
+        d="M7 17L17 7M7 7h10v10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

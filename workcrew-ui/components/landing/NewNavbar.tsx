@@ -3,17 +3,15 @@
 
 import * as React from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "next/link"; // kept for brand link
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "../primitives";
+import LayeredPill from "../primitives/buttons/LayeredPill";
 
-// Centralized Nav Links
 const links = [
   { href: "/", label: "Home" },
   { href: "/find-jobs", label: "Find jobs" },
   { href: "/pricing", label: "Pricing" },
-  // { href: "/blogs", label: "Blogs" }, // 🔸 Commented out: old internal blogs link
-  { href: "https://blog.workcrew.ai/", label: "Blogs", external: true }, // 🔹 New external blogs link
+  { href: "https://blog.workcrew.ai/", label: "Blogs", external: true },
   { href: "/about", label: "About us" },
   { href: "/contact", label: "Contact" },
 ];
@@ -35,17 +33,14 @@ const NewNavbar: React.FC = () => {
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
 
-  // handle login navigation
-  const handleLoginClick = () => {
-    router.push("/login");
-  };
+  const handleLoginClick = () => router.push("/login");
 
   return (
     <>
       <header className="wc-header" role="banner">
         <nav className="wc-nav" aria-label="Global">
           <div className="row">
-            {/* LHS brand */}
+            {/* Brand */}
             <Link className="brand" href="/" aria-label="WorkCrew.ai">
               <Image
                 src="/logo.png"
@@ -60,12 +55,11 @@ const NewNavbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Center menu */}
+            {/* Center Links */}
             <ul className="menu">
               {links.map((l) => (
                 <li key={l.href}>
                   {l.external ? (
-                    // 🔹 Open external blogs link in new tab
                     <a
                       href={l.href}
                       target="_blank"
@@ -75,34 +69,46 @@ const NewNavbar: React.FC = () => {
                       {l.label}
                     </a>
                   ) : (
-                    <Link
+                    <a
                       href={l.href}
-                      prefetch
                       className={`link ${isActive(l.href) ? "active" : ""}`}
                       aria-current={isActive(l.href) ? "page" : undefined}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(l.href);
+                      }}
                     >
                       {l.label}
-                    </Link>
+                    </a>
                   )}
                 </li>
               ))}
             </ul>
 
-            {/* RHS login */}
+            {/* Login pill */}
             <div className="login">
-              <Button
-                className="login-btn"
-                type="button"
+              <LayeredPill
+                label="Login"
+                size="sm"
                 onClick={handleLoginClick}
-              >
-                Login
-              </Button>
+                className="
+                  [&>*]:w-[195px]
+                  [&>*>*]:w-[180px]
+                  [&>*>*>*]:w-[170px]
+                  [&>*>*>*]:!min-w-[170px]
+                  [&>*>*>*]:!max-w-[170px]
+                  [&>*>*>*]:!h-[40px]
+                  [&>*>*>*]:!px-0
+                  [&>*>*>*]:!py-0
+                  [&>*>*>*]:!justify-center
+                "
+              />
             </div>
           </div>
         </nav>
 
         <style jsx>{`
-          /* =================== HEADER =================== */
+          /* HEADER */
           .wc-header {
             position: fixed;
             top: 0;
@@ -117,38 +123,8 @@ const NewNavbar: React.FC = () => {
             left: 8px;
             right: 8px;
           }
-          @media (min-width: 640px) {
-            :global(body.scrolled) .wc-header {
-              left: 12px;
-              right: 12px;
-            }
-          }
-          @media (min-width: 768px) {
-            :global(body.scrolled) .wc-header {
-              left: 16px;
-              right: 16px;
-            }
-          }
-          @media (min-width: 1024px) {
-            :global(body.scrolled) .wc-header {
-              left: 20px;
-              right: 20px;
-            }
-          }
-          @media (min-width: 1280px) {
-            :global(body.scrolled) .wc-header {
-              left: 24px;
-              right: 24px;
-            }
-          }
-          @media (min-width: 1536px) {
-            :global(body.scrolled) .wc-header {
-              left: 32px;
-              right: 32px;
-            }
-          }
 
-          /* =================== NAV SURFACE =================== */
+          /* NAV */
           .wc-nav {
             position: relative;
             height: 100%;
@@ -156,15 +132,13 @@ const NewNavbar: React.FC = () => {
             background: transparent;
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
-            border-radius: 0;
             border: 1.5px solid rgba(163, 157, 255, 0.11);
-            box-shadow: 0 12px 36px rgba(16, 22, 40, 0.18);
-            transition: border-radius 0.3s ease;
+            box-shadow: 0 4px 10px rgba(16, 22, 40, 0.08);
+            transition: border-radius 0.3s ease, box-shadow 0.3s ease;
           }
           :global(body.scrolled) .wc-nav {
             border-radius: 9999px;
           }
-
           .wc-nav::before,
           .wc-nav::after {
             content: "";
@@ -194,7 +168,7 @@ const NewNavbar: React.FC = () => {
             opacity: 0.26;
           }
 
-          /* =================== CONTENT =================== */
+          /* ROW */
           .row {
             position: relative;
             z-index: 1;
@@ -205,6 +179,7 @@ const NewNavbar: React.FC = () => {
             padding: 0 20px;
           }
 
+          /* BRAND */
           .brand {
             display: inline-flex;
             align-items: center;
@@ -227,6 +202,7 @@ const NewNavbar: React.FC = () => {
             background: linear-gradient(135deg, #6d5cf5 0%, #3b82f6 100%);
           }
 
+          /* MENU */
           .menu {
             justify-self: center;
             display: none;
@@ -235,58 +211,47 @@ const NewNavbar: React.FC = () => {
             padding: 0;
             gap: 36px;
           }
-          .link {
-            text-decoration: none;
-            color: #1c2140;
-            font-weight: 550;
-            letter-spacing: 0.005em;
-            transition: color 0.2s ease;
-          }
-          .link:hover {
-            text-decoration: underline;
-          }
-          .link.active {
-            color: #3b6af7;
-            text-decoration: underline;
-          }
           @media (min-width: 768px) {
             .menu {
               display: inline-flex;
             }
           }
 
-          /* =================== LOGIN BUTTON =================== */
+          /* LINKS */
+          .link {
+            text-decoration: none;
+            color: #1c2140;
+            font-weight: 550;
+            letter-spacing: 0.005em;
+            transition: color 0.25s ease, transform 0.2s ease;
+          }
+
+          /* Hard override so ALL anchors turn blue on hover */
+          .menu :global(a.link:hover),
+          .menu :global(a.link:focus-visible) {
+            color: #2563eb !important;
+          }
+
+          .link:hover {
+            transform: translateY(-1px);
+          }
+          .link.active {
+            color: #3b82f6;
+            text-decoration: underline;
+          }
+          .link.active:hover {
+            color: #2563eb !important;
+            text-decoration: underline;
+          }
+
+          /* LOGIN */
           .login {
             justify-self: end;
           }
-          .login :global(.login-btn) {
-            position: relative !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            height: 40px !important;
-            min-width: 120px !important;
-            padding: 0 22px !important;
-            border-radius: 24px !important;
-            color: #fff !important;
-            font-weight: 700 !important;
-            line-height: 1 !important;
-            text-decoration: none !important;
-            white-space: nowrap !important;
-            cursor: pointer !important;
-            background: linear-gradient(135deg, #4d31ec 0%, #3b6af7 100%) !important;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-              0 8px 22px rgba(61, 79, 255, 0.23),
-              0 0 0 7px rgba(196, 211, 239, 0.52),
-              0 0 0 14px rgba(196, 211, 239, 0.28) !important;
-          }
-          .login :global(.login-btn:active) {
-            transform: translateY(1px);
-          }
-          @media (hover: hover) {
-            .login :global(.login-btn:hover) {
-              filter: brightness(1.02);
-            }
+          .login :global(button:focus),
+          .login :global(button:focus-visible) {
+            outline: none !important;
+            box-shadow: none !important;
           }
         `}</style>
       </header>

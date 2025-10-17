@@ -61,7 +61,7 @@ export default function FeatureSlides({
 
   return (
     <section className={`relative ${className}`}>
-      {/* ===== Full-bleed background ===== */}
+      {/* Full-bleed background */}
       <div className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden">
         {/* BG: soft gradient */}
         <div
@@ -91,14 +91,17 @@ export default function FeatureSlides({
               Here’s <span style={{ color: "#4D31EC" }}>how</span> we do it!
             </h3>
 
-            {/* exact 20px gap */}
-            <div style={{ height: "20px" }} />
+            {/* increased to 35px (20px + extra 15px) */}
+            <div style={{ height: "35px" }} />
 
             <p className="how-subtitle">
               We provide clarity, efficiency, and intelligence at every stage of the hiring process.
               Whether you are changing careers or expanding your team, we make each step simpler.
             </p>
           </div>
+
+          {/* extra 15px gap between subtitle and slides */}
+          <div style={{ height: "15px" }} />
 
           {/* === Arrows + Card === */}
           <div className="relative mt-8">
@@ -164,7 +167,7 @@ export default function FeatureSlides({
   );
 }
 
-/* ---------- Arrow button (simple blue, no bg) ---------- */
+/* Arrow button (simple blue, no bg) */
 function NavButton({
   onClick,
   direction,
@@ -209,7 +212,7 @@ function NavButton({
   );
 }
 
-/* ---------- CTA ---------- */
+/*  CTA */
 function CtaElliptical({ href, label }: { href: string; label: string }) {
   return (
     <div
@@ -251,7 +254,7 @@ function CtaElliptical({ href, label }: { href: string; label: string }) {
   );
 }
 
-/* ---------- tiny pieces ---------- */
+/*  tiny pieces  */
 function FeatureIcon({ index }: { index: number }) {
   const common = "opacity-90";
   const stroke = "currentColor";

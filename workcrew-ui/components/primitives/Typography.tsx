@@ -20,7 +20,13 @@ export type Variant =
   | "sub"
   | "cap"
   | "statNumber"
-  | "statLabel";
+  | "statLabel"
+  /* ---- Added spec-friendly variants (non-breaking) ---- */
+  | "hero48"      // Schibsted Grotesk, 48, ls 1%
+  | "sub20"       // Archivo, 20,  ls 3%  (27px line-height typical)
+  | "body16"      // Archivo, 16,  ls 3%  (22px line-height typical)
+  | "sub14"       // Archivo, 14,  ls 3%  (pills)
+  | "card36";     // Schibsted Grotesk, 36, ls 1%
 
 type TProps = React.HTMLAttributes<HTMLElement> & {
   as?: TagName;
@@ -37,14 +43,20 @@ type TProps = React.HTMLAttributes<HTMLElement> & {
    */
   weight?: number;
 
-  /** Convenience for % letter-spacing tokens */
-  trackingPct?: 1 | 2 | 3; // 1% / 2% / 3%
+  /** Convenience for % letter-spacing tokens (supports -1%, 1%, 2%, 3%) */
+  trackingPct?: -1 | 1 | 2 | 3;
 
   /** Which preset to use */
   variant?: Variant;
 
-  /** Override the default 20px line gap if needed */
+  /** Override the default 20px line gap if needed (ignored if lineHeightPx is set) */
   lineGapPx?: number;
+
+  /** Set an exact line-height (e.g., 27 for 27px). This overrides gap logic. */
+  lineHeightPx?: number;
+
+  /** If true, do not set line-height at all (let CSS natural/utility classes take over). */
+  autoLeading?: boolean;
 };
 
 /* TOKENS */
@@ -55,9 +67,10 @@ const TOKENS = {
     archivo: "font-alt",     // map Tailwind "font-alt" to Archivo
   },
   track: {
-    1: "tracking-[0.01em]",
-    2: "tracking-[0.02em]",
-    3: "tracking-[0.03em]",
+    [-1]: "tracking-[-0.01em]",
+    [1]: "tracking-[0.01em]",
+    [2]: "tracking-[0.02em]",
+    [3]: "tracking-[0.03em]",
   } as const,
 } as const;
 
@@ -76,6 +89,13 @@ const FONT_PX: Record<Variant, number> = {
   cap:       16, // 1rem
   statNumber:20, // 1.25rem
   statLabel: 14, // 0.875rem
+
+  /* Added */
+  hero48:    48,
+  sub20:     20,
+  body16:    16,
+  sub14:     14,
+  card36:    36,
 };
 
 /* VARIANTS (role-based) */
@@ -83,27 +103,44 @@ const FONT_PX: Record<Variant, number> = {
 
 const baseByVariant: Record<Variant, string> = {
   /* Headings — Schibsted */
-  heroTitle: `${TOKENS.font.schibsted} text-[2.5rem] ${TOKENS.track[1]} font-540`,
-  h1:        `${TOKENS.font.schibsted} text-[2.5rem] ${TOKENS.track[1]} font-540`,
-  h2:        `${TOKENS.font.schibsted} text-[2rem]   ${TOKENS.track[1]} font-540`,
-  h3:        `${TOKENS.font.schibsted} text-[3rem]   ${TOKENS.track[1]} font-540`,
+  heroTitle: "font-sans text-[2.5rem] tracking-[0.01em] font-540",
+  h1:        "font-sans text-[2.5rem] tracking-[0.01em] font-540",
+  h2:        "font-sans text-[2rem]   tracking-[0.01em] font-540",
+  h3:        "font-sans text-[3rem]   tracking-[0.01em] font-540",
 
-  /* Body — Schibsted */
-  bodyLg:    `${TOKENS.font.schibsted} text-[1.25rem] ${TOKENS.track[3]}`,
-  body:      `${TOKENS.font.schibsted} text-[1rem]    ${TOKENS.track[1]}`,
+  /* Body — Schibsted (kept for backwards compat) */
+  bodyLg:    "font-sans text-[1.25rem] tracking-[0.03em]",
+  body:      "font-sans text-[1rem]    tracking-[0.01em]",
 
   /* UI bits — Archivo */
-  button:    `${TOKENS.font.archivo}   text-[1rem]     ${TOKENS.track[2]} font-semibold`,
-  chip:      `${TOKENS.font.archivo}   text-[0.875rem] ${TOKENS.track[3]} font-medium`,
-  altButton: `${TOKENS.font.archivo}   text-[1rem]     ${TOKENS.track[2]} font-semibold`,
+  button:    "font-alt text-[1rem]     tracking-[0.02em] font-semibold",
+  chip:      "font-alt text-[0.875rem] tracking-[0.03em] font-medium",
+  altButton: "font-alt text-[1rem]     tracking-[0.02em] font-semibold",
 
   /* Supporting text — Schibsted */
-  sub:       `${TOKENS.font.schibsted} text-[1.25rem] ${TOKENS.track[3]} font-medium`,
-  cap:       `${TOKENS.font.schibsted} text-[1rem]    ${TOKENS.track[3]} font-medium uppercase`,
+  sub:       "font-sans text-[1.25rem] tracking-[0.03em] font-medium",
+  cap:       "font-sans text-[1rem]    tracking-[0.03em] font-medium uppercase",
 
   /* Stats */
-  statNumber:`${TOKENS.font.schibsted} text-[1.25rem] ${TOKENS.track[1]} font-540 text-black`,
-  statLabel: `${TOKENS.font.schibsted} text-[0.875rem] ${TOKENS.track[3]} font-medium`,
+  statNumber:"font-sans text-[1.25rem] tracking-[0.01em] font-540 text-black",
+  statLabel: "font-sans text-[0.875rem] tracking-[0.03em] font-medium",
+
+  /* ---- Added spec-friendly variants ---- */
+
+  // Schibsted Grotesk, 48, ls 1% (default medium; override via weight prop)
+  hero48:    "font-sans text-[48px] tracking-[0.01em] font-medium",
+
+  // Archivo, 20, ls 3% (typ. 27px line-height -> pass lineHeightPx={27} where needed)
+  sub20:     "font-alt text-[20px] tracking-[0.03em] font-medium",
+
+  // Archivo, 16, ls 3% (typ. 22px line-height -> pass lineHeightPx={22})
+  body16:    "font-alt text-[16px] tracking-[0.03em]",
+
+  // Archivo, 14, ls 3% (good for pills/chips)
+  sub14:     "font-alt text-[14px] tracking-[0.03em] font-medium",
+
+  // Schibsted Grotesk, 36, ls 1% (card titles)
+  card36:    "font-sans text-[36px] tracking-[0.01em] font-medium",
 };
 
 function cx(...vals: Array<string | false | null | undefined>) {
@@ -115,8 +152,10 @@ function defaultTagForVariant(v: Variant): TagName {
   switch (v) {
     case "heroTitle":
     case "h1":
+    case "hero48":
       return "h1";
     case "h2":
+    case "card36":
       return "h2";
     case "h3":
       return "h3";
@@ -142,6 +181,8 @@ export function T({
   trackingPct,
   style,
   lineGapPx = 20,
+  lineHeightPx,
+  autoLeading,
   ...rest
 }: TProps) {
   const tag: ElementType = (as ?? defaultTagForVariant(variant)) as ElementType;
@@ -150,18 +191,28 @@ export function T({
     baseByVariant[variant],
     font && TOKENS.font[font],
     weight === 540 && "font-540",
-    trackingPct && TOKENS.track[trackingPct],
+    (trackingPct !== undefined && trackingPct !== null) ? TOKENS.track[trackingPct] : "",
     className
   );
 
-  const computedLineHeight = `${(FONT_PX[variant] ?? 16) + lineGapPx}px`;
+  // Decide line-height strategy:
+  // 1) Explicit px if provided
+  // 2) No line-height if autoLeading
+  // 3) Default "gap" (base font px + lineGapPx)
+  const computedLineHeight =
+    typeof lineHeightPx === "number"
+      ? `${lineHeightPx}px`
+      : autoLeading
+      ? undefined
+      : `${(FONT_PX[variant] ?? 16) + lineGapPx}px`;
 
   const mergedStyle: CSSProperties = {
-    lineHeight: computedLineHeight, // enforce 20px line gap by default
+    ...(computedLineHeight ? { lineHeight: computedLineHeight } : {}),
     ...(style || {}),
     ...(weight && weight !== 540 ? { fontWeight: weight } : {}),
   };
 
-  // style last so it wins over any class-based leading set in ...rest
   return React.createElement(tag, { className: classes, ...rest, style: mergedStyle }, children);
 }
+
+export default T;

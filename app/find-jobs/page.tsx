@@ -1,4 +1,3 @@
-// // PATH: app/find-jobs/page.tsx
 "use client";
 
 import * as React from "react";
@@ -9,6 +8,9 @@ import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
 /* Navbar & Footer */
 import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
+
+/* Typography */
+import T from "../../workcrew-ui/components/primitives/Typography";
 
 /* Decorative (static import) */
 import bg from "../../public/bg.png";
@@ -60,17 +62,15 @@ const Chip: React.FC<
   <button
     type="button"
     onClick={onClick}
-    className={`relative px-5 py-2 rounded-full text-sm transition border ${
+    className={`relative px-5 py-2 rounded-full transition border ${
       active
         ? "bg-[#4D31EC] text-white border-[#BFB4FF] shadow-sm"
         : "bg-white/70 text-black border-gray-300"
     }`}
-    style={{
-      fontFamily: "Archivo, system-ui, sans-serif",
-      letterSpacing: "0.02em",
-    }}
   >
-    {children}
+    <T variant="sub14" trackingPct={2} className="whitespace-nowrap">
+      {children}
+    </T>
     {active && (
       <span
         className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white text-[#4D31EC] grid place-items-center text-sm font-semibold shadow-sm"
@@ -85,7 +85,7 @@ const Chip: React.FC<
 /* FilterBlock */
 const FilterBlock: React.FC<{
   title: string;
-  options: Option[];
+  options: Option[]; // in UI we render labels at 14px
   selected: Set<string>;
   onToggle: (value: string) => void;
   searchable?: boolean;
@@ -123,20 +123,10 @@ const FilterBlock: React.FC<{
         className="w-full flex items-center justify-between text-left"
         onClick={() => setOpen((s) => !s)}
       >
-        <span
-          className="text-sm font-medium"
-          style={{
-            fontFamily: "Archivo, system-ui, sans-serif",
-            fontSize: "16px",
-            letterSpacing: "0.03em",
-            color: "#444953",
-          }}
-        >
+        <T as="span" variant="body16" weight={500} trackingPct={3} className="text-[#444953]">
           {title}
-        </span>
-        <ChevronDown
-          className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`}
-        />
+        </T>
+        <ChevronDown className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
@@ -145,11 +135,9 @@ const FilterBlock: React.FC<{
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={`Search ${title
-                .toLowerCase()
-                .replace("jobs by ", "")}...`}
+              placeholder={`Search ${title.toLowerCase().replace("jobs by ", "")}...`}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#4D31EC] w-full"
-              style={{ fontFamily: "Archivo, system-ui, sans-serif" }}
+              style={{ fontFamily: "Archivo, system-ui, sans-serif", letterSpacing: "0.02em" }}
             />
           )}
 
@@ -160,12 +148,6 @@ const FilterBlock: React.FC<{
                 <label
                   key={opt.value}
                   className="flex items-center gap-3 cursor-pointer select-none"
-                  style={{
-                    fontFamily: "Archivo, system-ui, sans-serif",
-                    fontSize: "14px",
-                    letterSpacing: "0.03em",
-                    color: "#000000",
-                  }}
                 >
                   <input
                     type="checkbox"
@@ -184,12 +166,16 @@ const FilterBlock: React.FC<{
                       }`}
                     />
                   </span>
-                  {opt.label}
+                  <T as="span" variant="sub14" trackingPct={3} className="text-black">
+                    {opt.label}
+                  </T>
                 </label>
               );
             })}
             {filtered.length === 0 && (
-              <p className="text-xs text-gray-500">No options available.</p>
+              <T as="p" variant="sub14" className="text-gray-500">
+                No options available.
+              </T>
             )}
           </div>
 
@@ -197,8 +183,8 @@ const FilterBlock: React.FC<{
             <button
               type="button"
               onClick={() => setExpanded((s) => !s)}
-              className="text-[#4D31EC] text-sm font-medium"
-              style={{ fontFamily: "Archivo, system-ui, sans-serif" }}
+              className="text-[#4D31EC]"
+              style={{ fontFamily: "Archivo, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}
             >
               {expanded ? "Hide" : "View more"}
             </button>
@@ -316,22 +302,22 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
       <div className="flex items-start justify-between gap-6">
         {/* Left */}
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
+          <T as="h3" variant="sub20" weight={600} lineHeightPx={27} className="truncate text-gray-900">
             {job.title || "Untitled Role"}
-          </h3>
-          <p className="text-sm text-[#4D31EC] mt-0.5 truncate">
+          </T>
+          <T as="p" variant="sub14" weight={500} trackingPct={3} className="text-[#4D31EC] mt-0.5 truncate">
             {companyName(job.company)}
-          </p>
+          </T>
 
           {/* Meta */}
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
-            <span className="inline-flex items-center gap-1">
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-gray-600">
+            <span className="inline-flex items-center gap-1 text-sm">
               <MapPin className="h-4 w-4" />
               {job.location || "—"}
             </span>
-            <span>• {job.type || "—"}</span>
+            <span className="text-sm">• {job.type || "—"}</span>
             {(job.salaryRange || job.salary) && (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 text-sm">
                 • <IndianRupee className="h-4 w-4" />
                 {formatSalary(job.salaryRange || job.salary)}
               </span>
@@ -339,18 +325,19 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
           </div>
 
           {/* Description */}
-          <div className="mt-3 text-sm text-gray-700 leading-6">
-            <p
-              className={`${
-                expanded ? "" : "line-clamp-2 overflow-hidden text-ellipsis"
-              } transition-all duration-200`}
+          <div className="mt-3 leading-6">
+            <T
+              as="p"
+              variant="body16"
+              lineHeightPx={24}
+              className={`${expanded ? "" : "line-clamp-2 overflow-hidden text-ellipsis"} transition-all duration-200 text-gray-700`}
             >
               {desc}
-            </p>
+            </T>
             {desc.length > 0 && (
               <button
                 onClick={() => setExpanded((s) => !s)}
-                className="text-[#4D31EC] font-medium mt-1"
+                className="text-[#4D31EC] font-medium mt-1 text-sm"
               >
                 {expanded ? "Show less" : "Show more"}
               </button>
@@ -651,45 +638,39 @@ export default function FindJobsPage() {
         <section
           className="
             relative text-center overflow-hidden
-            bg-gradient-to-b from-[#F6F7FC] to-[#ECEFF8]
+            bg-gradient-to-r from-[#DCE3FF] via-[#EEF1FF] to-[#FFFFFF]
             -mt-[88px] md:-mt-[96px]
-            h-[470px]
+            h-[430px]
+            z-[5]
           "
         >
-          {/* content wrapper — extra top padding so banner content sits lower */}
-          <div className="relative z-10 pt-[170px] md:pt-[186px]">
-            <h1
-              className="mb-4"
-              style={{
-                fontFamily: "Schibsted Grotesk, system-ui, sans-serif",
-                fontSize: "64px",
-                fontWeight: 500,
-                letterSpacing: "-0.01em",
-              }}
+          {/* content wrapper */}
+          <div className="relative z-[5] pt-[150px] md:pt-[166px]">
+            <T
+              as="h1"
+              variant="hero48"
+              className="mb-4 text-[64px]"
+              trackingPct={-1}
+              weight={500}
+              autoLeading
             >
-              <span style={{ color: "#4D31EC" }}>Find jobs</span>, made just for
-              you!
-            </h1>
+              <span style={{ color: "#4D31EC" }}>Find jobs</span>, made just for you!
+            </T>
 
-            <p
-              className="mx-auto"
-              style={{
-                fontFamily: "Archivo, system-ui, sans-serif",
-                fontSize: "16px",
-                lineHeight: "27px",
-                letterSpacing: "0.03em",
-                color: "#000000",
-                maxWidth: "880px",
-              }}
+            <T
+              as="p"
+              variant="body16"
+              lineHeightPx={27}
+              trackingPct={3}
+              className="mx-auto text-black"
+              style={{ maxWidth: "880px" }}
             >
-              Discover opportunities that match your skills and ambitions!
-              AI-powered matching ensures that you find roles that fit your
-              skills and aspirations perfectly!
-            </p>
+              Discover opportunities that match your skills and ambitions! AI-powered matching ensures that you find roles that fit your skills and aspirations perfectly!
+            </T>
 
             {/* Search row */}
-            <div className="flex justify-center items-center gap-3 max-w-5xl mx-auto mt-7 px-6">
-              <div className="flex items-center bg-white rounded-full h-[60px] w-full border border-gray-200 pl-5 pr-4">
+            <div className="flex justify-center items-center gap-3 max-w-5xl mx-auto mt-5 px-6">
+              <div className="flex items-center bg-white rounded-full h-[56px] w-full border border-gray-200 pl-5 pr-4">
                 <Search className="text-gray-400 mr-3 h-5 w-5" />
                 <input
                   type="text"
@@ -697,10 +678,10 @@ export default function FindJobsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="outline-none flex-1 bg-transparent text-gray-800"
-                  style={{ fontFamily: "Archivo, system-ui, sans-serif" }}
+                  style={{ fontFamily: "Archivo, system-ui, sans-serif", letterSpacing: "0.02em" }}
                 />
               </div>
-              <div className="flex items-center bg-white rounded-full h-[60px] w-full border border-gray-200 pl-5 pr-4">
+              <div className="flex items-center bg-white rounded-full h-[56px] w-full border border-gray-200 pl-5 pr-4">
                 <MapPin className="text-gray-400 mr-3 h-5 w-5" />
                 <input
                   type="text"
@@ -708,47 +689,50 @@ export default function FindJobsPage() {
                   value={locationText}
                   onChange={(e) => setLocationText(e.target.value)}
                   className="outline-none flex-1 bg-transparent text-gray-800"
-                  style={{ fontFamily: "Archivo, system-ui, sans-serif" }}
+                  style={{ fontFamily: "Archivo, system-ui, sans-serif", letterSpacing: "0.02em" }}
                 />
               </div>
               <button
                 onClick={() => setVisibleCount(PAGE_SIZE)}
-                className="min-w-[150px] h-[60px] rounded-full bg-[#4D31EC] text-white font-semibold hover:bg-[#3b25b5] whitespace-nowrap px-8"
+                className="min-w-[150px] h-[56px] rounded-full bg-[#4D31EC] text-white font-semibold hover:bg-[#3b25b5] whitespace-nowrap px-8"
               >
                 Find jobs
               </button>
             </div>
-
-            {/* Chips inside the grey banner */}
-            <div className="flex justify-center flex-wrap gap-3 mt-6 px-6">
-              {CHIP_LABELS.map((tag) => (
-                <Chip
-                  key={tag}
-                  active={selectedChips.has(tag)}
-                  onClick={() => toggleChip(tag)}
-                >
-                  {tag}
-                </Chip>
-              ))}
-            </div>
           </div>
 
-          {/* Decorative bg image anchored to the bottom of the banner */}
+          {/* Decorative bg image: full width */}
           <Image
             src={bg}
             alt="Decorative background"
             priority
             className="
               pointer-events-none select-none
-              absolute bottom-0 left-1/2 -translate-x-1/2
-              w-[92vw] max-w-[1100px] h-auto
+              absolute bottom-0 left-0
+              w-screen max-w-none h-auto
               opacity-90
+              z-[1]
             "
           />
         </section>
 
+        {/* ===== CHIPS ROW (on white, directly under grey banner) ===== */}
+        <div className="bg-white relative z-[3]">
+          <div className="flex justify-center flex-wrap gap-3 mt-[50px] mb-4 px-6">
+            {CHIP_LABELS.map((tag) => (
+              <Chip
+                key={tag}
+                active={selectedChips.has(tag)}
+                onClick={() => toggleChip(tag)}
+              >
+                {tag}
+              </Chip>
+            ))}
+          </div>
+        </div>
+
         {/* ======= JOBS SECTION ======= */}
-        <section className="py-16 flex justify-center bg-white relative z-0">
+        <section className="pt-8 pb-16 flex justify-center bg-white relative z-0">
           <div className="w-full max-w-6xl px-6">
             <div className="grid items-start gap-8 md:[grid-template-columns:auto_minmax(0,1fr)]">
               {/* Left filters */}
@@ -826,26 +810,19 @@ export default function FindJobsPage() {
 
               {/* Job cards */}
               <div className="min-w-0 space-y-6 pb-32">
-                <div
-                  className="text-sm text-gray-600"
-                  style={{
-                    fontFamily: "Archivo, system-ui, sans-serif",
-                    letterSpacing: "0.03em",
-                  }}
-                >
-                  {Math.min(visibleCount, filteredJobs.length)} of{" "}
-                  {filteredJobs.length} jobs
-                </div>
+                <T variant="body16" trackingPct={3} className="text-gray-600">
+                  {Math.min(visibleCount, filteredJobs.length)} of {filteredJobs.length} jobs
+                </T>
 
                 {loading && (
-                  <div className="text-center text-gray-500">
+                  <T as="div" variant="body16" className="text-center text-gray-500">
                     Loading jobs...
-                  </div>
+                  </T>
                 )}
 
                 {!loading && filteredJobs.length === 0 && (
                   <div className="text-center text-gray-500 py-10 rounded-2xl border border-dashed border-gray-300 bg-white">
-                    No jobs found yet. Try clearing some filters.
+                    <T variant="body16">No jobs found yet. Try clearing some filters.</T>
                   </div>
                 )}
 

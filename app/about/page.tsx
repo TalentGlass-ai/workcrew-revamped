@@ -1,26 +1,25 @@
+// // PATH: app/about/page.tsx
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Section, Container, Button } from "../../workcrew-ui/components/primitives";
+import { Section, Container } from "../../workcrew-ui/components/primitives";
 import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
+import GlassPill from "../../workcrew-ui/components/primitives/tags/GlassPill";
+import LayeredPill from "../../workcrew-ui/components/primitives/buttons/LayeredPill";
+import T from "../../workcrew-ui/components/primitives/Typography"; // ← reuse typography
 
-/*  Pill (140×38) with bolt icon */
-const Pill = ({ label }: { label: string }) => (
-  <span
-    className="inline-flex items-center justify-center rounded-full bg-[#E9ECFF] text-[#5E6AD2]"
-    style={{ width: 140, height: 38 }}
-  >
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="mr-2">
-      <path d="M13 2L3 14h7v8l11-14h-7l-1-6z" />
-    </svg>
-    <span className="text-xs font-medium">{label}</span>
-  </span>
-);
-
+// helper
 const cx = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(" ");
+
+// simple bolt svg
+const Bolt = ({ className = "", fill = "#4D31EC", size = 16 }: { className?: string; fill?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 11 18" className={className} aria-hidden>
+    <path d="M6.3 0L0 9.1h3.9L2.7 18 11 7.8H7.1L8.3 0H6.3z" fill={fill} />
+  </svg>
+);
 
 const CORE_TABS = [
   {
@@ -49,7 +48,6 @@ const CORE_TABS = [
   },
 ];
 
-/*  Journey steps (auto-plays)  */
 const JOURNEY_STEPS = [
   {
     id: "research",
@@ -98,7 +96,6 @@ const JOURNEY_STEPS = [
   },
 ];
 
-/* Testimonials data  */
 const TESTIMONIALS = [
   { name: "James Lee", role: "Product Manager at Google", quote: "The collaborative environment here has really elevated my skills and career!" },
   { name: "Priya S", role: "HR Lead at FintechCo", quote: "Rahi helped us screen faster without compromising quality." },
@@ -116,95 +113,95 @@ const STATS = [
 
 export default function AboutPage() {
   const [activeTab, setActiveTab] = React.useState(CORE_TABS[0].id);
-  const active = CORE_TABS.find((t) => t.id === activeTab)!;
 
-  // 2s per slide
   const [jIndex, setJIndex] = React.useState(0);
   React.useEffect(() => {
     const id = setInterval(() => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length), 2000);
     return () => clearInterval(id);
   }, []);
 
-  // 2 cards visible
-  const [tIndex, setTIndex] = React.useState(0);
-  const total = TESTIMONIALS.length;
-  const visibleCards = [TESTIMONIALS[tIndex % total], TESTIMONIALS[(tIndex + 1) % total]];
-  const prevT = () => setTIndex((i) => (i - 1 + total) % total);
-  const nextT = () => setTIndex((i) => (i + 1) % total);
+  // conversations carousel
+  const convoImages = React.useMemo(
+    () => ["/about-team.png", "/about-team-2.png", "/about-team-3.png"],
+    []
+  );
+  const [convoIdx, setConvoIdx] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => setConvoIdx((i) => (i + 1) % convoImages.length), 5000);
+    return () => clearInterval(id);
+  }, [convoImages.length]);
 
   return (
     <main className="relative min-h-screen bg-white">
       <NewNavbar />
 
-      {/*  HERO */}
+      {/* HERO */}
       <Section className="relative overflow-hidden">
-        <Container className="relative z-10 pt-[96px] pb-20">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="flex justify-center mb-6">
-              <Pill label="Who are we?" />
+        <Container className="relative z-10 pt-[96px] pb-20 px-[50px]">
+          <div className="mx-auto w-full text-center flex flex-col items-center">
+            <div className="mb-4">
+              <GlassPill className="px-4">who are we ?</GlassPill>
             </div>
 
-            <h1
-              className="font-medium"
-              style={{
-                fontFamily: "var(--font-schibsted)",
-                fontSize: 48,
-                lineHeight: "62px",
-                letterSpacing: "0em",
-              }}
-            >
-              Your <span className="text-[#5E6AD2]">one-stop AI</span>
-              <br />
-              <span className="text-[#5E6AD2]">recruitment</span> <span className="font-normal">platform</span>
-            </h1>
+            <div className="px-2">
+              {/* Two centered lines at 52px (Schibsted, -1% ls, 66px lh) */}
+              <T
+                as="h1"
+                variant="hero48"
+                className="mx-auto font-medium text-center text-black"
+                trackingPct={-1}
+                lineHeightPx={66}
+              >
+                <span className="block text-[52px]">
+                  <span className="text-black">Your </span>
+                  <span className="text-[#4D31EC]">one-stop AI</span>
+                </span>
+                <span className="block text-[52px] text-black">recruitment platform</span>
+              </T>
 
-            <p
-              className="mt-5 text-[#2D3340]/85"
-              style={{
-                fontFamily: "var(--font-archivo)",
-                fontWeight: 400,
-                fontSize: 20,
-                lineHeight: "27px",
-                letterSpacing: "0.03em",
-              }}
-            >
-              WorkCrew.ai is more than a hiring tool. It&apos;s an AI-powered recruitment platform that helps companies
-              find and hire talent efficiently. We simplify the recruitment journey with one intelligent, human-first
-              platform.
-            </p>
+              <T
+                as="p"
+                variant="sub20"
+                weight={400}
+                lineHeightPx={27}
+                className="mt-4 text-center mx-auto text-black max-w-[820px]"
+              >
+                WorkCrew.ai is more than a hiring tool. It&apos;s an AI-powered recruitment platform that helps
+                companies find and hire talent efficiently. We simplify the recruitment journey with one intelligent,
+                human-first platform.
+              </T>
+            </div>
 
-            {/* Book a demo — login-style pill  */}
+            {/* Book demo — blue pill, white text + arrow */}
             <div className="mt-8">
-              <Link href="/contact" className="inline-block">
-                <button
-                  className="inline-flex items-center justify-center gap-2 rounded-full text-white font-semibold"
-                  style={{
-                    background: "linear-gradient(90deg, #6E45FF 0%, #4D31EC 100%)",
-                    height: 48,
-                    padding: "0 28px",
-                    boxShadow: "0 6px 20px rgba(77,49,236,0.30)",
-                    transition: "all .25s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 10px 28px rgba(77,49,236,0.40)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(77,49,236,0.30)";
-                  }}
+              <Link href="/contact" className="inline-block" aria-label="Book demo">
+                <span
+                  className={cx(
+                    "inline-flex items-center gap-3 rounded-full h-[56px] px-8",
+                    "bg-[#4D31EC] text-white font-semibold",
+                    "hover:bg-[#3a27c5] transition-all duration-200 ease-in-out",
+                    "shadow-[0_6px_18px_rgba(77,49,236,0.35)]"
+                  )}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    aria-hidden
+                  >
                     <path d="M7 17L17 7M9 7h8v8" />
                   </svg>
-                  Book a demo
-                </button>
+                  <span>Book demo</span>
+                </span>
               </Link>
             </div>
           </div>
         </Container>
 
-        {/* Edge visuals */}
+        {/* background decor */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute z-20 drop-shadow-2xl" style={{ top: "calc(10% - 10px)", left: "-280px", transform: "rotate(30deg)" }}>
             <Image src="/hero-right.png" alt="Left hero image" width={435} height={480} priority />
@@ -225,15 +222,25 @@ export default function AboutPage() {
         />
       </Section>
 
-      {/* CONVERSATIONS  */}
+      {/* CONVERSATIONS */}
       <Section>
-        <Container className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <Container className="px-[50px] grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
-            <Pill label="How we started" />
-            <h2 className="mt-6 font-medium" style={{ fontFamily: "var(--font-schibsted)", fontSize: 48, lineHeight: "normal", letterSpacing: "0.01em" }}>
+            <div className="mb-6">
+              <GlassPill className="px-4">How we started</GlassPill>
+            </div>
+
+            <T as="h2" variant="hero48" className="text-left" lineHeightPx={56}>
               Built through conversations
-            </h2>
-            <p className="mt-5 text-[#454B54]" style={{ fontFamily: "var(--font-archivo)", fontWeight: 400, fontSize: 16, lineHeight: "27px", letterSpacing: "0.03em" }}>
+            </T>
+
+            <T
+              as="p"
+              variant="body16"
+              weight={400}
+              lineHeightPx={27}
+              className="mt-5 text-left text-black"
+            >
               WorkCrew.ai grew out of countless conversations with people who live and breathe hiring. They shared their
               frustrations, their ideas, and their hopes for something better.
               <br />
@@ -242,80 +249,121 @@ export default function AboutPage() {
               experiences shaped our features, their honesty shaped our purpose, and their belief in something better
               continues to inspire us as we grow. These are the people behind the idea, the ones who made WorkCrew.ai
               possible.
-            </p>
+            </T>
           </div>
 
-          <div className="lg:col-span-6 flex justify-center">
-            <div className="relative rounded-3xl overflow-hidden shadow-xl" style={{ width: 386, height: 381 }}>
-              <Image src="/about-team.png" alt="WorkCrew team — conversations" fill className="object-cover" />
+          <div className="lg:col-span-6 flex flex-col items-center">
+            <div
+              className="relative rounded-3xl overflow-hidden select-none"
+              style={{ width: 386, height: 381 }}
+              aria-roledescription="carousel"
+            >
+              <div
+                className="absolute inset-0 flex transition-transform duration-700 ease-out"
+                style={{ transform: `translateX(-${convoIdx * 100}%)`, width: `${convoImages.length * 100}%` }}
+              >
+                {convoImages.map((src, i) => (
+                  <div key={i} className="relative h-full" style={{ width: `${100 / convoImages.length}%` }}>
+                    <Image src={src} alt={`Team photo ${i + 1}`} fill className="object-cover" priority={i === 0} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* dots under image */}
+            <div className="mt-3 flex items-center gap-2">
+              {convoImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setConvoIdx(i)}
+                  className="h-[6px] rounded-full transition-all"
+                  style={{
+                    width: i === convoIdx ? 42 : 10,
+                    background: i === convoIdx ? "#6D5EF0" : "rgba(109,94,240,0.35)",
+                  }}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
             </div>
           </div>
         </Container>
       </Section>
 
-      {/*  CORE VALUES (tabs) — parallel layout  */}
+      {/* CORE VALUES */}
       <Section className="pt-2">
-        <Container className="flex flex-col lg:flex-row gap-12 px-[80px] items-start justify-between">
-          
-          <div className="w-full max-w-[300px] space-y-6">
-            {CORE_TABS.map((t) => {
-              const activeNow = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setActiveTab(t.id)}
-                  className={cx("w-full text-left text-base transition relative", activeNow ? "text-[#4D31EC] font-semibold" : "text-[#A3A9B5]")}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13 2L3 14h7v8l11-14h-7l-1-6z" />
-                    </svg>
-                    {t.title}
-                  </span>
-                  {activeNow && (
-                    <span
-                      className="block absolute left-0 right-0"
-                      style={{
-                        height: 2,
-                        bottom: -10,
-                        background: "linear-gradient(90deg, rgba(77,49,236,0) 0%, #4D31EC 20%, #4D31EC 80%, rgba(77,49,236,0) 100%)",
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
+        <Container className="px-[50px] flex flex-col lg:flex-row gap-12 items-stretch justify-between">
+          {/* left tabs */}
+          <div className="w-full max-w-[300px]">
+            <div className="grid grid-rows-3 h-full content-between gap-0">
+              {CORE_TABS.map((t) => {
+                const activeNow = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className="w-full text-left relative py-4"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      {/* show bolt ONLY for the active option, in #4D31EC */}
+                      {activeNow && <Bolt size={16} fill="#4D31EC" />}
+                      <T
+                        as="span"
+                        variant="body16"
+                        weight={500}
+                        lineHeightPx={27}
+                        className={activeNow ? "text-[#4D31EC]" : "text-[#A2A2A2]"}
+                      >
+                        {t.title}
+                      </T>
+                    </span>
+                    {activeNow && (
+                      <span
+                        className="block absolute left-0 right-0"
+                        style={{
+                          height: 2,
+                          bottom: 6,
+                          background:
+                            "linear-gradient(90deg, rgba(77,49,236,0) 0%, #4D31EC 20%, #4D31EC 80%, rgba(77,49,236,0) 100%)",
+                        }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Content card (flex-1) */}
+          {/* right card */}
           <div
             className="flex-1 rounded-3xl border border-transparent shadow-sm flex flex-col md:flex-row items-center gap-10 px-7 py-16"
             style={{ background: "linear-gradient(135deg, #F1EEFF 0%, #F6F8FF 60%, #F9FBFF 100%)" }}
           >
             {activeTab === "values" && (
               <>
-                <div className="flex-1 max-w-[780px]">
-                  <h3 className="text-[40px] leading-tight font-semibold">
-                    <span className="text-[#4D31EC]">{active.headline.split(" ")[0]}</span>{" "}
-                    {active.headline.split(" ").slice(1).join(" ")}
-                  </h3>
-                  <p className="mt-4 text-[#222] text-lg leading-8">{active.body}</p>
+                <div className="flex-1 max-w-[780px] text-left">
+                  <T as="h3" variant="card36" className="text-left">
+                    Human first always
+                  </T>
+                  <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                    {CORE_TABS[0].body}
+                  </T>
                 </div>
                 <div className="shrink-0">
                   <div className="relative w-[220px] h-[220px] rounded-full overflow-hidden ring-8 ring-white/60">
-                    <Image src={active.img} alt="" fill className="object-cover" />
+                    <Image src={"/Ellipse 87.png"} alt="Human first always" fill className="object-cover" />
                   </div>
                 </div>
               </>
             )}
 
             {activeTab === "vision" && (
-              <div className="w-full text-center">
-                <h3 className="text-[40px] leading-tight font-semibold">
-                  <span className="text-[#4D31EC]">{active.headline.split(" ")[0]}</span>{" "}
-                  {active.headline.split(" ").slice(1).join(" ")}
-                </h3>
-                <p className="mt-4 text-[#222] text-lg leading-8 mx-auto max-w-2xl">{active.body}</p>
+              <div className="flex-1 max-w-[780px] text-left">
+                <T as="h3" variant="card36" className="text-left">
+                  Make hiring simple, fair, and fast
+                </T>
+                <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                  {CORE_TABS[1].body}
+                </T>
               </div>
             )}
 
@@ -323,14 +371,22 @@ export default function AboutPage() {
               <>
                 <div className="shrink-0">
                   <div className="relative w-[220px] h-[220px] rounded-full overflow-hidden ring-8 ring-white/60">
-                    <Image src="/cyril-thomas.png" alt="Cyril Thomas" fill className="object-cover" />
+                    <Image
+                      src="/cyril.png"
+                      alt="Cyril Thomas"
+                      fill
+                      className="object-cover"
+                      style={{ objectPosition: "65% 50%" }}
+                    />
                   </div>
                 </div>
                 <div className="flex-1 max-w-[780px]">
-                  <h3 className="text-[40px] leading-tight font-semibold">
-                    <span className="text-[#4D31EC]">{active.headline}</span>
-                  </h3>
-                  <p className="mt-4 text-[#222] text-lg leading-8">{active.body}</p>
+                  <T as="h3" variant="card36" className="text-left">
+                    Hi, I’m <span className="text-[#4D31EC]">Cyril Thomas!</span>
+                  </T>
+                  <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                    {CORE_TABS[2].body}
+                  </T>
                 </div>
               </>
             )}
@@ -338,246 +394,168 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/*OUR JOURNEY (auto-plays)  */}
+      {/* OUR JOURNEY */}
       <section className="relative">
         <div className="absolute inset-0" style={{ background: "#4D31EC" }} />
         <Container className="relative text-white py-[96px]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center min-h-[520px]">
             <div className="lg:col-span-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 h-10">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-90">
-                  <path d="M13 2L3 14h7v8l11-14h-7l-1-6z" />
-                </svg>
+              {/* white-on-purple pill */}
+              <GlassPill iconColor="#FFFFFF" className="border-white/30 bg-white/10 text-white/95 px-4">
                 How we started
-              </span>
-              <h2 className="mt-6 text-5xl font-semibold tracking-tight">Our journey</h2>
+              </GlassPill>
+              <T as="h2" variant="hero48" className="mt-6 text-white" autoLeading>
+                Our journey
+              </T>
             </div>
 
             <div className="lg:col-span-8">
-              <div className="mb-12">
-                <div className="flex items-center justify-between text-sm opacity-90">
-                  <div />
-                  <div className="flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="opacity-90">
-                      <path d={JOURNEY_STEPS[jIndex].iconPath} />
-                    </svg>
-                    {JOURNEY_STEPS[jIndex].topLabel}
-                  </div>
-                  <div className="opacity-90">{JOURNEY_STEPS[jIndex].year}</div>
-                </div>
-
-                <div className="relative mt-3">
-                  <div className="h-1 w-full bg-white/30 rounded-full" />
-                  <div className="absolute inset-0 flex items-center justify-between px-2">
-                    {JOURNEY_STEPS.map((_, i) => (
-                      <span key={i} className="h-3 w-3 rounded-full bg-white" style={{ opacity: i <= jIndex ? 1 : 0.6 }} />
-                    ))}
+              {/* traversing check-post line */}
+              <div className="mt-2">
+                <div className="relative w-full">
+                  <div className="h-[6px] w-full rounded-full bg-white/25" />
+                  <div
+                    className="absolute top-0 left-0 h-[6px] rounded-full bg-white transition-all duration-500"
+                    style={{
+                      width:
+                        JOURNEY_STEPS.length > 1
+                          ? `${(jIndex / (JOURNEY_STEPS.length - 1)) * 100}%`
+                          : "0%",
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-between">
+                    {JOURNEY_STEPS.map((_, i) => {
+                      const reached = i <= jIndex;
+                      return (
+                        <span key={i} className="relative grid place-items-center" style={{ transform: "translateY(-2px)" }}>
+                          <span
+                            className="h-4 w-4 rounded-full ring-2 transition-all"
+                            style={{
+                              background: reached ? "#FFFFFF" : "transparent",
+                              boxShadow: reached ? "0 0 0 3px rgba(255,255,255,0.25)" : "none",
+                              border: "2px solid rgba(255,255,255,0.9)",
+                            } as React.CSSProperties}
+                          />
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
+              <div className="mt-4 mb-6 flex items-center justify-between text-sm opacity-90">
+                <div />
+                <div className="flex items-center gap-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="opacity-90" aria-hidden>
+                    <path d={JOURNEY_STEPS[jIndex].iconPath} />
+                  </svg>
+                  <T as="span" variant="body16" weight={500} lineHeightPx={22} className="text-white/90">
+                    {JOURNEY_STEPS[jIndex].topLabel}
+                  </T>
+                </div>
+                <T as="span" variant="body16" weight={500} lineHeightPx={22} className="opacity-90">
+                  {JOURNEY_STEPS[jIndex].year}
+                </T>
+              </div>
+
               <div>
                 <div className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <path d={JOURNEY_STEPS[jIndex].iconPath} />
                   </svg>
                 </div>
 
-                <h3 className="text-4xl font-semibold">{JOURNEY_STEPS[jIndex].title}</h3>
-                <p className="mt-4 max-w-3xl text-white/95 text-lg leading-8">{JOURNEY_STEPS[jIndex].blurb}</p>
-
-                <div className="mt-10 mb-[96px] flex gap-6">
-                  {JOURNEY_STEPS.map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-2 rounded-full bg-white/40"
-                      style={{
-                        width: 140,
-                        opacity: i === jIndex ? 1 : 0.6,
-                        boxShadow: i === jIndex ? "0 0 0 2px rgba(255,255,255,.35) inset" : undefined,
-                      }}
-                    />
-                  ))}
-                </div>
+                <T as="h3" variant="card36" weight={540} className="text-white">
+                  {JOURNEY_STEPS[jIndex].title}
+                </T>
+                <T as="p" variant="body16" lineHeightPx={26} className="mt-4 max-w-3xl text-white/95">
+                  {JOURNEY_STEPS[jIndex].blurb}
+                </T>
               </div>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* RAHI (spec + animated rings)*/}
-      <Section>
-        <Container className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10">
+      {/* RAHI — add 100px gap above & below */}
+      <Section className="my-[100px]">
+        <Container className="px-[50px] grid grid-cols-1 lg:grid-cols-12 items-center gap-10">
           <div className="lg:col-span-7">
-            <span
-              className="inline-flex items-center justify-center rounded-full bg-[#E9ECFF] text-[#5E6AD2] mb-6"
-              style={{ width: 157, height: 38 }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="mr-2">
-                <path d="M13 2L3 14h7v8l11-14h-7l-1-6z" />
-              </svg>
-              <span className="text-xs font-medium">How we started</span>
-            </span>
-
-            <h2
-              className="font-medium"
-              style={{
-                fontFamily: "var(--font-schibsted)",
-                fontSize: 48,
-                lineHeight: "normal",
-                letterSpacing: "0.01em",
-              }}
-            >
+            <GlassPill className="px-4 mb-6">How we started</GlassPill>
+            <T as="h2" variant="hero48" className="text-left">
               Say Hi to <span className="text-[#4D31EC]">Rahi</span>!
-            </h2>
+            </T>
 
-            <p
-              className="mt-5 text-[#2D3340]/90"
-              style={{
-                fontFamily: "var(--font-archivo)",
-                fontWeight: 400,
-                fontSize: 16,
-                lineHeight: "27px",
-                letterSpacing: "0.03em",
-              }}
-            >
-              Rahi is the AI assistant built into WorkCrew.ai, designed to simplify, automate, and
-              humanize recruitment. She helps companies screen thousands of resumes, conduct smart
-              interviews, and assess culture-fit. From matching candidates to the right roles to running
-              interviews and assessments, Rahi supports both sides of the hiring journey with precision
-              and empathy.
-            </p>
+            {/* black paragraph per request */}
+            <T as="p" variant="body16" weight={400} lineHeightPx={27} className="mt-5 text-left text-black">
+              Rahi is the AI assistant built into WorkCrew.ai, designed to simplify, automate, and humanize recruitment.
+              She helps companies screen thousands of resumes, conduct smart interviews, and assess culture-fit. From
+              matching candidates to the right roles to running interviews and assessments, Rahi supports both sides of
+              the hiring journey with precision and empathy.
+            </T>
           </div>
 
           <div className="lg:col-span-5">
+            {/* blue background + slightly smaller image so face is fully visible */}
             <div className="relative mx-auto" style={{ width: 227, height: 227 }}>
-              <span className="absolute inset-0 rounded-full border animate-spin-slower" style={{ borderColor: "#FFA1EE", borderWidth: 4 }} aria-hidden />
               <span
-                className="absolute rounded-full border animate-pulse-ring"
+                className="absolute inset-0 rounded-full"
+                style={{ background: "#4D31EC", opacity: 0.12 }}
+                aria-hidden
+              />
+              <span
+                className="absolute rounded-full border"
                 style={{
-                  width: 208,
-                  height: 208,
-                  left: "50%",
-                  top: "50%",
+                  width: 208, height: 208, left: "50%", top: "50%",
                   transform: "translate(-50%, -50%)",
-                  borderColor: "#C778F8",
-                  borderWidth: 4,
+                  borderColor: "#C778F8", borderWidth: 4,
                 }}
                 aria-hidden
               />
               <span
-                className="absolute rounded-full border animate-spin-slow"
+                className="absolute rounded-full border"
                 style={{
-                  width: 187,
-                  height: 187,
-                  left: "50%",
-                  top: "50%",
+                  width: 187, height: 187, left: "50%", top: "50%",
                   transform: "translate(-50%, -50%)",
-                  borderColor: "#4D31EC",
-                  borderWidth: 4,
+                  borderColor: "#4D31EC", borderWidth: 4,
                 }}
                 aria-hidden
               />
               <div
-                className="absolute overflow-hidden rounded-full ring-8"
+                className="absolute overflow-hidden rounded-full ring-8 bg-[#3C34D9]"
                 style={{
-                  width: 159,
-                  height: 159,
-                  left: "50%",
-                  top: "50%",
+                  width: 150, height: 150, left: "50%", top: "50%",
                   transform: "translate(-50%, -50%)",
-                  ringColor: "#E9ECFF",
-                } as any}
+                }}
               >
-                <Image src="/Rah.png" alt="Rahi" fill className="object-cover" />
+                <Image
+                  src="/Rah.png"
+                  alt="Rahi"
+                  fill
+                  className="object-cover"
+                  style={{ objectPosition: "50% 25%" }}
+                />
               </div>
             </div>
           </div>
         </Container>
-
-        <style jsx>{`
-          @keyframes spin-slower {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-          }
-          @keyframes spin-slow {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to   { transform: translate(-50%, -50%) rotate(-360deg); }
-          }
-          @keyframes pulse-ring {
-            0%   { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
-            60%  { transform: translate(-50%, -50%) scale(1.04); opacity: .9; }
-            100% { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
-          }
-          .animate-spin-slower { animation: spin-slower 18s linear infinite; }
-          .animate-spin-slow   { animation: spin-slow 12s linear infinite; }
-          .animate-pulse-ring  { animation: pulse-ring 2.6s ease-in-out infinite; }
-        `}</style>
       </Section>
 
-      {/* TESTIMONIALS (2-card grid + arrows) */}
+      {/* TESTIMONIALS */}
       <Section>
-        <Container>
-          <h2 className="text-center font-semibold mb-12" style={{ fontFamily: "var(--font-schibsted)", fontSize: 48, lineHeight: "60px" }}>
+        <Container className="px-[50px]">
+          <T as="h2" variant="hero48" weight={600} lineHeightPx={60} className="mb-12 text-center">
             Testimonials
-          </h2>
+          </T>
+        </Container>
 
-          <div className="mx-auto max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
-              {visibleCards.map((t, i) => (
-                <article
-                  key={`${t.name}-${i}`}
-                  className="w-full max-w-[520px] rounded-2xl border border-[#E7EBF2] bg-white p-8 shadow-[0_2px_8px_rgba(17,24,39,0.04)]"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-[#EEF2FF] grid place-items-center overflow-hidden">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#5E6AD2" aria-hidden>
-                        <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
-                      </svg>
-                    </div>
+        {/* Full-bleed carousel (edge-to-edge) */}
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+          <CarouselEndless items={TESTIMONIALS} cardW={410} cardH={215} />
+        </div>
 
-                    <div>
-                      <div className="text-[20px] leading-[28px] font-semibold text-[#111827]">{t.name}</div>
-                      <div className="text-sm text-[#6B7280]">{t.role}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-[#111827]">
-                      <path d="M7.17 6A4.17 4.17 0 0 0 3 10.17V18h6v-8H6.5A3.5 3.5 0 0 1 10 6H7.17zm9 0A4.17 4.17 0 0 0 12 10.17V18h6v-8h-2.5A3.5 3.5 0 0 1 19 6h-2.83z" />
-                    </svg>
-
-                    <p className="mt-2 text-[16px] leading-[26px] text-[#111827]/85">
-                      {t.quote}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="mt-8 flex items-center justify-center gap-6">
-              <button
-                onClick={prevT}
-                className="h-9 w-9 grid place-items-center rounded-full border border-[#E5E7EB] hover:bg-[#F5F7FF] transition"
-                aria-label="Previous testimonials"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-              </button>
-
-              <button
-                onClick={nextT}
-                className="h-9 w-9 grid place-items-center rounded-full border border-[#E5E7EB] hover:bg-[#F5F7FF] transition"
-                aria-label="Next testimonials"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
+        {/* Stats back inside container */}
+        <Container className="px-[50px]">
           <div className="mt-12 rounded-2xl bg-gradient-to-r from-[#F2F4FF] to-[#F9FAFF] p-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
@@ -589,50 +567,38 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/*  CTA (Curious how…)  */}
+      {/* CTA */}
       <Section className="pb-20">
-        <div className="mx-[100px]">
+        <Container className="px-[50px]">
           <div className="relative overflow-hidden rounded-3xl" style={{ background: "#4D31EC" }}>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-8 lg:p-12">
               <div className="lg:col-span-8">
-                <h3
-                  style={{
-                    fontFamily: "var(--font-schibsted)",
-                    fontWeight: 500,
-                    fontSize: 32,
-                    lineHeight: "42px",
-                    letterSpacing: "0.01em",
-                    color: "#FFFFFF",
-                  }}
-                >
+                <T as="h3" variant="sub20" className="text-white" lineHeightPx={42} trackingPct={1} weight={500}>
                   Curious how WorkCrew.ai can fit into your hiring workflow?
-                </h3>
+                </T>
 
-                <p className="mt-3 text-white/90" style={{ fontFamily: "var(--font-archivo)" }}>
+                <T as="p" variant="body16" className="mt-3 text-white/90">
                   Let’s talk. Our team can walk you through how it works, what it solves, and
                   how fast you can get started.
-                </p>
+                </T>
 
-                {/* Concentric pill button */}
                 <div className="mt-6">
                   <Link href="/contact" className="inline-block" aria-label="Contact sales">
-                    <span className="relative inline-flex rounded-full p-[3px]" style={{ background: "rgba(196,211,239,0.43)" }}>
-                      <span className="inline-flex items-center gap-3 rounded-full bg-white h-[48px] px-5 shadow-[0_1px_0_rgba(17,24,39,0.06)]">
-                        <span className="grid place-items-center h-[28px] w-[28px] rounded-full" style={{ background: "#E7E3FF" }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2">
-                            <path d="M7 17L17 7M9 7h8v8" />
-                          </svg>
-                        </span>
-                        <span className="text-[#4D31EC] font-medium" style={{ fontFamily: "var(--font-archivo)" }}>
-                          Contact sales
-                        </span>
-                      </span>
-                    </span>
+                    {/* White button with blue text (4D31EC) */}
+                    <LayeredPill
+                      label="Contact sales"
+                      size="md"
+                      className={cx(
+                        "text-[#4D31EC]",
+                        "[--pill-middle-bg:#FFFFFF]",
+                        "[--pill-shadow:0_1px_0_rgba(17,24,39,0.06)]",
+                        "[&_svg]:text-[#4D31EC] [&_svg]:stroke-[#4D31EC]"
+                      )}
+                    />
                   </Link>
                 </div>
               </div>
 
-              {/* Right image (save as /public/cta-lady.png) */}
               <div className="lg:col-span-4 relative">
                 <div className="relative ml-auto h-[267px] w-[220px]">
                   <Image
@@ -647,10 +613,131 @@ export default function AboutPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Container>
       </Section>
 
       <NewFooter />
     </main>
+  );
+}
+
+/** =========================
+ *  Endless Carousel Component
+ *  ========================= */
+type Testimonial = { name: string; role: string; quote: string };
+
+function CarouselEndless({ items, cardW = 410, cardH = 215 }: { items: Testimonial[]; cardW?: number; cardH?: number }) {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const trackRef = React.useRef<HTMLDivElement | null>(null);
+  const frameRef = React.useRef<number | null>(null);
+  const speedRef = React.useRef<number>(0.4); // px per frame
+  const pausedRef = React.useRef<boolean>(false);
+
+  // Duplicate items to achieve a seamless loop
+  const LOOPED = React.useMemo(() => [...items, ...items, ...items], [items]);
+
+  // Normalize scroll position into the middle copy to keep it stable
+  const normalizeScroll = React.useCallback(() => {
+    const el = containerRef.current;
+    const track = trackRef.current;
+    if (!el || !track) return;
+    const singleSetWidth = track.scrollWidth / 3; // since LOOPED has 3 copies
+    if (el.scrollLeft <= singleSetWidth * 0.2) {
+      el.scrollLeft += singleSetWidth;
+    } else if (el.scrollLeft >= singleSetWidth * 1.8) {
+      el.scrollLeft -= singleSetWidth;
+    }
+  }, []);
+
+  const step = React.useCallback(() => {
+    const el = containerRef.current;
+    if (!el || pausedRef.current) {
+      frameRef.current = requestAnimationFrame(step);
+      return;
+    }
+    el.scrollLeft += speedRef.current;
+    normalizeScroll();
+    frameRef.current = requestAnimationFrame(step);
+  }, [normalizeScroll]);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    const track = trackRef.current;
+    if (!el || !track) return;
+    el.scrollLeft = track.scrollWidth / 3;
+
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (!media.matches) {
+      frameRef.current = requestAnimationFrame(step);
+    }
+
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [step]);
+
+  const onMouseEnter = () => { pausedRef.current = true; };
+  const onMouseLeave = () => { pausedRef.current = false; };
+
+  const slideBy = (dir: "left" | "right") => {
+    const el = containerRef.current;
+    if (!el) return;
+    const delta = (dir === "left" ? -1 : 1) * Math.round(el.clientWidth * 0.8);
+    el.scrollBy({ left: delta, behavior: "smooth" });
+    setTimeout(() => normalizeScroll(), 400);
+  };
+
+  return (
+    <div className="relative">
+      <div
+        ref={containerRef}
+        className="overflow-x-hidden"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <div ref={trackRef} className="flex gap-6 w-max px-6 sm:px-10" style={{ paddingBottom: 8 }}>
+          {LOOPED.map((t, i) => (
+            <article
+              key={`${t.name}-${i}`}
+              className="rounded-2xl border border-[#E7EBF2] bg-white p-6 shadow-[0_2px_8px_rgba(17,24,39,0.04)] flex flex-col justify-between"
+              style={{ width: cardW, height: cardH }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-[#EEF2FF] flex-shrink-0">
+                  <Image src="/Rah.png" alt="" width={40} height={40} className="object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[20px] leading-[28px] font-semibold text-[#111827] truncate">{t.name}</div>
+                  <div className="text-sm text-[#6B7280] truncate">{t.role}</div>
+                </div>
+              </div>
+
+              <p className="mt-3 text-[16px] leading-[24px] text-[#111827] line-clamp-3">{t.quote}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 flex w-full items-center justify-center gap-4">
+        <button
+          onClick={() => slideBy("left")}
+          aria-label="Slide testimonials left"
+          className="h-10 w-10 grid place-items-center rounded-full border border-[#E7EBF2] bg-white shadow-sm hover:bg-[#F7F9FF] transition"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <button
+          onClick={() => slideBy("right")}
+          aria-label="Slide testimonials right"
+          className="h-10 w-10 grid place-items-center rounded-full border border-[#E7EBF2] bg-white shadow-sm hover:bg-[#F7F9FF] transition"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 }

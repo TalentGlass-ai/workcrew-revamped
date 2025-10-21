@@ -4,22 +4,31 @@ import React from "react";
 
 /**
  * Reusable glass-effect pill component
- * Example usage:
+ * Works with both:
  *  <GlassPill text="We’re here for a reason" />
- *  <GlassPill text="For candidates" iconColor="#2288FE" />
+ *  <GlassPill>who are we ?</GlassPill>
+ *  <GlassPill iconColor="#2288FE" className="px-6">Custom text</GlassPill>
  */
 
 interface GlassPillProps {
-  text: string;
-  iconColor?: string; // optional, defaults to blue
-  className?: string; // optional extra classes
+  /** Text content (optional if using children) */
+  text?: string;
+  /** Optional icon color */
+  iconColor?: string;
+  /** Optional custom class names */
+  className?: string;
+  /** Optional children as alternative to text */
+  children?: React.ReactNode;
 }
 
 export default function GlassPill({
   text,
   iconColor = "#2288FE",
   className = "",
+  children,
 }: GlassPillProps) {
+  const content = text || children;
+
   return (
     <span
       className={`
@@ -29,7 +38,7 @@ export default function GlassPill({
         ${className}
       `}
     >
-      {/* Icon (blue bolt) */}
+      {/* Icon (colored bolt) */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -40,7 +49,7 @@ export default function GlassPill({
         <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
       </svg>
 
-      <span>{text}</span>
+      <span>{content}</span>
     </span>
   );
 }

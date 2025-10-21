@@ -1,255 +1,193 @@
+// PATH: workcrew-ui/components/landing/HeroSection.tsx
 "use client";
 
 import Image from "next/image";
 import React from "react";
-import LogoMarquee from "./LogoMarquee"; 
+import LogoMarquee from "./LogoMarquee";
+import FeatureSlides from "./FeatureSlides";
+import T from "../primitives/Typography"; // default export
+import GlassPill from "../primitives/tags/GlassPill";
 
-export default function HeroSection() {
+export default function HeroSection(): React.ReactElement {
   return (
-    <section className="relative overflow-hidden">
-      {/* subtle grid & the soft top gradient stuff */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(236,239,255,0.6),transparent_40%),linear-gradient(90deg,rgba(255,255,255,0.6),transparent_30%),radial-gradient(600px_200px_at_50%_-80px,#E7E9FF_0%,transparent_60%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 [background-image:linear-gradient(#edf0ff_1px,transparent_1px),linear-gradient(90deg,#edf0ff_1px,transparent_1px)] [background-size:40px_40px] opacity-40"
-      />
+    <section className="relative">
+      <div className="hero-top relative overflow-hidden min-h-[740px]">
+        {/* Backgrounds */}
+        <div
+          aria-hidden
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(246,247,252,0.95) 0%, rgba(236,239,248,0.92) 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 z-0 opacity-30"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(163,157,255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(163,157,255,0.25) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
 
-      <div className="mx-auto max-w-6xl px-6 pt-20 pb-10 md:pt-28 md:pb-20">
-        <header className="mb-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="WorkCrew.ai"
-              width={102}
-              height={26}
-              priority
-              className="h-[26px] w-auto"
-            />
-          </div>
+        {/* LEFT SIDE CONTENT */}
+        <div className="relative z-10 mx-auto max-w-[1440px] pl-[51px] pr-[51px] pb-24 md:pb-28">
+          <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
+            <div className="mt-[100px]">
+              {/* Eyebrow pill */}
+              <div className="mb-6">
+                <GlassPill text="The future of hiring is here" iconColor="#4D31EC" />
+              </div>
 
-          <nav className="hidden gap-8 text-sm text-slate-600 md:flex">
-            <a className="hover:text-slate-900" href="#">Pricing</a>
-            <a className="hover:text-slate-900" href="#">Find jobs</a>
-            <a className="hover:text-slate-900" href="#">Blogs</a>
-            <a className="hover:text-slate-900" href="#">About us</a>
-            <a className="hover:text-slate-900" href="#">Contact</a>
-          </nav>
+              {/* Headline */}
+              <h1>
+                <T
+                  as="div"
+                  variant="hero48"
+                  weight={540}
+                  className="text-[#4D31EC] text-left"
+                  autoLeading
+                >
+                  Hiring or job hunting?
+                </T>
+                <T
+                  as="div"
+                  variant="hero48"
+                  weight={540}
+                  className="mt-5 text-black text-left"
+                  autoLeading
+                >
+                  You’re in the right place.
+                </T>
+              </h1>
 
-          <button className="hidden rounded-full bg-gradient-to-b from-[#6C79FF] to-[#4C43D5] px-6 py-2.5 text-white shadow-[0_6px_24px_rgba(102,96,255,0.35)] ring-1 ring-inset ring-white/30 md:block">
-            Login
-          </button>
-        </header>
-
-        <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
-          {/* Left one */}
-          <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#D8E0FF] bg-white/60 px-3 py-1 text-xs text-[#5E6AD9] shadow-sm backdrop-blur">
-              <span className="text-base">⚡</span> The future of hiring is here
-            </div>
-
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-[#4E35F2] md:text-[56px] md:leading-[64px]">
-              Hiring or job hunting?
-              <br />
-              <span className="bg-gradient-to-b from-black to-black/70 bg-clip-text text-transparent">
-                You’re in the right place.
-              </span>
-            </h1>
-
-            <p className="mt-6 max-w-xl text-[15px] leading-7 text-slate-600">
-              An AI-powered hiring experience that helps candidates find the
-              right role and recruiters hire faster, smarter, better.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-full border border-[#D9E2FF] bg-white px-4 py-2 text-sm font-medium text-[#2F46F6] shadow-sm hover:bg-slate-50"
+              {/* Subcopy (Archivo 20 / 27, 3%) */}
+              <T
+                as="p"
+                variant="sub20"
+                weight={400}
+                lineHeightPx={27}
+                trackingPct={3}
+                className="mt-6 max-w-[720px] text-black"
+                style={{ textWrap: "balance" as any }}
               >
-                <ArrowNortheast /> Find work
-              </a>
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-full bg-[#5B4BFF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(91,75,255,0.35)] hover:brightness-105"
-              >
-                <ArrowNortheast /> Start hiring
-              </a>
-            </div>
+                An AI-powered hiring experience that helps candidates find the
+                right role and recruiters hire faster, smarter, better.
+              </T>
 
-            {/* Stats */}
-            <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
-              <Stat number="5,000+" label="Candidates" />
-              <Stat number="500+" label="Recruiters" />
-              <Stat number="300+" label="Companies" />
-              <Stat number="400+" label="Jobs Posted" />
-            </div>
-          </div>
+              {/* CTAs */}
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <a
+                  href="#"
+                  className="inline-flex h-[50px] items-center gap-2 rounded-full px-6 leading-none transition hover:brightness-105 active:translate-y-[1px] text-[#4D31EC]"
+                  style={{
+                    borderWidth: "1.5px",
+                    borderStyle: "solid",
+                    borderColor: "#6C55FF",
+                    background:
+                      "linear-gradient(180deg, rgba(108,85,255,0.06) 0%, rgba(108,85,255,0.03) 100%)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.95), 0 10px 22px rgba(91,75,255,0.18)",
+                  }}
+                >
+                  <ArrowNortheast />
+                  <T as="span" variant="sub14" weight={600} trackingPct={2}>
+                    Find work
+                  </T>
+                </a>
 
-          {/* RIGHT: product card */}
-          <div className="relative">
-            <div className="rounded-3xl border border-[#E6E9FF] bg-white/90 p-6 shadow-[0_20px_60px_rgba(76,67,213,0.08)] backdrop-blur">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/logo.png"
-                    alt="WorkCrew.ai"
-                    width={84}
-                    height={22}
-                    className="h-[22px] w-auto"
-                  />
-                  <Image
-                    src="/laptopLadyOnCard.png"
-                    alt="User avatar"
-                    width={45}
-                    height={45}
-                    className="h-[45px] w-[45px] rounded-full object-cover"
-                  />
-                </div>
-                <div className="h-2 w-40 rounded-full bg-[#EDEAFE]" />
+                <a
+                  href="#"
+                  className="inline-flex h-[50px] items-center gap-2 rounded-full px-6 shadow-[0_10px_24px_rgba(91,75,255,0.28)] hover:brightness-105 text-white leading-none"
+                  style={{ background: "#5B4BFF" }}
+                >
+                  <ArrowNortheast />
+                  <T as="span" variant="sub14" weight={600} trackingPct={2}>
+                    Start hiring
+                  </T>
+                </a>
               </div>
 
-              {/* Profile completion */}
-              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4 shadow-[0_2px_0_rgba(76,67,213,0.05)]">
-                <div className="mb-3 text-sm font-semibold text-slate-800">
-                  Profile completion
-                </div>
-                <Progress value={66} />
-              </div>
-
-              {/* Job matches */}
-              <div className="mb-5 rounded-xl border border-[#E6E9FF] p-4">
-                <div className="mb-3 text-sm font-semibold text-slate-800">
-                  Job matches
-                </div>
-
-                <JobRow
-                  title="Senior Frontend Developer"
-                  meta="TechCorp • Remote • $120k–150k"
-                />
-                <div className="my-3 h-px bg-[#EEF1FF]" />
-                <JobRow
-                  title="React Engineer"
-                  meta="StartupXYZ • Hybrid • $100k–130k"
-                />
-              </div>
-
-              {/* Recent applications */}
-              <div className="rounded-xl border border-[#E6E9FF] p-4">
-                <div className="mb-3 text-sm font-semibold text-slate-800">
-                  Recent Applications
-                </div>
-
-                <AppRow
-                  title="Frontend Developer at InnovateLabs"
-                  badge={{ label: "Under Review", tone: "amber" }}
-                />
-                <div className="my-3 h-px bg-[#EEF1FF]" />
-                <AppRow
-                  title="React Engineer at DevCorp"
-                  badge={{ label: "Interview Scheduled", tone: "green" }}
-                />
+              {/* Stats */}
+              <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
+                <Stat number="5,000+" label="Candidates" />
+                <Stat number="500+" label="Recruiters" />
+                <Stat number="300+" label="Companies" />
+                <Stat number="400+" label="Jobs Posted" />
               </div>
             </div>
-
-            {/* Floating chatbot avatar (bottom-right of card) */}
-            <Image
-              src="/ChatbotLady.png"
-              alt="Chatbot"
-              width={64}
-              height={64}
-              className="absolute -bottom-8 right-4 h-16 w-16 rounded-full border-4 border-white shadow-[0_10px_24px_rgba(0,0,0,0.15)]"
-            />
           </div>
         </div>
 
-        {/* ---- LogoMarquee below grid ---- */}
-        <div className="mt-12 md:mt-16">
-          <LogoMarquee />
-        </div>
-        <div className="mx-auto my-10 h-px w-full max-w-3xl bg-[#EEF1FF]" />
-
-        {/* ---- “Recruiting … broken” statement ---- */}
-        <div className="mx-auto max-w-[717px] text-center">
-          <h2 className="mb-6 text-[28px] md:text-[32px] font-extrabold leading-tight tracking-tight text-slate-900">
-            “Recruiting &amp; job searching are fundamentally broken” – They say.
-          </h2>
-
-          <a
-            href="#solution"
-            className="text-[18px] md:text-[20px] font-medium text-[#4C43D5] underline decoration-[#5B4BFF] decoration-2 underline-offset-4 hover:opacity-90"
-          >
-            But we have solved every problem for you
-          </a>
+        {/* RIGHT HERO IMAGE */}
+        <div className="relative z-10 mx-auto mt-10 w-[510px] max-w-[92vw] md:absolute md:right-6 md:top-1/2 md:mt-0 md:-translate-y-1/2">
+          <div className="relative rounded-[24px] overflow-hidden" style={{ width: "510px" }}>
+            <div className="min-h-[320px]">
+              <Image
+                src="/hero-right.png"
+                alt="WorkCrew preview"
+                width={510}
+                height={420}
+                className="h-auto w-full object-contain"
+                priority
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Logo marquee */}
+      <div className="mt-6 md:mt-8">
+        <LogoMarquee heightMax={64} heightMin={40} heightVw={8} repeat={32} speed={28} />
+      </div>
+
+      {/* Statement block */}
+      <div className="mx-auto max-w-4xl px-6 pt-28 pb-36 md:pt-40 md:pb-48">
+        <div className="h-px w-full bg-[#E5E7EB] mb-14 md:mb-16" />
+        <div className="text-center">
+          {/* 40px headline — reuse hero48 and override size/leading to 40/52 */}
+          <T
+            as="div"
+            variant="hero48"
+            weight={540}
+            className="text-black"
+            style={{ fontSize: 40, lineHeight: "52px" }}
+          >
+            “Recruiting &amp; job searching are fundamentally broken” – They say.
+          </T>
+
+          <div className="mt-5">
+            {/* 36px purple line — use card36 and keep tight leading */}
+            <T
+              as="div"
+              variant="card36"
+              weight={540}
+              className="text-[#4D31EC]"
+              style={{ lineHeight: "28px" }}
+            >
+              But we have solved every problem for you
+            </T>
+          </div>
+        </div>
+        <div className="h-px w-full bg-[#E5E7EB] mt-14 md:mt-16" />
+      </div>
+
+      <FeatureSlides />
     </section>
   );
 }
 
-/* ---------- small UI bits ---------- */
-
+/*  small UI bits  */
 function Stat({ number, label }: { number: string; label: string }) {
   return (
-    <div>
-      <div className="text-lg font-extrabold text-slate-900">{number}</div>
-      <div className="text-xs text-slate-500">{label}</div>
-    </div>
-  );
-}
-
-function Progress({ value }: { value: number }) {
-  return (
-    <div className="h-3 w-full rounded-full bg-[#ECECFA]">
-      <div
-        className="h-3 rounded-full bg-gradient-to-r from-[#7C7BFF] to-[#4C43D5]"
-        style={{ width: `${value}%` }}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={value}
-        role="progressbar"
-      />
-      <div className="mt-1 text-right text-xs font-semibold text-[#5E60FF]">
-        {value}%
-      </div>
-    </div>
-  );
-}
-
-function JobRow({ title, meta }: { title: string; meta: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <div className="text-sm font-semibold text-slate-800">{title}</div>
-        <div className="text-xs text-slate-500">{meta}</div>
-      </div>
-      <button className="rounded-lg bg-[#5B4BFF] px-4 py-1.5 text-sm font-semibold text-white shadow hover:brightness-110">
-        Apply
-      </button>
-    </div>
-  );
-}
-
-function AppRow({
-  title,
-  badge,
-}: {
-  title: string;
-  badge: { label: string; tone: "amber" | "green" };
-}) {
-  const tone =
-    badge.tone === "amber"
-      ? "bg-amber-100 text-amber-700 ring-amber-200"
-      : "bg-emerald-100 text-emerald-700 ring-emerald-200";
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="text-sm text-slate-700">{title}</div>
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${tone}`}
-      >
-        {badge.label}
-      </span>
+    <div className="text-center md:text-left">
+      <T as="div" variant="statNumber" className="text-black">
+        {number}
+      </T>
+      <T as="div" variant="statLabel" className="text-[#7B72AF]">
+        {label}
+      </T>
     </div>
   );
 }
@@ -260,7 +198,6 @@ function ArrowNortheast() {
       className="size-4"
       viewBox="0 0 24 24"
       fill="none"
-      aria-hidden="true"
       stroke="currentColor"
       strokeWidth="2"
     >

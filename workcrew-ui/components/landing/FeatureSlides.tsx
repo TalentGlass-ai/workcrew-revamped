@@ -1,191 +1,379 @@
 "use client";
 
-import Image from "next/image";
-import React from "react";
-//not done yet have doubts in this section 
-type Slide = {
-  id: string;
-  icon?: React.ReactNode;          // can we swap for an <Image /> ...?
+import * as React from "react";
+
+/** Slide shape */
+export type FeatureSlide = {
+  id?: "resume" | "matching" | "assessments" | "interviews" | string;
   title: string;
   copy: string;
-  videoSrc?: string;               
-  imageSrc?: string;               
   ctaHref?: string;
+  ctaLabel?: string;
 };
 
 type Props = {
-  slides: Slide[];
+  slides?: FeatureSlide[];
   className?: string;
 };
 
-export default function FeatureSlides({ slides, className }: Props) {
-  const [index, setIndex] = React.useState(0);
+const SLIDES_DEFAULT: FeatureSlide[] = [
+  {
+    id: "resume",
+    title: "Smart resume parsing",
+    copy:
+      "AI smartly extracts and organizes your skills, experience, and achievements from any resume format.",
+    ctaHref: "#resume-parser",
+    ctaLabel: "Try it out",
+  },
+  {
+    id: "matching",
+    title: "AI job matching",
+    copy:
+      "Get matched with jobs that truly fit your skills, experience and career goals. Quality over quantity, always.",
+    ctaHref: "#job-matching",
+    ctaLabel: "Try it out",
+  },
+  {
+    id: "assessments",
+    title: "Structured assessments",
+    copy:
+      "AI assessments accurately measure your strengths using data-driven, personalized evaluations.",
+    ctaHref: "#assessments",
+    ctaLabel: "Try it out",
+  },
+  {
+    id: "interviews",
+    title: "AI interviews",
+    copy:
+      "AI interviews simulate real-world questions to evaluate your communication, problem-solving, and role-specific skills.",
+    ctaHref: "#ai-interviews",
+    ctaLabel: "Try it out",
+  },
+];
 
-  const total = slides.length;
-  const go = (n: number) => setIndex((prev) => (n + total) % total);
-  const next = () => go(index + 1);
-  const prev = () => go(index - 1);
-
-  // keyboard navigation
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [index]);
-
-  // simple touch swipe
-  const startX = React.useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => (startX.current = e.touches[0].clientX);
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (startX.current == null) return;
-    const dx = e.changedTouches[0].clientX - startX.current;
-    if (Math.abs(dx) > 40) (dx < 0 ? next() : prev());
-    startX.current = null;
-  };
-
-  const slide = slides[index];
+export default function FeatureSlides({
+  slides = SLIDES_DEFAULT,
+  className = "",
+}: Props) {
+  const [i, setI] = React.useState(0);
+  const go = (d: number) => setI((p) => (p + d + slides.length) % slides.length);
+  const s = slides[i];
 
   return (
-    <section className={className}>
-      {/* Outer container width ~1280, inner panel ~1003×581 on md+ */}
-      <div className="mx-auto max-w-[1280px] px-4">
+    <section className={`relative ${className}`}>
+      {/* Full-bleed background */}
+      <div className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden">
+        {/* BG: soft gradient */}
         <div
-          className="
-            relative mx-auto rounded-xl border
-            border-white/10
-            bg-[#4D31EC] text-white shadow-[0_30px_120px_rgba(77,49,236,0.25)]
-            md:rounded-[10px]
-            md:w-[1003px] md:h-[581px]
-          "
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          {/* content grid */}
-          <div className="grid h-full grid-cols-1 gap-8 p-6 md:grid-cols-2 md:p-10">
-            {/* LEFT copy */}
-            <div className="flex flex-col justify-center">
-              <div className="mb-5 text-2xl/none opacity-90">
-                {/* icon (use emoji or replace with <Image />) */}
-                <span aria-hidden>🗂️</span>
-              </div>
+          aria-hidden
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(246,247,252,0.95) 0%, rgba(236,239,248,0.92) 100%)",
+          }}
+        />
+        {/* BG: grid overlay */}
+        <div
+          aria-hidden
+          className="absolute inset-0 z-0 opacity-30"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(163,157,255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(163,157,255,0.25) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
 
-              <h3 className="mb-2 text-xl font-semibold md:text-2xl">{slide.title}</h3>
+        {/* Content container */}
+        <div className="relative z-10 mx-auto w-full max-w-[1003px] px-4 py-12 md:py-16">
+          {/* Heading */}
+          <div className="mx-auto max-w-[918px]">
+            <h3 className="how-title">
+              Here’s <span style={{ color: "#4D31EC" }}>how</span> we do it!
+            </h3>
 
-              <p className="max-w-[420px] text-sm leading-6 text-white/85">
-                {slide.copy}
-              </p>
+            {/* increased to 35px (20px + extra 15px) */}
+            <div style={{ height: "35px" }} />
 
-              <div className="mt-8">
-                <a
-                  href={slide.ctaHref || "#"}
-                  className="
-                    inline-flex h-[67px] w-[169px] items-center justify-center gap-2
-                    rounded-[30px] bg-white text-[#4D31EC] font-semibold
-                    ring-1 ring-white/70 shadow-[0_12px_40px_rgba(88,87,255,0.45)]
-                    hover:brightness-95 transition
-                  "
-                >
-                  <ArrowNortheast />
-                  <span>Try it out</span>
-                </a>
-              </div>
-            </div>
+            <p className="how-subtitle">
+              We provide clarity, efficiency, and intelligence at every stage of the hiring process.
+              Whether you are changing careers or expanding your team, we make each step simpler.
+            </p>
+          </div>
 
-            {/* RIGHT media 458×324, radius 9px */}
-            <div className="flex items-center justify-center">
-              <div className="rounded-[9px] border border-white/30 bg-white/95 p-3 shadow-[0_10px_40px_rgba(0,0,0,0.2)]">
-                <div className="rounded-[9px] border border-black/5 bg-white p-3">
-                  <div className="overflow-hidden rounded-[9px] md:w-[458px] md:h-[324px]">
-                    {slide.videoSrc ? (
-                      <video
-                        src={slide.videoSrc}
-                        className="h-full w-full object-cover"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      />
-                    ) : slide.imageSrc ? (
-                      <Image
-                        src={slide.imageSrc}
-                        alt={slide.title}
-                        width={458}
-                        height={324}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-500">
-                        458×324
-                      </div>
-                    )}
+          {/* extra 15px gap between subtitle and slides */}
+          <div style={{ height: "15px" }} />
+
+          {/* === Arrows + Card === */}
+          <div className="relative mt-8">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center">
+              {/* Left Arrow (20px away) */}
+              <NavButton
+                ariaLabel="Previous"
+                onClick={() => go(-1)}
+                direction="left"
+                className="justify-self-end mr-[20px]"
+              />
+
+              {/* Card */}
+              <div
+                className="rounded-[10px] p-[1px]"
+                style={{
+                  background:
+                    "linear-gradient(159.15deg, #FFFFFF 20.18%, rgba(195,191,255,0.11) 247.36%)",
+                }}
+              >
+                <div className="grid min-h-[581px] w-full grid-cols-1 rounded-[9px] bg-[#4D31EC] p-6 md:grid-cols-2 md:p-10">
+                  {/* LEFT: text */}
+                  <div className="flex flex-col justify-center text-white">
+                    <FeatureIcon index={i} />
+                    <h4 className="mb-3 text-[28px] font-semibold leading-tight">{s.title}</h4>
+                    <p className="max-w-[480px] text-[14px] leading-6 text-white/90">{s.copy}</p>
+                  </div>
+
+                  {/* RIGHT: visual + CTA */}
+                  <div className="mt-8 flex flex-col items-center justify-center gap-6 md:mt-0">
+                    <Illustration key={s.id} slide={s} />
+                    <CtaElliptical href={s.ctaHref ?? "#"} label={s.ctaLabel ?? "Try it out"} />
                   </div>
                 </div>
               </div>
+
+              {/* Right Arrow (20px away) */}
+              <NavButton
+                ariaLabel="Next"
+                onClick={() => go(1)}
+                direction="right"
+                className="justify-self-start ml-[20px]"
+              />
             </div>
-          </div>
 
-          {/* left/right arrows */}
-          <button
-            aria-label="Previous"
-            onClick={prev}
-            className="
-              absolute left-2 top-1/2 -translate-y-1/2
-              grid size-9 place-items-center rounded-full
-              bg-white/90 text-[#4D31EC] shadow hover:bg-white
-            "
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            aria-label="Next"
-            onClick={next}
-            className="
-              absolute right-2 top-1/2 -translate-y-1/2
-              grid size-9 place-items-center rounded-full
-              bg-white/90 text-[#4D31EC] shadow hover:bg-white
-            "
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {/* dots */}
-          <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-            <div className="flex items-center gap-2">
-              {slides.map((_, i) => (
-                <span
-                  key={i}
-                  className={[
-                    "inline-block h-2 w-2 rounded-full bg-white/60",
-                    i === index ? "w-6 bg-white" : "",
-                  ].join(" ")}
-                  aria-hidden
+            {/* dots */}
+            <div className="mt-4 flex justify-center gap-2">
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setI(idx)}
+                  className={`h-1.5 rounded-full transition ${
+                    idx === i ? "w-8 bg-[#4D31EC]" : "w-3 bg-slate-300"
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
             </div>
           </div>
         </div>
-
-        {/* little scrubber line under the panel like Figma... */}
-        <div className="mx-auto mt-6 h-[3px] w-24 rounded-full bg-[#3FB7FF]" />
       </div>
-
-      <div className="mt-2 text-center text-xs text-slate-500">• • •</div>
     </section>
   );
 }
 
-/* ---------- tiny icon ---------- */
+/* Arrow button (simple blue, no bg) */
+function NavButton({
+  onClick,
+  direction,
+  className = "",
+  ariaLabel,
+}: {
+  onClick: () => void;
+  direction: "left" | "right";
+  className?: string;
+  ariaLabel: string;
+}) {
+  return (
+    <button aria-label={ariaLabel} onClick={onClick} className={`p-1 ${className}`}>
+      {direction === "left" ? (
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#4D31EC"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      ) : (
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#4D31EC"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+/*  CTA */
+function CtaElliptical({ href, label }: { href: string; label: string }) {
+  return (
+    <div
+      className="rounded-full grid place-items-center"
+      style={{
+        width: 169,
+        height: 67,
+        background: "rgba(196, 211, 239, 0.43)",
+      }}
+    >
+      <div
+        className="rounded-full grid place-items-center"
+        style={{
+          width: 159,
+          height: 59,
+          background: "#E7E3FF",
+        }}
+      >
+        <a
+          className="rounded-full inline-flex items-center justify-center gap-2 font-semibold"
+          style={{
+            width: 149,
+            height: 50,
+            background: "#FFFFFF",
+            color: "#4D31EC",
+            fontSize: 16,
+            letterSpacing: "0.02em",
+            textDecoration: "none",
+            lineHeight: 1,
+          }}
+          href={href}
+          aria-label={label}
+        >
+          <ArrowNortheast />
+          {label}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/*  tiny pieces  */
+function FeatureIcon({ index }: { index: number }) {
+  const common = "opacity-90";
+  const stroke = "currentColor";
+  const size = 24;
+
+  return (
+    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
+      {index === 0 && (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+          <path d="M16 13H8M16 17H8M10 9H8" />
+        </svg>
+      )}
+      {index === 1 && (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+          <path d="M3 7h18M6 7l1 12h10l1-12M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+      )}
+      {index === 2 && (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M8 10h8M8 14h6" />
+        </svg>
+      )}
+      {index === 3 && (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+          <circle cx="12" cy="7" r="3" />
+          <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/** Video with graceful fallback */
+function Illustration({ slide }: { slide: FeatureSlide }) {
+  const sourcesMap: Record<string, string[]> = {
+    resume: ["/videos/resume_parse.mp4"],
+    matching: ["/videos/jobmatching.mp4"],
+    assessments: [
+      "/videos/Assessment%20insights.mp4",
+      "/videos/assessment_insights.mp4",
+      "/videos/assessment-insights.mp4",
+    ],
+    interviews: [],
+  };
+
+  const sources = sourcesMap[slide.id ?? ""] ?? [];
+  const [failed, setFailed] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  React.useEffect(() => {
+    setFailed(false);
+    const v = videoRef.current;
+    if (!v) return;
+    try {
+      v.pause();
+      v.currentTime = 0;
+      v.load();
+      const p = v.play();
+      if (p && typeof p.then === "function") p.catch(() => {});
+    } catch {}
+  }, [slide.id]);
+
+  const hasVideo = sources.length > 0 && !failed;
+
+  if (hasVideo) {
+    return (
+      <div className="-mt-5 w-[458px] max-w-full overflow-hidden rounded-[9px] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
+        {/* moved up by 20px using -mt-5 */}
+        <video
+          key={slide.id}
+          ref={videoRef}
+          className="h-[260px] w-full rounded-[9px] object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          onError={() => setFailed(true)}
+        >
+          {sources.map((src) => (
+            <source key={src} src={src} type="video/mp4" />
+          ))}
+        </video>
+      </div>
+    );
+  }
+
+  // Fallback card (no video) — unchanged position
+  return (
+    <div className="w-[458px] max-w-full rounded-[9px] bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
+      <div className="space-y-3 rounded-[8px] border border-slate-200 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-700">TechCorp</div>
+            <div className="text-xs text-slate-500">Senior software engineer | Remote</div>
+          </div>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Now</span>
+        </div>
+        <button className="w-full rounded bg-[#4D31EC] py-2 text-sm font-semibold text-white">
+          Join interview
+        </button>
+        <div className="pt-2">
+          <div className="text-sm font-semibold text-slate-700">TechViz</div>
+          <div className="text-xs text-slate-500">Backend engineer | Bangalore, India</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ArrowNortheast() {
   return (
     <svg
-      className="size-4"
+      className="shrink-0"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"

@@ -8,7 +8,18 @@ export default {
     "./workcrew-ui/**/*.{ts,tsx,js,jsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        // maps to Typography.tsx "font-sans"
+        sans: ["Schibsted Grotesk", "sans-serif"],
+
+        // maps to Typography.tsx "font-display"
+        display: ["Schibsted Grotesk", "sans-serif"],
+
+        // maps to Typography.tsx "font-alt"
+        alt: ["Archivo", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 } satisfies Config;

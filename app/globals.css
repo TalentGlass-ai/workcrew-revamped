@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* your custom styles… */
-
 
 /* exact 540 weight for Schibsted Grotesk */
 .font-540 {
@@ -14,7 +12,48 @@
   .font-540 { font-weight: 600; }
 }
 
-/* Letter-spacing helpers */
+/* Letter-spacin */
 .tracking-1pct { letter-spacing: .03em; }
 .tracking-2pct { letter-spacing: .02em; }
 .tracking-3pct { letter-spacing: .03em; }
+/* ── hero text ─────────────────────────────── */
+.hero-headline {
+  font-family: var(--font-display);
+  /* Ask variable font for ~540; fallback to 600  */
+  font-variation-settings: "wght" 540;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.0;         /* 1=100% */
+  letter-spacing: 0.01em;   /* 1% */
+  text-align: center;
+  color: #000000;
+  margin: 0;
+}
+
+.hero-subline {
+  font-family: var(--font-display);
+  font-variation-settings: "wght" 540;
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1.0;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: #4D31EC;         
+  margin: 0;
+}
+.hero-headline{font-family:var(--font-display);font-variation-settings:"wght" 540;font-weight:600;font-size:40px;line-height:1;letter-spacing:.01em;text-align:center;color:#000;margin:0}
+.hero-subline{font-family:var(--font-display);font-variation-settings:"wght" 540;font-weight:600;font-size:36px;line-height:1;letter-spacing:.01em;text-align:center;color:#4D31EC;margin:0}
+/* “Here’s how we do it!” */
+.how-title{
+  font-family: var(--font-display);
+  font-variation-settings:"wght" 540; /* asks variable font for ~540 */
+  font-weight:600; font-size:48px; line-height:1; letter-spacing:.01em;
+  text-align:center; margin:0;
+}
+/* body under the title */
+.how-subtitle{
+  font-family: var(--font-sans);
+  font-weight:400; font-size:20px; line-height:27px; letter-spacing:.03em;
+  text-align:center; margin:0;
+}
+

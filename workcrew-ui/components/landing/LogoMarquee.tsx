@@ -6,109 +6,124 @@ import Image from "next/image";
 type LogoItem = { src: string; alt: string };
 
 type Props = {
-  /** seconds per full loop */
   speed?: number;
-  /** text shown between the divider lines */
   caption?: string;
-  /** override logos if you want */
   logos?: LogoItem[];
+  heightMax?: number;
+  heightMin?: number;
+  heightVw?: number;
+  gap?: number;
+  itemPx?: number;
+  repeat?: number;
 };
 
-const DEFAULT_LOGOS: LogoItem[] = [
-  { src: "/brands/company1.png", alt: "Azul" },
-  { src: "/brands/company2.png", alt: "Linarc" },
-  { src: "/brands/company3.png", alt: "Canopus" },
+const BASE_LOGOS: LogoItem[] = [
+  { src: "/brands/company1.png", alt: "Company 1" },
+  { src: "/brands/company2.png", alt: "Company 2" },
+  { src: "/brands/company3.png", alt: "Company 3" },
 ];
 
 export default function LogoMarquee({
   speed = 24,
   caption = "- Loved by startups, scale-ups, and hiring platforms -",
-  logos = DEFAULT_LOGOS,
+  logos,
+  heightMax = 64,   // ⬅️ was 44 — increased for bigger logos
+  heightMin = 40,   // ⬅️ was 28
+  heightVw = 8,     // ⬅️ was 6 — grows slightly with viewport width
+  gap = 32,         // ⬅️ a bit more breathing space between logos
+  itemPx = 16,      // ⬅️ more padding on sides
+  repeat = 24,
 }: Props) {
-  const loop = React.useMemo(() => [...logos, ...logos, ...logos], [logos]);
-  // 👆 tripled the logos so the train is longer
+  const srcLogos = (logos && logos.length > 0) ? logos : BASE_LOGOS;
+
+  const safeRepeat = React.useMemo(() => {
+    if (srcLogos.length < 2) return Math.max(repeat, 64);
+    if (srcLogos.length < 4) return Math.max(repeat, 40);
+    return repeat;
+  }, [srcLogos.length, repeat]);
+
+  const longList = React.useMemo(
+    () => Array.from({ length: safeRepeat }, (_, i) => srcLogos[i % srcLogos.length]),
+    [srcLogos, safeRepeat]
+  );
+  const doubled = React.useMemo(() => [...longList, ...longList], [longList]);
+
+  const vars = {
+    ["--speed" as any]: `${speed}s`,
+    ["--gap" as any]: `${gap}px`,
+    ["--item-px" as any]: `${itemPx}px`,
+    ["--h-max" as any]: `${heightMax}px`,
+    ["--h-min" as any]: `${heightMin}px`,
+    ["--h-vw" as any]: `${heightVw}vw`,
+  } as React.CSSProperties;
 
   return (
     <section className="w-full">
-      {/* Caption */}
-      <div className="flex items-center justify-center mb-5">
-        <span className="h-px bg-black/40 w-32" />
-        <p className="mx-4 text-[14px] font-medium tracking-[0.01em] text-[#A2A2A2] text-center">
-          {caption}
-        </p>
-        <span className="h-px bg-black/40 w-32" />
-      </div>
+      {caption ? (
+        <div className="mb-6 flex items-center justify-center">
+          <p className="text-center text-[14px] font-medium tracking-[0.01em] text-[#A2A2A2]">
+            {caption}
+          </p>
+        </div>
+      ) : null}
 
-      {/* Full-width logo bar */}
-      <div className="w-full">
-        <div className="relative overflow-hidden w-full h-[140px]">
-          {/* black background */}
-          <div className="absolute inset-0 bg-black" />
-
-          {/* scrolling track */}
-          <div
-            className="absolute left-0 top-0 h-full flex items-center"
-            style={{
-              width: "300%", // enough to cover 3x logos
-              animation: `lm-scroll ${speed}s linear infinite`,
-            }}
-          >
-            <Row logos={loop} />
-          </div>
-
-          <style jsx>{`
-            @keyframes lm-scroll {
-              from {
-                transform: translateX(0);
-              }
-              to {
-                transform: translateX(-33.3333%);
-              }
-            }
-          `}</style>
+      <div className="relative w-full overflow-hidden">
+        <div className="marquee-track" style={vars}>
+          {doubled.map((logo, i) => (
+            <span className="logo-cell" key={`${logo.src}-${i}`}>
+              <span className="logo-img-wrap">
+                <Image
+                  src={logo.src}
+                  alt={logo.alt}
+                  fill
+                  sizes="100vw"
+                  style={{ objectFit: "contain" }}
+                  priority={i < 6}
+                />
+              </span>
+            </span>
+          ))}
         </div>
       </div>
+
+      <style jsx>{`
+        .marquee-track {
+          display: flex;
+          gap: var(--gap);
+          align-items: center;
+          min-width: max-content;
+          min-height: clamp(var(--h-min), var(--h-vw), var(--h-max));
+          will-change: transform;
+          animation: marquee var(--speed) linear infinite;
+          transform: translateZ(0);
+        }
+
+        .logo-cell {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: clamp(var(--h-min), var(--h-vw), var(--h-max));
+          padding: 0 var(--item-px);
+          flex: 0 0 auto;
+        }
+
+        .logo-img-wrap {
+          position: relative;
+          height: 100%;
+          width: auto;
+          min-width: 80px; /* bigger baseline width */
+          aspect-ratio: 3 / 1;
+        }
+
+        @keyframes marquee {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </section>
-  );
-}
-
-function Row({ logos }: { logos: LogoItem[] }) {
-  return (
-    <div className="flex items-center gap-16 px-16">
-      {logos.map((logo, i) => (
-        <Tile key={`${logo.src}-${i}`} {...logo} />
-      ))}
-    </div>
-  );
-}
-
-function Tile({ src, alt }: LogoItem) {
-  return (
-    <div
-      className="flex items-center justify-center bg-white shadow-sm"
-      style={{
-        width: 104, // bigger card
-        height: 104,
-        borderRadius: 16,
-      }}
-    >
-      <div
-        className="overflow-hidden"
-        style={{
-          width: 80,
-          height: 70,
-          borderRadius: 6,
-        }}
-      >
-        <Image
-          src={src}
-          alt={alt}
-          width={80}
-          height={70}
-          style={{ objectFit: "contain", width: "100%", height: "100%" }}
-          priority
-        />
-      </div>
-    </div>
   );
 }

@@ -3,7 +3,7 @@ export { default as Section } from "./Section";
 export { default as Stack } from "./Stack";
 export { default as Grid } from "./Grid";
 export { default as Button } from "./Button";
-export { Heading, Text } from "./Typography";
+export { T } from "./Typography";
 export { default as Card } from "./Card";
 export { default as Input } from "./Input";
 export { default as Badge } from "./Badge";

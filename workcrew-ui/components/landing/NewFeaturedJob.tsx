@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
-import { Section, Container, Heading, Grid, Card, Text, Button, Badge } from "../primitives";
+import { Section, Container, Grid, Card,  Button, Badge } from "../primitives";
+import { T } from "../primitives/Typography";
 
 type Props = { setJobs?: (x:any[])=>void };
 
@@ -12,12 +13,12 @@ const NewFeaturedJob: React.FC<Props> = () => {
   return (
     <Section size="lg" background="default">
       <Container>
-        <Heading as={2}>Discover roles made for you!</Heading>
+        <T as="h2">Discover roles made for you!</T>
         <Grid cols={{ base:1, md:2 }} gap={16}>
           {sample.map((j, i)=>(
             <Card key={i} padding="lg">
-              <Heading as={4}>{j.title}</Heading>
-              <Text variant="sm">{j.company}</Text>
+              <T as="h4">{j.title}</T>
+              <T variant="body" className="text-sm">{j.company}</T> 
               <div style={{height:8}}/>
               <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
                 {j.tags.map(t => <Badge key={t} tone="neutral" soft>{t}</Badge>)}

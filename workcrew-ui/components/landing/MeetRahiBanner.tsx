@@ -6,11 +6,11 @@ import Image from "next/image";
 type Props = {
   title?: string;
   subtitle?: string;
-  /** Path under /public (default: /Rah.png) */
   avatarSrc?: string;
   className?: string;
 };
 
+/* Simple banner introducing RAHI with text at left and avatar at right */
 const MeetRahiBanner: React.FC<Props> = ({
   title = "Meet RAHI!",
   subtitle =
@@ -21,52 +21,34 @@ const MeetRahiBanner: React.FC<Props> = ({
   return (
     <section className={`relative w-full bg-[#4D31EC] ${className ?? ""}`}>
       <div className="relative h-[162px] w-full">
-        {/* TEXT: pinned 51px from left edge */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 text-white"
-          style={{ left: 51, right: 400 }}
-        >
-          <h3
-            className="font-medium tracking-[0] leading-normal"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 32,
-            }}
-          >
+        {/* Text block (fixed offsets per spec) */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-[51px] right-[400px] text-white">
+          <h3 className="font-sans text-[32px] font-medium leading-normal tracking-[0]">
             {title}
           </h3>
-
           <p
-            className="mt-2 font-medium tracking-[0] leading-normal text-white/95 whitespace-nowrap"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 16,
-            }}
+            className="mt-2 whitespace-nowrap font-sans text-[16px] font-medium leading-normal tracking-[0] text-white/95"
             title={subtitle}
           >
             {subtitle}
           </p>
         </div>
 
-        {/* AVATAR: moved 150px right + Rah.png sized 150×150 */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2"
-          style={{ left: 1173 }} // 1023 + 150
-        >
-          {/* Backdrop circle (106×106) */}
+        {/* Avatar block (fixed left offset) */}
+        <div className="absolute top-1/2 left-[1173px] -translate-y-1/2">
+          {/* Soft halo behind avatar */}
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-[106px] w-[106px] rounded-full"
-            style={{ backgroundColor: "rgba(180,165,255,0.45)" }}
+            className="-z-10 absolute left-1/2 top-1/2 h-[106px] w-[106px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgba(180,165,255,0.45)]"
             aria-hidden
           />
-          {/* Rah.png (150×150, straight cut bottom) */}
+          {/* RAHI image */}
           <div className="h-[150px] w-[150px] overflow-hidden">
             <Image
               src={avatarSrc}
               alt="RAHI"
               width={150}
               height={150}
-              className="h-full w-full object-cover object-top border-0 ring-0 shadow-none"
+              className="h-full w-full object-cover object-top"
               priority
             />
           </div>

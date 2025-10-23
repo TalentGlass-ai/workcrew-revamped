@@ -6,15 +6,15 @@ import Image from "next/image";
 type LogoItem = { src: string; alt: string };
 
 type Props = {
-  speed?: number;
+  speed?: number;       // seconds for one full pass (controls animation duration)
   caption?: string;
   logos?: LogoItem[];
-  heightMax?: number;
-  heightMin?: number;
-  heightVw?: number;
-  gap?: number;
-  itemPx?: number;
-  repeat?: number;
+  heightMax?: number;   // px
+  heightMin?: number;   // px
+  heightVw?: number;    // vw
+  gap?: number;         // px between logo cells
+  itemPx?: number;      // px horizontal padding inside each cell
+  repeat?: number;      // number of logos before looping
 };
 
 const BASE_LOGOS: LogoItem[] = [
@@ -24,60 +24,76 @@ const BASE_LOGOS: LogoItem[] = [
 ];
 
 export default function LogoMarquee({
-  speed = 24,
+  speed = 100,
   caption = "- Loved by startups, scale-ups, and hiring platforms -",
   logos,
-  heightMax = 64,   // ⬅️ was 44 — increased for bigger logos
-  heightMin = 40,   // ⬅️ was 28
-  heightVw = 8,     // ⬅️ was 6 — grows slightly with viewport width
-  gap = 32,         // ⬅️ a bit more breathing space between logos
-  itemPx = 16,      // ⬅️ more padding on sides
+  heightMax = 128, // increased maximum height
+  heightMin = 80,  // taller baseline height
+  heightVw = 16,   // scales more with viewport width
+  gap = 12,        // slightly more space between logos
+  itemPx = 12,     // more inner padding per logo
   repeat = 24,
 }: Props) {
-  const srcLogos = (logos && logos.length > 0) ? logos : BASE_LOGOS;
+  const srcLogos = logos && logos.length > 0 ? logos : BASE_LOGOS;
 
+  // ensure enough logos to avoid empty gaps
   const safeRepeat = React.useMemo(() => {
     if (srcLogos.length < 2) return Math.max(repeat, 64);
     if (srcLogos.length < 4) return Math.max(repeat, 40);
     return repeat;
   }, [srcLogos.length, repeat]);
 
+  // repeat and duplicate for smooth continuous scroll
   const longList = React.useMemo(
     () => Array.from({ length: safeRepeat }, (_, i) => srcLogos[i % srcLogos.length]),
     [srcLogos, safeRepeat]
   );
   const doubled = React.useMemo(() => [...longList, ...longList], [longList]);
 
-  const vars = {
-    ["--speed" as any]: `${speed}s`,
-    ["--gap" as any]: `${gap}px`,
-    ["--item-px" as any]: `${itemPx}px`,
-    ["--h-max" as any]: `${heightMax}px`,
-    ["--h-min" as any]: `${heightMin}px`,
-    ["--h-vw" as any]: `${heightVw}vw`,
-  } as React.CSSProperties;
+  // build responsive Tailwind classes dynamically
+  const trackHeight = `min-h-[clamp(${heightMin}px,${heightVw}vw,${heightMax}px)]`;
+  const cellHeight = `h-[clamp(${heightMin}px,${heightVw}vw,${heightMax}px)]`;
+  const gapClass = `gap-[${gap}px]`;
+  const padClass = `px-[${itemPx}px]`;
+  const durationClass = `duration-[${speed}s]`;
 
   return (
     <section className="w-full">
-      {caption ? (
+      {caption && (
         <div className="mb-6 flex items-center justify-center">
           <p className="text-center text-[14px] font-medium tracking-[0.01em] text-[#A2A2A2]">
             {caption}
           </p>
         </div>
-      ) : null}
+      )}
 
       <div className="relative w-full overflow-hidden">
-        <div className="marquee-track" style={vars}>
+        {/* Track scrolling continuously to the left */}
+        <div
+          className={[
+            "flex min-w-max items-center will-change-transform translate-z-0",
+            "animate-marquee", // keyframes defined in globals.css
+            durationClass,
+            trackHeight,
+            gapClass,
+          ].join(" ")}
+        >
           {doubled.map((logo, i) => (
-            <span className="logo-cell" key={`${logo.src}-${i}`}>
-              <span className="logo-img-wrap">
+            <span
+              key={`${logo.src}-${i}`}
+              className={[
+                "inline-flex flex-none items-center justify-center",
+                cellHeight,
+                padClass,
+              ].join(" ")}
+            >
+              <span className="relative aspect-[3/1] h-full w-auto min-w-[180px]">
                 <Image
                   src={logo.src}
                   alt={logo.alt}
                   fill
                   sizes="100vw"
-                  style={{ objectFit: "contain" }}
+                  className="object-contain"
                   priority={i < 6}
                 />
               </span>
@@ -85,45 +101,6 @@ export default function LogoMarquee({
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        .marquee-track {
-          display: flex;
-          gap: var(--gap);
-          align-items: center;
-          min-width: max-content;
-          min-height: clamp(var(--h-min), var(--h-vw), var(--h-max));
-          will-change: transform;
-          animation: marquee var(--speed) linear infinite;
-          transform: translateZ(0);
-        }
-
-        .logo-cell {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          height: clamp(var(--h-min), var(--h-vw), var(--h-max));
-          padding: 0 var(--item-px);
-          flex: 0 0 auto;
-        }
-
-        .logo-img-wrap {
-          position: relative;
-          height: 100%;
-          width: auto;
-          min-width: 80px; /* bigger baseline width */
-          aspect-ratio: 3 / 1;
-        }
-
-        @keyframes marquee {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
     </section>
   );
 }

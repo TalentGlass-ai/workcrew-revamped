@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ new reusable pill
+import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill";
 
 type Job = {
   _id?: string;
@@ -32,6 +32,7 @@ export default function JobRoles() {
 
   const getId = (j: Job) => String(j._id || j.id || j.title || Math.random());
 
+  // measure description overflow and decide if "Show more" is needed
   const setDescRef =
     (id: string) =>
     (el: HTMLParagraphElement | null): void => {
@@ -50,13 +51,12 @@ export default function JobRoles() {
       });
     };
 
+  // fetch jobs
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=12`, {
-          cache: "no-store",
-        });
+        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=12`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const list: Job[] = json?.jobposts || json?.result || [];
@@ -72,44 +72,43 @@ export default function JobRoles() {
     };
   }, []);
 
+  // horizontal scroll helpers
   const SCROLL = 519 + 24;
-  const scrollBy = (px: number) => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.scrollBy({ left: px, behavior: "smooth" });
-  };
+  const scrollBy = (px: number) => trackRef.current?.scrollBy({ left: px, behavior: "smooth" });
 
-  const toggleExpand = (id: string) =>
-    setExpanded((s) => ({ ...s, [id]: !s[id] }));
+  const toggleExpand = (id: string) => setExpanded((s) => ({ ...s, [id]: !s[id] }));
+
+  // drop the first 5 items (remove gibberish cards)
+  const cleanedJobs = jobs.slice(5);
 
   return (
-    <section className="w-full px-0 pt-16 pb-10 overflow-x-hidden relative">
+    <section className="relative w-full overflow-x-hidden px-0 pb-10 pt-16">
       {/* Header */}
-      <header className="mb-10 text-center px-6">
+      <header className="px-6 text-center">
         <GlassPill text="For candidates" iconColor="#2288FE" />
 
         <div className="mx-auto mt-4 w-[663px] max-w-full whitespace-nowrap">
-          <h2 className="font-[540] text-[48px] leading-[59px] tracking-[0.01em] text-center">
+          <h2 className="text-center font-[540] text-[48px] leading-[59px] tracking-[0.01em]">
             <span className="text-[#4D31EC]">Discover</span>{" "}
             <span className="text-black">roles made for you!</span>
           </h2>
         </div>
 
-        <p className="mx-auto mt-3 max-w-none whitespace-nowrap text-[20px] leading-[27px] tracking-[0.03em] text-black text-center">
+        <p className="mx-auto mt-3 max-w-none whitespace-nowrap text-center text-[20px] leading-[27px] tracking-[0.03em] text-black">
           From startups to big companies, discover roles that match your skills and career aspirations
         </p>
       </header>
 
-      {/* Layout area */}
+      {/* Layout: sidebar + cards */}
       <div className="relative md:min-h-[365px]">
         {/* Sidebar */}
-        <aside className="hidden md:block absolute left-[88px] top-0 w-[164px] h-[365px]">
+        <aside className="absolute left-[88px] top-0 hidden h-[365px] w-[164px] md:block">
           <ul className="space-y-6">
             <li className="relative flex items-center gap-2 whitespace-nowrap">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                className="text-[#4D31EC] w-[20.2px] h-[36px]"
+                className="h-[36px] w-[20.2px] text-[#4D31EC]"
                 fill="currentColor"
                 aria-hidden="true"
               >
@@ -117,58 +116,45 @@ export default function JobRoles() {
               </svg>
               <span
                 className={`
-                  font-archivo font-medium text-[16px] tracking-[0.03em] text-[#4D31EC]
+                  font-alt font-medium text-[16px] tracking-[0.03em] text-[#4D31EC]
                   before:absolute before:-bottom-2 before:left-0 before:h-[3px] before:w-28 before:bg-[#4D31EC]
                 `}
               >
                 Development
               </span>
             </li>
-            <li className="font-archivo font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2] whitespace-nowrap">
+            <li className="whitespace-nowrap font-alt font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2]">
               Design
             </li>
-            <li className="font-archivo font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2] whitespace-nowrap">
+            <li className="whitespace-nowrap font-alt font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2]">
               Product management
             </li>
-            <li className="font-archivo font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2] whitespace-nowrap">
+            <li className="whitespace-nowrap font-alt font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2]">
               Marketing
             </li>
-            <li className="font-archivo font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2] whitespace-nowrap">
+            <li className="whitespace-nowrap font-alt font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2]">
               Customer service
             </li>
-            <li className="font-archivo font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2] whitespace-nowrap">
+            <li className="whitespace-nowrap font-alt font-medium text-[16px] tracking-[0.03em] text-[#A2A2A2]">
               Sales
             </li>
           </ul>
-
-          {/* ✅ Reusable More jobs pill */}
           <div className="mt-10">
-            <LayeredPill
-              href="/jobs"
-              label="More jobs"
-              icon={<ArrowNortheastIcon />}
-              size="md"
-            />
+            <LayeredPill href="/jobs" label="More jobs" icon={<ArrowNortheastIcon />} size="md" />
           </div>
         </aside>
 
         {/* Cards wrapper */}
         <div className="absolute left-[460px] top-0 right-0">
           <div className="relative overflow-hidden px-6 md:pl-[40px] md:pr-0">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent"
-            />
+            {/* right fade mask */}
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent" />
 
             {/* arrows */}
             <button
               onClick={() => scrollBy(-SCROLL)}
               aria-label="Previous"
-              className="
-                absolute left-0 top-1/2 hidden h-9 w-9 -translate-y-1/2
-                items-center justify-center rounded-full bg-white ring-1 ring-slate-200
-                hover:bg-slate-50 md:flex z-[2]
-              "
+              className="absolute left-0 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
               title="Previous"
             >
               ‹
@@ -176,30 +162,24 @@ export default function JobRoles() {
             <button
               onClick={() => scrollBy(SCROLL)}
               aria-label="Next"
-              className="
-                absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2
-                items-center justify-center rounded-full bg-white ring-1 ring-slate-200
-                hover:bg-slate-50 md:flex z-[2]
-              "
+              className="absolute right-2 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
               title="Next"
             >
               ›
             </button>
 
-            {/* track */}
+            {/* horizontal track */}
             <div
               ref={trackRef}
-              className="overflow-x-auto overflow-y-hidden px-2 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="[-ms-overflow-style:none] [scrollbar-width:none] overflow-x-auto overflow-y-hidden px-2 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
             >
-              <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
-
               <div className="flex gap-6">
-                {/* Skeletons */}
+                {/* loading skeletons */}
                 {loading &&
                   Array.from({ length: 3 }).map((_, i) => (
                     <div
                       key={i}
-                      className="flex-none w-[519px] snap-start rounded-2xl border border-[#E7EAFF] bg-white/70 p-6 animate-pulse overflow-hidden"
+                      className="flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg-white/70 p-6 animate-pulse"
                     >
                       <div className="h-6 w-40 rounded bg-slate-200" />
                       <div className="mt-2 h-4 w-28 rounded bg-slate-200" />
@@ -209,14 +189,14 @@ export default function JobRoles() {
                   ))}
 
                 {!loading && err && <div className="text-rose-600">{err}</div>}
-                {!loading && !err && jobs.length === 0 && (
+                {!loading && !err && cleanedJobs.length === 0 && (
                   <div className="text-slate-500">No jobs found.</div>
                 )}
 
-                {/* Cards */}
+                {/* job cards */}
                 {!loading &&
                   !err &&
-                  jobs.map((job) => {
+                  cleanedJobs.map((job) => {
                     const id = getId(job);
                     const isOpen = !!expanded[id];
                     const isExpandable = !!canExpand[id];
@@ -224,21 +204,21 @@ export default function JobRoles() {
                     return (
                       <article
                         key={id}
-                        className="flex-none w-[519px] snap-start rounded-2xl border border-[#E7EAFF] bg-white p-6 overflow-hidden flex flex-col"
+                        className="flex flex-col flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg-white p-6"
                       >
                         <div className="grid grid-cols-[1fr_auto] items-start gap-3">
                           <div className="min-w-0">
-                            <div className="text-[20px] leading-[23px] tracking-[0.03em] text-black font-medium break-words">
+                            <div className="break-words text-[20px] font-medium leading-[23px] tracking-[0.03em] text-black">
                               {job.title || "Untitled role"}
                             </div>
-                            <div className="mt-1 text-[20px] leading-[23px] tracking-[0.03em] font-medium text-[#4D31EC] break-words">
+                            <div className="mt-1 break-words text-[20px] font-medium leading-[23px] tracking-[0.03em] text-[#4D31EC]">
                               {companyName(job.company)}
                             </div>
                           </div>
 
                           {job.type && (
-                            <span className="justify-self-end self-start inline-flex h-[32px] items-center rounded-full bg-[#EEF0FF] px-3">
-                              <span className="font-archivo font-semibold text-[16px] leading-[23px] tracking-[0.03em] text-[#4D31EC]">
+                            <span className="inline-flex h-[32px] items-center self-start justify-self-end rounded-full bg-[#EEF0FF] px-3">
+                              <span className="font-alt text-[16px] font-semibold leading-[23px] tracking-[0.03em] text-[#4D31EC]">
                                 {job.type}
                               </span>
                             </span>
@@ -246,16 +226,15 @@ export default function JobRoles() {
                         </div>
 
                         {/* body */}
-                        <div className="mt-4 flex flex-col" style={{ minHeight: 180 }}>
+                        <div className="mt-4 flex flex-col">
                           <div>
                             <p
                               id={`desc-${id}`}
                               ref={setDescRef(id)}
                               className={[
-                                "font-archivo text-[16px] leading-[23px] tracking-[0.03em] text-slate-700",
+                                "font-alt text-[16px] leading-[23px] tracking-[0.03em] text-slate-700 min-h-[46px]",
                                 isOpen ? "line-clamp-none" : "line-clamp-3",
                               ].join(" ")}
-                              style={{ minHeight: "46px" }}
                             >
                               {job.description ?? "—"}
                             </p>
@@ -264,7 +243,7 @@ export default function JobRoles() {
                               <button
                                 type="button"
                                 onClick={() => toggleExpand(id)}
-                                className="mt-1 text-[14px] leading-[20px] tracking-[0.02em] font-archivo text-[#4D31EC] hover:underline"
+                                className="mt-1 font-alt text-[14px] leading-[20px] tracking-[0.02em] text-[#4D31EC] hover:underline"
                                 aria-expanded={isOpen}
                                 aria-controls={`desc-${id}`}
                               >
@@ -273,7 +252,8 @@ export default function JobRoles() {
                             )}
                           </div>
 
-                          <div className="mt-4 flex items-center gap-6 font-archivo text-[16px] tracking-[0.03em] text-slate-600">
+                          {/* location + salary */}
+                          <div className="mt-4 flex items-center gap-6 font-alt text-[16px] tracking-[0.03em] text-slate-600">
                             {job.location && (
                               <span className="flex items-center gap-1">
                                 <svg
@@ -290,8 +270,17 @@ export default function JobRoles() {
                             {job.salaryRange && <span>₹ {job.salaryRange}</span>}
                           </div>
 
+                          {/* CTA sits ~20px below the location row */}
+                          <a
+                            href={`/jobs/${job._id || job.id}`}
+                            className="mt-[20px] block w-full rounded-xl bg-[#4D31EC] py-3 text-center font-alt text-[16px] tracking-[0.03em] text-white hover:brightness-110"
+                          >
+                            Apply now
+                          </a>
+
+                          {/* tags (optional) below CTA */}
                           {!!job.tags?.length && (
-                            <div className="mt-4 flex flex-wrap gap-2">
+                            <div className="mt-3 flex flex-wrap gap-2">
                               {job.tags.slice(0, 6).map((t) => (
                                 <span
                                   key={t}
@@ -303,14 +292,6 @@ export default function JobRoles() {
                             </div>
                           )}
                         </div>
-
-                        {/* CTA */}
-                        <a
-                          href={`/jobs/${job._id || job.id}`}
-                          className="mt-auto block w-full rounded-xl bg-[#4D31EC] py-3 text-center font-archivo text-[16px] tracking-[0.03em] text-white hover:brightness-110"
-                        >
-                          Apply now
-                        </a>
                       </article>
                     );
                   })}

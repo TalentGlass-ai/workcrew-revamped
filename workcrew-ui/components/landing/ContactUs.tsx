@@ -6,27 +6,24 @@ export default function ContactUs(): React.ReactElement {
   return (
     <section id="contact" className="relative">
       <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
-        {/*  Heading (no Typography)  */}
-        <h2
-          className="mb-4 text-[48px] font-[500] tracking-[0.01em] leading-[normal]"
-          style={{ fontFamily: "'Schibsted Grotesk', sans-serif" }}
-        >
+        {/* Heading (no Typography component) */}
+        <h2 className="mb-4 font-display text-[48px] font-[500] leading-[normal] tracking-[0.01em]">
           <span className="text-[#5A3BFF]">Contact</span>{" "}
           <span className="text-black">us</span>
         </h2>
 
         {/* Subheading */}
-        <p className="mb-8 text-[20px] tracking-[0.01em] text-[#1F2937]">
+        <p className="mb-8 font-alt text-[20px] tracking-[0.01em] text-[#1F2937]">
           Connect with our team to discover how WorkCrew.ai can streamline your
-          company's talent acquisition and HR operations.
+          company's talent acquisition an HR operations.
         </p>
 
-        {/*  Form  */}
+        {/* Form */}
         <form
-          className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
+          className="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
-            // TODO: handle submit
+            // handle submit
           }}
         >
           {/* Company name */}
@@ -106,12 +103,16 @@ export default function ContactUs(): React.ReactElement {
           <div className="md:col-span-2 flex justify-center pt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white
-                         bg-[#5A3BFF] hover:bg-[#4F35E6] active:bg-[#442ECC]
-                         shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition"
+              className="inline-flex items-center gap-2 rounded-full bg-[#5A3BFF] px-6 py-3 text-white shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition hover:bg-[#4F35E6] active:bg-[#442ECC]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M5 12h14M13 5l7 7-7 7"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className="font-medium">Get in touch</span>
             </button>
@@ -122,8 +123,7 @@ export default function ContactUs(): React.ReactElement {
   );
 }
 
-/*  Minimal form primitives  */
-
+/* Minimal form primitives */
 function Field({
   label,
   htmlFor,
@@ -137,7 +137,10 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="block mb-2 text-[#111827]">
+      <label
+        htmlFor={htmlFor}
+        className="mb-2 block font-alt text-[#111827]"
+      >
         <span className="font-medium">{label}</span>
         {required && <span className="text-[#5A3BFF]"> *</span>}
       </label>
@@ -151,10 +154,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...rest}
-      className={`w-full h-[52px] rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
-                  px-4 text-[14px] text-[#111827] placeholder:text-[#9CA3AF]
-                  focus:outline-none focus:border-[#5A3BFF] focus:bg-white
-                  focus:ring-4 focus:ring-[#5A3BFF]/15 transition ${className ?? ""}`}
+      className={`h-[52px] w-full rounded-xl border border-[#E5E7EB] bg-[#F5F6F7] px-4 font-alt text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition focus:border-[#5A3BFF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/15 ${className ?? ""}`}
     />
   );
 }
@@ -164,10 +164,7 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...rest}
-      className={`w-full rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
-                  px-4 py-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF]
-                  focus:outline-none focus:border-[#5A3BFF] focus:bg-white
-                  focus:ring-4 focus:ring-[#5A3BFF]/15 transition ${className ?? ""}`}
+      className={`w-full rounded-xl border border-[#E5E7EB] bg-[#F5F6F7] px-4 py-3 font-alt text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition focus:border-[#5A3BFF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/15 ${className ?? ""}`}
     />
   );
 }
@@ -183,10 +180,7 @@ function Select(
     <div className={`relative ${className ?? ""}`}>
       <select
         {...rest}
-        className="w-full h-[52px] appearance-none rounded-xl border border-[#E5E7EB] bg-[#F5F6F7]
-                   px-4 pr-10 text-[14px] text-[#111827]
-                   focus:outline-none focus:border-[#5A3BFF] focus:bg-white
-                   focus:ring-4 focus:ring-[#5A3BFF]/15 transition"
+        className="h-[52px] w-full appearance-none rounded-xl border border-[#E5E7EB] bg-[#F5F6F7] px-4 pr-10 font-alt text-[14px] text-[#111827] transition focus:border-[#5A3BFF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/15"
         defaultValue={rest.defaultValue ?? ""}
       >
         {placeholder && (
@@ -200,13 +194,23 @@ function Select(
           </option>
         ))}
       </select>
+
       {/* caret */}
       <svg
         aria-hidden
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-        width="16" height="16" viewBox="0 0 24 24" fill="none"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
       >
-        <path d="M6 9l6 6 6-6" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M6 9l6 6 6-6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );

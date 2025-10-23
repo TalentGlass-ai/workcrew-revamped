@@ -1,9 +1,9 @@
 import Image from "next/image";
 
 type LogoProps = {
-  src: string;        // e.g. "/brands/company1.png"
+  src: string;        
   alt: string;
-  width?: number;     // optional size overrides
+  width?: number;     
   height?: number;
   className?: string;
 };

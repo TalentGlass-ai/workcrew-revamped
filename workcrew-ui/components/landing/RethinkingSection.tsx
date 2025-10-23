@@ -3,9 +3,8 @@
 import * as React from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ layered pill
+import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill";
 
-/* ---------------------------- Types ---------------------------- */
 type Feature = {
   id: string;
   title: string;
@@ -14,7 +13,6 @@ type Feature = {
   posterSrc?: string;
 };
 
-/* ---------------- Default Recruiter Features ---------------- */
 const DEFAULT_RECRUITER_FEATURES: Feature[] = [
   {
     id: "jds",
@@ -42,31 +40,14 @@ const DEFAULT_RECRUITER_FEATURES: Feature[] = [
   },
 ];
 
-/* ---------------- Candidate Features ---------------- */
+/* Candidate-side feature list */
 const CANDIDATE_FEATURES: Feature[] = [
-  {
-    id: "profile",
-    title: "Profile optimisation",
-    blurb: "Get AI tips to improve your profile and attract top recruiters.",
-  },
-  {
-    id: "quickapply",
-    title: "One click applications",
-    blurb: "Apply to jobs instantly with pre-filled details, no extra forms.",
-  },
-  {
-    id: "interview",
-    title: "Interview and showcase skills",
-    blurb: "Share your strengths through AI-led interviews and assessments.",
-  },
-  {
-    id: "tracking",
-    title: "Application tracking",
-    blurb: "Track every application with real-time status updates.",
-  },
+  { id: "profile", title: "Profile optimisation", blurb: "Get AI tips to improve your profile and attract top recruiters." },
+  { id: "quickapply", title: "One click applications", blurb: "Apply to jobs instantly with pre-filled details, no extra forms." },
+  { id: "interview", title: "Interview and showcase skills", blurb: "Share your strengths through AI-led interviews and assessments." },
+  { id: "tracking", title: "Application tracking", blurb: "Track every application with real-time status updates." },
 ];
 
-/* ---------------- Rethinking Section ---------------- */
 export default function RethinkingSection({
   features = DEFAULT_RECRUITER_FEATURES,
   onHireNow,
@@ -91,12 +72,9 @@ export default function RethinkingSection({
 
   const featuresToShow = isRecruiter ? features : CANDIDATE_FEATURES;
   const activeIndex = isRecruiter ? activeRecruiter : activeCandidate;
-  const activeFeature = useMemo(
-    () => featuresToShow[activeIndex],
-    [featuresToShow, activeIndex]
-  );
+  const activeFeature = useMemo(() => featuresToShow[activeIndex], [featuresToShow, activeIndex]);
 
-  /* ---------------- Autoplay Logic ---------------- */
+  /* Autoplay changes while in view; pauses on interaction */
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const intervalRef = useRef<number | null>(null);
   const inViewRef = useRef(false);
@@ -120,7 +98,8 @@ export default function RethinkingSection({
 
   useEffect(() => {
     manageInterval();
-  }, [autoPlayEnabled, features.length]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlayEnabled, features.length]);
 
   const manageInterval = () => {
     clearAutoPlay();
@@ -143,7 +122,7 @@ export default function RethinkingSection({
   };
 
   const setActive = (i: number) => {
-    clearAutoPlay(); // stop autoplay on interaction
+    clearAutoPlay();
     if (isRecruiter) setActiveRecruiter(i);
     else setActiveCandidate(i);
   };
@@ -153,57 +132,30 @@ export default function RethinkingSection({
     setMode(m);
   };
 
-  /* ---------------- JSX ---------------- */
+  /* Markup */
   return (
-    <section
-      ref={sectionRef as any}
-      id="rethinking"
-      className={`py-12 md:py-16 ${className}`}
-    >
+    <section ref={sectionRef as any} id="rethinking" className={`py-12 md:py-16 ${className}`}>
       <div className="mx-auto max-w-[1400px] px-0">
         {/* Header */}
-        <div
-          className="flex flex-col justify-start"
-          style={{ width: "1094px", height: "162px", marginLeft: "93px" }}
-        >
+        <div className="ml-[93px] h-[162px] w-[1094px] max-w-full">
           <div className="flex items-center whitespace-nowrap">
             <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
           </div>
 
-          <h2
-            className="mt-4 text-left"
-            style={{
-              fontFamily: "Schibsted Grotesk, var(--font-display)",
-              fontWeight: 500,
-              fontSize: "48px",
-              letterSpacing: "0.01em",
-              lineHeight: "normal",
-            }}
-          >
+          <h2 className="mt-4 text-left font-display text-[48px] font-[500] tracking-[0.01em] leading-[normal]">
             <span className="text-[#4D31EC]">Rethinking</span>{" "}
             <span className="text-black">how you hire and get hired</span>
           </h2>
 
-          <p
-            className="mt-2 text-left"
-            style={{
-              fontFamily: "Archivo, var(--font-sans)",
-              fontWeight: 400,
-              fontSize: "20px",
-              lineHeight: "27px",
-              letterSpacing: "0.03em",
-              color: "#111827",
-            }}
-          >
-            Build your dream team or find your next move with WorkCrew.ai, all in
-            one place, without clutter or chaos.
+          <p className="mt-2 text-left font-alt text-[20px] font-[400] leading-[27px] tracking-[0.03em] text-[#111827]">
+            Build your dream team or find your next move with WorkCrew.ai, all in one place, without clutter or chaos.
           </p>
         </div>
 
-        {/* Outer Panel */}
-        <div className="mx-auto mt-6 w-[1100px] h-[632px] rounded-[16px] bg-gradient-to-b from-[#F6F7FF] to-white p-4">
+        {/* Panel: tabs (left) + preview (right) */}
+        <div className="mx-auto mt-6 h-[632px] w-[1100px] max-w-full rounded-[16px] bg-gradient-to-b from-[#F6F7FF] to-white p-4">
           <div className="grid h-full grid-cols-2 gap-6">
-            {/* LEFT: Tabs */}
+            {/* Tabs list */}
             <div
               role="tablist"
               aria-labelledby={`${groupId}-label`}
@@ -221,44 +173,29 @@ export default function RethinkingSection({
                         id={`${groupId}-tab-${i}`}
                         onClick={() => setActive(i)}
                         className={[
-                          "w-full rounded-2xl border text-left transition px-5 py-5",
+                          "w-full rounded-2xl border px-5 py-5 text-left transition",
                           selected
                             ? "border-[#4D31EC] bg-white"
                             : "border-[#D9D7FD] bg-[#F3F2FF]/50 hover:bg-white/80",
                           "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4D31EC]/60",
                         ].join(" ")}
                       >
-                        <div className="text-[17px] font-semibold text-gray-900">
-                          {f.title}
-                        </div>
-                        {selected && (
-                          <div className="mt-2 text-[15px] leading-6 text-gray-700">
-                            {f.blurb}
-                          </div>
-                        )}
+                        <div className="text-[17px] font-semibold text-gray-900">{f.title}</div>
+                        {selected && <div className="mt-2 text-[15px] leading-6 text-gray-700">{f.blurb}</div>}
                       </button>
                     </li>
                   );
                 })}
               </ul>
 
-              {/* CTA + toggle */}
+              {/* CTA + mode toggle */}
               <div className="mt-6">
-                {/* ✅ Use the shared LayeredPill for 'Hire now' */}
-                <LayeredPill
-                  label="Hire now"
-                  icon={<ArrowNortheastIcon />}
-                  onClick={onHireNow}
-                  size="md"
-                />
-
+                <LayeredPill label="Hire now" icon={<ArrowNortheastIcon />} onClick={onHireNow} size="md" />
                 <div className="mt-3 text-sm text-gray-600">
                   I’m a{" "}
                   <button
                     className="text-[#5E6AD9] underline"
-                    onClick={() =>
-                      switchMode(isRecruiter ? "candidate" : "recruiter")
-                    }
+                    onClick={() => switchMode(isRecruiter ? "candidate" : "recruiter")}
                   >
                     {isRecruiter ? "candidate!" : "recruiter"}
                   </button>
@@ -266,25 +203,18 @@ export default function RethinkingSection({
               </div>
             </div>
 
-            {/* RIGHT: Clean video (no shadow, no white bg) */}
+            {/* Preview area */}
             <div
               role="tabpanel"
               id={`${groupId}-panel`}
               aria-labelledby={`${groupId}-tab-${activeIndex}`}
               className="flex items-start justify-center"
             >
-              <div
-                className="relative overflow-hidden rounded-[12px] ring-1 ring-[#E9ECF6]"
-                style={{
-                  width: 368,
-                  height: 371,
-                  background: "#D9D9D9",
-                }}
-              >
+              <div className="relative h-[371px] w-[368px] overflow-hidden rounded-[12px] bg-[#D9D9D9] ring-1 ring-[#E9ECF6]">
                 {isRecruiter && activeFeature.videoSrc ? (
                   <video
                     key={activeFeature.videoSrc}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full rounded-[12px] object-cover"
                     src={encodeURI(activeFeature.videoSrc)}
                     poster={activeFeature.posterSrc}
                     muted
@@ -305,11 +235,7 @@ export default function RethinkingSection({
   );
 }
 
-/* Candidate placeholder */
+/* Candidate preview placeholder */
 function CandidatePreview({ id }: { id: string }) {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-gray-500">
-      Candidate view: {id}
-    </div>
-  );
+  return <div className="flex h-full items-center justify-center text-sm text-gray-500">Candidate view: {id}</div>;
 }

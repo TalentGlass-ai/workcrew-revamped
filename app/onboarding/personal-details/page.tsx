@@ -44,8 +44,7 @@ export default function PersonalDetailsPage() {
   function next() {
     saveDraft(form);
     router.push("/onboarding/work-experience");
-    // If you don't want persistence after submit, uncomment:
-    // localStorage.removeItem("wc_onboard");
+
   }
 
   const activeStep = 0;

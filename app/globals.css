@@ -57,3 +57,29 @@
   text-align:center; margin:0;
 }
 
+/* minimal keyframes for the marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); } /* -50% because we render the list twice */
+}
+
+/* hook for Tailwind's animate-* convention */
+.animate-marquee {
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+
+
+}
+
+/* ReviewsSection — parallax rows without inline styles */
+.reviews-row-1,
+.reviews-row-2,
+.reviews-row-3 {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.reviews-row-1 { transform: translate3d(var(--reviews-row1, 0), 0, 0); }
+.reviews-row-2 { transform: translate3d(var(--reviews-row2, 0), 0, 0); }
+.reviews-row-3 { transform: translate3d(var(--reviews-row3, 0), 0, 0); }

@@ -1,9 +1,8 @@
-// PATH: /workcrew-ui/components/landing/NewNavbar.tsx
 "use client";
 
 import * as React from "react";
 import Image from "next/image";
-import Link from "next/link"; // kept for brand link
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import LayeredPill from "../primitives/buttons/LayeredPill";
 
@@ -13,7 +12,7 @@ const links = [
   { href: "/pricing", label: "Pricing" },
   { href: "https://blog.workcrew.ai/", label: "Blogs", external: true },
   { href: "/about", label: "About us" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#contact", label: "Contact" }, // Smooth scrolls to Contact section on landing page
 ];
 
 const NAV_HEIGHT = 76;
@@ -22,6 +21,7 @@ const NewNavbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Adds floating animation when scrolled
   React.useEffect(() => {
     const onScroll = () =>
       document.body.classList.toggle("scrolled", window.scrollY > 8);
@@ -35,12 +35,34 @@ const NewNavbar: React.FC = () => {
 
   const handleLoginClick = () => router.push("/login");
 
+  // Smooth scroll for internal anchor (like /#contact)
+  const handleSmoothScroll = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (href.startsWith("/#")) {
+      e.preventDefault();
+      const id = href.split("#")[1];
+      const section = document.getElementById(id);
+      if (section) {
+        window.scrollTo({
+          top: section.offsetTop - NAV_HEIGHT,
+          behavior: "smooth",
+        });
+      }
+    } else {
+      e.preventDefault();
+      router.push(href);
+    }
+  };
+
   return (
     <>
+      {/* ====== NAVBAR ====== */}
       <header className="wc-header" role="banner">
         <nav className="wc-nav" aria-label="Global">
           <div className="row">
-            {/* Brand */}
+            {/* --- Brand Logo --- */}
             <Link className="brand" href="/" aria-label="WorkCrew.ai">
               <Image
                 src="/logo.png"
@@ -55,7 +77,7 @@ const NewNavbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Center Links */}
+            {/* --- Menu Links --- */}
             <ul className="menu">
               {links.map((l) => (
                 <li key={l.href}>
@@ -73,10 +95,7 @@ const NewNavbar: React.FC = () => {
                       href={l.href}
                       className={`link ${isActive(l.href) ? "active" : ""}`}
                       aria-current={isActive(l.href) ? "page" : undefined}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(l.href);
-                      }}
+                      onClick={(e) => handleSmoothScroll(e, l.href)}
                     >
                       {l.label}
                     </a>
@@ -85,7 +104,7 @@ const NewNavbar: React.FC = () => {
               ))}
             </ul>
 
-            {/* Login pill */}
+            {/* --- Login Button --- */}
             <div className="login">
               <LayeredPill
                 label="Login"
@@ -107,6 +126,7 @@ const NewNavbar: React.FC = () => {
           </div>
         </nav>
 
+        {/* --- Floating Sticky Animation --- */}
         <style jsx>{`
           /* HEADER */
           .wc-header {
@@ -226,7 +246,7 @@ const NewNavbar: React.FC = () => {
             transition: color 0.25s ease, transform 0.2s ease;
           }
 
-          /* Hard override so ALL anchors turn blue on hover */
+          /* Hover + focus colors */
           .menu :global(a.link:hover),
           .menu :global(a.link:focus-visible) {
             color: #2563eb !important;
@@ -256,12 +276,8 @@ const NewNavbar: React.FC = () => {
         `}</style>
       </header>
 
-      {/* Spacer */}
-      <div
-        className="wc-nav-spacer"
-        aria-hidden="true"
-        style={{ height: NAV_HEIGHT }}
-      />
+      {/* Spacer to prevent layout shift */}
+      <div className="h-[76px]" aria-hidden="true" />
     </>
   );
 };

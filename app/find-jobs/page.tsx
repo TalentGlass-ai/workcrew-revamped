@@ -4,18 +4,11 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
-
-/* Navbar & Footer */
 import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
-
-/* Typography */
 import T from "../../workcrew-ui/components/primitives/Typography";
-
-/* Decorative (static import) */
 import bg from "../../public/bg.png";
 
-/* Types  */
 type Job = {
   _id?: string;
   id?: string | number;
@@ -634,7 +627,6 @@ export default function FindJobsPage() {
       <NewNavbar />
 
       <main className="min-h-screen bg-white text-black pt-0 pb-20">
-        {/* ===== HERO (fixed 430px tall) ===== */}
         <section
           className="
             relative text-center overflow-hidden
@@ -701,7 +693,6 @@ export default function FindJobsPage() {
             </div>
           </div>
 
-          {/* Decorative bg image: full width */}
           <Image
             src={bg}
             alt="Decorative background"
@@ -716,7 +707,6 @@ export default function FindJobsPage() {
           />
         </section>
 
-        {/* ===== CHIPS ROW (on white, directly under grey banner) ===== */}
         <div className="bg-white relative z-[3]">
           <div className="flex justify-center flex-wrap gap-3 mt-[50px] mb-4 px-6">
             {CHIP_LABELS.map((tag) => (

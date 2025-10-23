@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-/** Slide shape */
+/* Slide shape used by the carousel */
 export type FeatureSlide = {
   id?: "resume" | "matching" | "assessments" | "interviews" | string;
   title: string;
@@ -61,38 +61,29 @@ export default function FeatureSlides({
 
   return (
     <section className={`relative ${className}`}>
-      {/* Full-bleed background */}
+      {/* Full-bleed section with layered background */}
       <div className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden">
-        {/* BG: soft gradient */}
+        {/* Soft gradient */}
         <div
           aria-hidden
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(246,247,252,0.95) 0%, rgba(236,239,248,0.92) 100%)",
-          }}
+          className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(246,247,252,0.95)_0%,rgba(236,239,248,0.92)_100%)]"
         />
-        {/* BG: grid overlay */}
+        {/* Subtle grid overlay */}
         <div
           aria-hidden
-          className="absolute inset-0 z-0 opacity-30"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(163,157,255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(163,157,255,0.25) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
+          className="absolute inset-0 z-0 opacity-30 bg-[linear-gradient(rgba(163,157,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(163,157,255,0.25)_1px,transparent_1px)] [background-size:40px_40px]"
         />
 
-        {/* Content container */}
+        {/* Content */}
         <div className="relative z-10 mx-auto w-full max-w-[1003px] px-4 py-12 md:py-16">
           {/* Heading */}
           <div className="mx-auto max-w-[918px]">
             <h3 className="how-title">
-              Here’s <span style={{ color: "#4D31EC" }}>how</span> we do it!
+              Here’s <span className="text-[#4D31EC]">how</span> we do it!
             </h3>
 
-            {/* increased to 35px (20px + extra 15px) */}
-            <div style={{ height: "35px" }} />
+            {/* Spacer: 35px */}
+            <div className="h-[35px]" />
 
             <p className="how-subtitle">
               We provide clarity, efficiency, and intelligence at every stage of the hiring process.
@@ -100,28 +91,22 @@ export default function FeatureSlides({
             </p>
           </div>
 
-          {/* extra 15px gap between subtitle and slides */}
-          <div style={{ height: "15px" }} />
+          {/* Spacer: 15px */}
+          <div className="h-[15px]" />
 
-          {/* === Arrows + Card === */}
+          {/* Arrows + Card */}
           <div className="relative mt-8">
             <div className="grid grid-cols-[auto_1fr_auto] items-center">
-              {/* Left Arrow (20px away) */}
+              {/* Left Arrow (20px offset) */}
               <NavButton
                 ariaLabel="Previous"
                 onClick={() => go(-1)}
                 direction="left"
-                className="justify-self-end mr-[20px]"
+                className="mr-[20px] justify-self-end"
               />
 
-              {/* Card */}
-              <div
-                className="rounded-[10px] p-[1px]"
-                style={{
-                  background:
-                    "linear-gradient(159.15deg, #FFFFFF 20.18%, rgba(195,191,255,0.11) 247.36%)",
-                }}
-              >
+              {/* Card with faint gradient border */}
+              <div className="rounded-[10px] p-[1px] bg-[linear-gradient(159.15deg,#FFFFFF_20.18%,rgba(195,191,255,0.11)_247.36%)]">
                 <div className="grid min-h-[581px] w-full grid-cols-1 rounded-[9px] bg-[#4D31EC] p-6 md:grid-cols-2 md:p-10">
                   {/* LEFT: text */}
                   <div className="flex flex-col justify-center text-white">
@@ -130,7 +115,7 @@ export default function FeatureSlides({
                     <p className="max-w-[480px] text-[14px] leading-6 text-white/90">{s.copy}</p>
                   </div>
 
-                  {/* RIGHT: visual + CTA */}
+                  {/* RIGHT: media + CTA */}
                   <div className="mt-8 flex flex-col items-center justify-center gap-6 md:mt-0">
                     <Illustration key={s.id} slide={s} />
                     <CtaElliptical href={s.ctaHref ?? "#"} label={s.ctaLabel ?? "Try it out"} />
@@ -138,16 +123,16 @@ export default function FeatureSlides({
                 </div>
               </div>
 
-              {/* Right Arrow (20px away) */}
+              {/* Right Arrow (20px offset) */}
               <NavButton
                 ariaLabel="Next"
                 onClick={() => go(1)}
                 direction="right"
-                className="justify-self-start ml-[20px]"
+                className="ml-[20px] justify-self-start"
               />
             </div>
 
-            {/* dots */}
+            {/* Pagination dots */}
             <div className="mt-4 flex justify-center gap-2">
               {slides.map((_, idx) => (
                 <button
@@ -167,7 +152,7 @@ export default function FeatureSlides({
   );
 }
 
-/* Arrow button (simple blue, no bg) */
+/* Arrow button */
 function NavButton({
   onClick,
   direction,
@@ -212,37 +197,13 @@ function NavButton({
   );
 }
 
-/*  CTA */
+/* CTA: concentric rounded pills (outer → middle → inner link) */
 function CtaElliptical({ href, label }: { href: string; label: string }) {
   return (
-    <div
-      className="rounded-full grid place-items-center"
-      style={{
-        width: 169,
-        height: 67,
-        background: "rgba(196, 211, 239, 0.43)",
-      }}
-    >
-      <div
-        className="rounded-full grid place-items-center"
-        style={{
-          width: 159,
-          height: 59,
-          background: "#E7E3FF",
-        }}
-      >
+    <div className="grid h-[67px] w-[169px] place-items-center rounded-full bg-[rgba(196,211,239,0.43)]">
+      <div className="grid h-[59px] w-[159px] place-items-center rounded-full bg-[#E7E3FF]">
         <a
-          className="rounded-full inline-flex items-center justify-center gap-2 font-semibold"
-          style={{
-            width: 149,
-            height: 50,
-            background: "#FFFFFF",
-            color: "#4D31EC",
-            fontSize: 16,
-            letterSpacing: "0.02em",
-            textDecoration: "none",
-            lineHeight: 1,
-          }}
+          className="no-underline inline-flex h-[50px] w-[149px] items-center justify-center gap-2 rounded-full bg-white text-[16px] font-semibold leading-[1] tracking-[0.02em] text-[#4D31EC]"
           href={href}
           aria-label={label}
         >
@@ -254,7 +215,7 @@ function CtaElliptical({ href, label }: { href: string; label: string }) {
   );
 }
 
-/*  tiny pieces  */
+/* Feature icon that swaps per slide index */
 function FeatureIcon({ index }: { index: number }) {
   const common = "opacity-90";
   const stroke = "currentColor";
@@ -290,7 +251,7 @@ function FeatureIcon({ index }: { index: number }) {
   );
 }
 
-/** Video with graceful fallback */
+/* Video with graceful fallback */
 function Illustration({ slide }: { slide: FeatureSlide }) {
   const sourcesMap: Record<string, string[]> = {
     resume: ["/videos/resume_parse.mp4"],
@@ -325,7 +286,6 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
   if (hasVideo) {
     return (
       <div className="-mt-5 w-[458px] max-w-full overflow-hidden rounded-[9px] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
-        {/* moved up by 20px using -mt-5 */}
         <video
           key={slide.id}
           ref={videoRef}
@@ -345,7 +305,7 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
     );
   }
 
-  // Fallback card (no video) — unchanged position
+  // Fallback card
   return (
     <div className="w-[458px] max-w-full rounded-[9px] bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
       <div className="space-y-3 rounded-[8px] border border-slate-200 p-4">

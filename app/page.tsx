@@ -1,7 +1,7 @@
+// PATH: app/page.tsx
 "use client";
 
 import * as React from "react";
-
 import {
   NewNavbar,
   HeroSection,
@@ -15,17 +15,19 @@ import {
 import JobRoles from "../workcrew-ui/components/landing/JobRoles";
 import { Section } from "../workcrew-ui/components/primitives";
 
-/* Fixed build badge (visible in dev only) */
+/* Build badge for dev */
+const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
+
 function DevBuildBadge() {
   if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="fixed right-2 top-2 z-[9999] bg-[#ffe58f] p-[6px]">
-      BUILD: {Date.now()}
+      BUILD: {BUILD_ID}
     </div>
   );
 }
 
-/* Section with zero vertical padding; parent controls spacing */
+/* Wrapper with no default vertical padding */
 function GapSection({ children }: { children: React.ReactNode }) {
   return (
     <Section size="lg" background="default" withContainer={false} className="!py-0">
@@ -34,85 +36,93 @@ function GapSection({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function HomePage() {
+/* ============================================
+   MAIN PAGE
+   ============================================ */
+export default function HomePage(): React.ReactElement {
   return (
     <>
       <DevBuildBadge />
-
-      {/* Navbar — outside main */}
       <NewNavbar />
 
-      {/* 60px between sections and before footer */}
-      <main className="mb-[60px] flex flex-col space-y-[60px]">
-        {/* 1) Hero */}
+      <style jsx global>{`
+        html {
+          scroll-behavior: smooth;
+        }
+        #contact {
+          scroll-margin-top: 92px; /* offset for fixed navbar */
+        }
+      `}</style>
+
+      <main className="flex flex-col space-y-[60px] [&>*]:my-0">
+        {/* Hero Section */}
         <HeroSection />
 
-        {/* 2) Why They Love Us */}
+        {/* Why They Love Us */}
         <GapSection>
           <WhyTheyLoveUs />
         </GapSection>
 
-        {/* 3) Meet Rahi Banner — trim internal paddings to keep visual gap ≈ 60px */}
-        <div className="-mb-[60px] -mt-[60px]">
+        {/* Meet RAHI — reduced top/bottom gap */}
+        <div className="!mt-[8px] !mb-[16px]">
           <GapSection>
-            <MeetRahiBanner />
+            <MeetRahiBanner className="!my-0 !py-0" />
           </GapSection>
         </div>
 
-        {/* 4) Why Love Us */}
+        {/* Why Love Us */}
         <GapSection>
           <WhyLoveUs />
         </GapSection>
 
-        {/* 5) Big Statement — trimmed to avoid oversized gaps */}
-        <div className="-mb-[60px] -mt-[60px]">
-          <GapSection>
-            <div className="mx-auto max-w-[1106px] text-center">
-              <div className="mx-auto flex flex-col items-center gap-[76px]">
-                <div className="h-px w-[320px] bg-[#D0D5DD]" />
-                <div className="mx-auto max-w-[625px]">
-                  <h2 className="font-display text-[40px] font-medium leading-[1] tracking-[0.01em] text-black">
-                    “WorkCrew.ai fixed the broken system.” – We say
-                  </h2>
-                  <p className="mt-6 font-display text-[32px] font-medium leading-[1] tracking-[0.01em] text-[#4D31EC]">
-                    Here’s what that means for you – New opportunities!
-                  </p>
-                </div>
-                <div className="h-px w-[320px] bg-[#D0D5DD]" />
+        {/* Statement Strip */}
+        <GapSection>
+          <div className="mx-auto max-w-[1106px] text-center">
+            <div className="mx-auto flex flex-col items-center gap-[76px]">
+              <div className="h-px w-[320px] bg-[#D0D5DD]" />
+              <div className="mx-auto max-w-[625px]">
+                <h2 className="font-display text-[40px] font-medium leading-[1] tracking-[0.01em] text-black">
+                  “WorkCrew.ai fixed the broken system.” – We say
+                </h2>
+                <p className="mt-6 font-display text-[32px] font-medium leading-[1] tracking-[0.01em] text-[#4D31EC]">
+                  Here’s what that means for you – New opportunities!
+                </p>
               </div>
+              <div className="h-px w-[320px] bg-[#D0D5DD]" />
             </div>
-          </GapSection>
-        </div>
+          </div>
+        </GapSection>
 
-        {/* 6) Job Roles */}
+        {/* Job Roles */}
         <GapSection>
           <JobRoles />
         </GapSection>
 
-        {/* 7) Reviews */}
+        {/* Reviews */}
         <GapSection>
           <ReviewsSection />
         </GapSection>
 
-        {/* 8) Contact Us */}
+        {/* Contact Section with bottom breathing space */}
         <GapSection>
-          <ContactSection />
+          <div className="mb-[30px]">
+            <ContactSection />
+          </div>
         </GapSection>
       </main>
 
-      {/* Footer — outside main (gap above handled by main margin) */}
+      {/* Footer */}
       <NewFooter />
     </>
   );
 }
 
-/* ================================
-   Contact Section
-   ================================ */
-function ContactSection() {
+/* ============================================
+   CONTACT SECTION
+   ============================================ */
+function ContactSection(): React.ReactElement {
   return (
-    <div>
-      {/* Heading + subheading pinned 55px from viewport edge */}
+    <section id="contact">
       <div className="pl-[55px]">
         <h2 className="mb-4 font-display text-[48px] font-medium leading-[normal] tracking-[0.01em]">
           <span className="text-[#4D31EC]">Contact</span>{" "}
@@ -125,9 +135,8 @@ function ContactSection() {
         </p>
       </div>
 
-      {/* Centered form */}
       <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-8 md:px-10">
-        <div className="mx-auto max-w_[800px] md:max-w-[800px]">
+        <div className="mx-auto md:max-w-[800px]">
           <form
             className="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2"
             onSubmit={(e) => e.preventDefault()}
@@ -190,7 +199,11 @@ function ContactSection() {
 
             <div className="md:col-span-2">
               <ContactField label="Description" htmlFor="desc">
-                <ContactTextarea id="desc" placeholder="Tell us more about your hiring needs" rows={5} />
+                <ContactTextarea
+                  id="desc"
+                  placeholder="Tell us more about your hiring needs"
+                  rows={5}
+                />
               </ContactField>
             </div>
 
@@ -214,13 +227,13 @@ function ContactSection() {
           </form>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
-/* ================================
-   Form primitives
-   ================================ */
+/* ============================================
+   FORM PRIMITIVES
+   ============================================ */
 function ContactField({ label, htmlFor, required, children }: any) {
   return (
     <div>
@@ -276,7 +289,7 @@ function ContactSelect({ options, placeholder, className, ...rest }: any) {
         ))}
       </select>
 
-      {/* Dropdown chevron (inherits text color) */}
+      {/* chevron icon */}
       <svg
         aria-hidden
         className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"

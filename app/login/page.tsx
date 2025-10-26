@@ -9,11 +9,12 @@ import T from "../../workcrew-ui/components/primitives/Typography";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = React.useState<"candidate" | "employer">("candidate");
+
+  // Employer default (per recruiter view), but ORIGINAL toggle styling
+  const [role, setRole] = React.useState<"candidate" | "employer">("employer");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: send username/password + rememberMe to your auth API here
     router.push("/onboarding/upload-resume");
   }
 
@@ -21,7 +22,6 @@ export default function LoginPage() {
     <main className="flex min-h-screen">
       {/* LEFT (Blue half) */}
       <section className="relative hidden w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
-        {/* WorkCrew icon: 50px from left, 50px below navbar */}
         <Image
           src="/workcrew-icon.png"
           alt="WorkCrew.ai"
@@ -31,9 +31,7 @@ export default function LoginPage() {
           priority
         />
 
-        {/* Centered content block */}
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
-          {/* White card like Figma tile */}
           <div className="mb-6 w-full overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <div className="relative aspect-[16/10] w-full">
               <video
@@ -46,9 +44,7 @@ export default function LoginPage() {
                 autoPlay
                 controls={false}
                 preload="metadata"
-              >
-                Your browser does not support the video tag.
-              </video>
+              />
             </div>
           </div>
 
@@ -66,7 +62,6 @@ export default function LoginPage() {
             achievements from any resume format.
           </T>
 
-          {/* Slider bars */}
           <div className="mt-8 flex gap-2">
             <div className="h-1.5 w-16 rounded-full bg-white" />
             <div className="h-1.5 w-10 rounded-full bg-white/40" />
@@ -99,9 +94,10 @@ export default function LoginPage() {
             Enter your credentials to login
           </T>
 
-          {/* Role toggle */}
+          {/* ORIGINAL two-button toggle (no pill wrapper) */}
           <div className="mt-6 flex justify-center gap-6">
             <button
+              type="button"
               onClick={() => setRole("candidate")}
               className={`rounded-md px-8 py-2 transition ${
                 role === "candidate"
@@ -114,6 +110,7 @@ export default function LoginPage() {
               </T>
             </button>
             <button
+              type="button"
               onClick={() => setRole("employer")}
               className={`rounded-md px-8 py-2 transition ${
                 role === "employer"
@@ -129,20 +126,22 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div>
-              {/* keep htmlFor on a real <label>, render text with T */}
               <label htmlFor="username" className="mb-1 block">
                 <T as="span" variant="body16" weight={500}>
-                  Username
+                  {role === "employer" ? "Company email" : "Username or email"}
                 </T>
               </label>
               <input
                 id="username"
                 name="username"
-                // RULES: 3–30 chars, letters/numbers/_/., or email allowed
                 pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$"
                 title="Use an email or 3–30 characters (letters, numbers, dot or underscore)."
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="Enter your username or email"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#4D31EC]"
+                placeholder={
+                  role === "employer"
+                    ? "Enter your username"
+                    : "Enter your username or email"
+                }
                 autoComplete="username"
                 required
               />
@@ -158,30 +157,17 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                // RULES: at least 8 chars (add stronger rules in backend)
                 minLength={8}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
               />
-              <T
-                as="p"
-                variant="sub14"
-                className="mt-1 text-gray-400"
-                lineHeightPx={18}
-              >
-                Minimum 8 characters. (Enforce complexity on the server.)
-              </T>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input
-                  name="remember"
-                  type="checkbox"
-                  className="accent-[#4D31EC]"
-                />
+                <input name="remember" type="checkbox" className="accent-[#4D31EC]" />
                 <T as="span" variant="sub14">
                   Remember me
                 </T>
@@ -195,35 +181,28 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-full bg-[#4D31EC] py-3 text-white hover:bg-[#3b25b5]"
+              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5]"
             >
               <T as="span" variant="button">
                 Login →
               </T>
             </button>
 
-            {/* OR divider */}
             <div className="flex items-center gap-3">
               <span className="h-px w-full bg-gray-200" />
               <T as="span" variant="sub14" weight={600} className="text-black">
-                or continue with
+                or
               </T>
               <span className="h-px w-full bg-gray-200" />
             </div>
 
-            {/* Social buttons with real icons */}
             <div className="flex justify-center gap-4">
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
                 aria-label="Continue with Google"
               >
-                <Image
-                  src="/flat-color-icons_google.png"
-                  alt="Google"
-                  width={16}
-                  height={16}
-                />
+                <Image src="/flat-color-icons_google.png" alt="Google" width={16} height={16} />
                 <T as="span" variant="sub14" weight={600}>
                   Google
                 </T>
@@ -234,12 +213,7 @@ export default function LoginPage() {
                 className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
                 aria-label="Continue with Microsoft"
               >
-                <Image
-                  src="/logos_microsoft-icon.png"
-                  alt="Microsoft"
-                  width={16}
-                  height={16}
-                />
+                <Image src="/logos_microsoft-icon.png" alt="Microsoft" width={16} height={16} />
                 <T as="span" variant="sub14" weight={600}>
                   Microsoft
                 </T>

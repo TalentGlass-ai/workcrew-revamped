@@ -1,11 +1,91 @@
-// PATH: app/onboarding/work-experience/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
-import Stepper, { Step } from "../Stepper";
 
+/* Shared type for a step node */
+type Step = { key: string; label: string };
+
+/* Connector between circles — animates width 0 → 100% and stays vertically centered */
+function Connector({
+  filled,
+  animate = false,
+}: {
+  filled: boolean;
+  animate?: boolean;
+}) {
+  const [grow, setGrow] = React.useState(filled);
+
+  React.useEffect(() => {
+    if (filled || animate) {
+      const id = requestAnimationFrame(() => setGrow(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setGrow(false);
+  }, [filled, animate]);
+
+  return (
+    <div className="relative mx-2 h-10 flex-1">
+      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
+        <div
+          className={`h-full transition-[width] duration-500 ease-out ${
+            grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* Stepper matching the personal-details page */
+function OnboardStepper({
+  steps,
+  active,
+  advancing,
+}: {
+  steps: Step[];
+  active: number;
+  advancing?: boolean;
+}) {
+  return (
+    <div className="w-full">
+      <div className="relative flex items-center justify-between">
+        {steps.map((s, i) => {
+          const isDone = i < active;
+          const isCurrent = i === active;
+          const isUpcoming = i > active;
+
+          return (
+            <React.Fragment key={s.key}>
+              <div className="relative flex shrink-0 basis-[88px] flex-col items-center">
+                <div
+                  className={[
+                    "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
+                    isDone ? "bg-[#4D31EC] text-white" : "",
+                    isCurrent ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]" : "",
+                    isUpcoming ? "bg-white ring-1 ring-gray-300 text-gray-400" : "",
+                  ].join(" ")}
+                >
+                  {isDone ? "✓" : i + 1}
+                </div>
+                <div className="mt-2 w-[88px] text-center text-[12px] font-medium text-gray-700 md:text-sm">
+                  {s.label}
+                </div>
+              </div>
+
+              {i < steps.length - 1 && (
+                <Connector filled={i < active} animate={advancing && i === active} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* Persist draft across steps */
 function loadDraft<T = any>(): T {
   if (typeof window === "undefined") return {} as T;
   try {
@@ -20,17 +100,19 @@ function saveDraft(patch: Record<string, any>) {
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
 }
 
+/* Keep order consistent with personal-details page */
 const STEPS: Step[] = [
-  { key: "personal",  label: "Personal details" },
-  { key: "work",      label: "Work experience" },
-  { key: "summary",   label: "Professional summary" },
+  { key: "personal", label: "Personal details" },
+  { key: "work", label: "Work experience" },
   { key: "education", label: "Education" },
+  { key: "summary", label: "Professional summary" },
 ];
 
 export default function WorkExperiencePage() {
   const router = useRouter();
   const draft = loadDraft();
 
+  // Form state seeded from draft
   const [exp, setExp] = React.useState({
     company: draft.exp?.company || "",
     title: draft.exp?.title || "",
@@ -40,11 +122,24 @@ export default function WorkExperiencePage() {
     bullets: draft.exp?.bullets || "",
   });
 
+  // Animate connector before routing
+  const [advancing, setAdvancing] = React.useState(false);
+
+  // 1 = this step
+  const activeStep = 1;
+
+  // Gate Next on required fields (end date optional if "current")
+  const requiredFilled =
+    [exp.company, exp.title, exp.start, exp.bullets].every((v) => v.trim().length > 0) &&
+    (exp.current || exp.end.trim().length > 0);
+
   function next() {
+    if (!requiredFilled || advancing) return;
     saveDraft({ exp });
-    router.push("/onboarding/education");
-    // If you don't want to persist after navigating:
-    // localStorage.removeItem("wc_onboard");
+    setAdvancing(true);
+    setTimeout(() => {
+      router.push("/onboarding/education");
+    }, 500);
   }
 
   function prev() {
@@ -52,13 +147,10 @@ export default function WorkExperiencePage() {
     router.back();
   }
 
-  const activeStep = 1; // 0=personal, 1=work (this page)
-
   return (
     <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* LEFT PANEL */}
+      {/* Left: logo, illustration, helper text */}
       <section className="relative flex flex-col justify-center bg-[#F6F5FF] px-10 py-16 md:px-20">
-        {/* Logo pinned 50/50 */}
         <Image
           src="/logo.png"
           alt="WorkCrew.ai"
@@ -69,7 +161,6 @@ export default function WorkExperiencePage() {
         />
 
         <div className="mt-10 flex flex-col items-center justify-center space-y-6 md:items-start">
-          {/* Illustration – save the provided image in /public as work-experience.png */}
           <Image
             src="/work-experience.png"
             alt="Work experience illustration"
@@ -80,17 +171,15 @@ export default function WorkExperiencePage() {
           />
 
           <div className="text-center md:text-left">
-            <h1 className="text-xl md:text-2xl font-semibold text-black">
+            <h1 className="text-xl font-semibold text-black md:text-2xl">
               Add your work experience
             </h1>
-            <p className="mt-3 max-w-md text-sm md:text-base text-gray-600">
-              To improve your job matches, please enter your work experience. We
-              match jobs with increased accuracy if we know your work experience!
+            <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
+              Add your latest role first. Clear bullet points with metrics help match you to better jobs.
             </p>
           </div>
         </div>
 
-        {/* Skip link */}
         <button
           onClick={() => router.push("/onboarding/education")}
           className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
@@ -99,24 +188,23 @@ export default function WorkExperiencePage() {
         </button>
       </section>
 
-      {/* RIGHT PANEL */}
+      {/* Right: stepper + form */}
       <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
           {/* Stepper */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
-            <Stepper steps={STEPS} active={activeStep} />
+            <OnboardStepper steps={STEPS} active={activeStep} advancing={advancing} />
           </div>
 
-          {/* Page title */}
+          {/* Title */}
           <h2 className="mb-4 text-center text-2xl font-semibold text-[#4D31EC]">
             Work experience
           </h2>
 
-          {/* Instruction box */}
+          {/* Tip box */}
           <div className="mx-auto mb-8 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
-              Begin with your latest job. Use bullet points for achievements, including metrics
-              (e.g., “Increased sales by 25%”).
+              Use bullet points. Include impact with metrics (e.g., “Increased sales by 25%”).
             </p>
           </div>
 
@@ -153,8 +241,20 @@ export default function WorkExperiencePage() {
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                  {/* calendar icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
                 </span>
                 <input
                   value={exp.start}
@@ -168,11 +268,24 @@ export default function WorkExperiencePage() {
             {/* End date */}
             <div>
               <label className="mb-1 block text-sm font-medium">
-                End date <span className="text-red-500">*</span>
+                End date {exp.current ? "" : <span className="text-red-500">*</span>}
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
                 </span>
                 <input
                   disabled={exp.current}
@@ -243,7 +356,13 @@ export default function WorkExperiencePage() {
             </button>
             <button
               onClick={next}
-              className="rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5]"
+              disabled={!requiredFilled || advancing}
+              className={[
+                "rounded-full px-8 py-3 font-semibold text-white",
+                requiredFilled && !advancing
+                  ? "bg-[#4D31EC] hover:bg-[#3b25b5]"
+                  : "cursor-not-allowed bg-gray-300",
+              ].join(" ")}
             >
               Next →
             </button>

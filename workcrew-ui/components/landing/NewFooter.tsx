@@ -1,28 +1,45 @@
+// PATH: workcrew-ui/components/landing/NewFooter.tsx
 "use client";
 
+/**
+ * NewFooter
+ * ----------
+ * - Zero outer spacing — the parent section controls inter-section gaps
+ * - Uses our Typography primitive (T) for all textual elements
+ * - Archivo presets enforced (per spec):
+ *    • Top caption: Medium 16 / auto / 2%
+ *    • Blurb + list + contact: Medium 14 / 23 / 3%
+ *    • Bottom copyright (single line, bottom-left): Semibold 14 / 23 / 0%
+ * - Accessible links (keyboard focus rings), no inline styles
+ */
+
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/navigation";
+import T from "../primitives/Typography";
 
-/* centralize links so it's easy to maintain */
+/* --------------------------------------------
+   Link & contact config — pure data (no UI)
+--------------------------------------------- */
+type FooterItem =
+  | { label: string; href: string; smart?: undefined }
+  | { label: string; smart: "browseJobs" | "resumeBuilder"; href?: undefined };
+
 const footerLinks = {
   seekers: [
-    { label: "Browse jobs", href: "/find-jobs" },
-    { label: "One click apply", href: "/signup" },
-    { label: "Resume builder", href: "#" }, // TODO: confirm route
+    { label: "Browse jobs", smart: "browseJobs" } as FooterItem,
+    { label: "Resume builder", smart: "resumeBuilder" } as FooterItem,
   ],
   recruiters: [
-    { label: "Post jobs", href: "/signup" },
-    { label: "Find candidates", href: "#" },   // TODO: confirm route
-    { label: "Pricing", href: "/pricing" },
-    { label: "Hiring solutions", href: "#" },  // TODO: confirm route
+    { label: "Post jobs", href: "/signup" } as FooterItem,
+    { label: "Find candidates", href: "#" } as FooterItem,
+    { label: "Pricing", href: "/pricing" } as FooterItem,
   ],
   company: [
-    { label: "About us", href: "/about" },                        // ✅ updated
-    { label: "Blogs", href: "https://blog.workcrew.ai/" },        // ✅ updated (external)
-    { label: "Terms and conditions", href: "#" },                 // TODO: confirm URL
-    { label: "Help desk", href: "#" },                            // TODO: confirm route
-    { label: "Query post", href: "#" },                           // TODO: confirm route
+    { label: "About us", href: "/about" } as FooterItem,
+    { label: "Blogs", href: "https://blog.workcrew.ai/" } as FooterItem,
+    { label: "Terms and conditions", href: "#" } as FooterItem,
   ],
   socials: {
     instagram: "https://www.instagram.com/workcrew.ai/",
@@ -37,21 +54,48 @@ const footerLinks = {
     phone: "+91 9785724383",
     whatsapp: "https://wa.me/917676161689",
     addressText: "Sector 2, HSR Layout, Bengaluru, Karnataka 560102",
-    addressMaps:
-      "https://maps.google.com/?q=Sector 2, HSR Layout, Bengaluru, Karnataka 560102",
   },
 };
 
-export default function NewFooter() {
-  const year = new Date().getFullYear();
+/* -----------------------
+   Auth helpers (client)
+------------------------ */
+function getIsAuthed(): boolean {
+  try {
+    const lsToken =
+      typeof window !== "undefined" &&
+      (localStorage.getItem("wc_token") ||
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token"));
+    const hasCookie =
+      typeof document !== "undefined" &&
+      /(?:^|;\s*)wc_auth=/.test(document.cookie);
+    return Boolean(lsToken || hasCookie);
+  } catch {
+    return false;
+  }
+}
 
+/* -----------------------
+   Footer root component
+------------------------ */
+export default function NewFooter(): React.ReactElement {
   return (
-    <footer className="px-0 py-0">
+    <footer className="relative !my-0 !py-0">
       <div className="w-full border-t border-white/10 bg-[#444953] md:h-[529px]">
         <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-6 py-10 text-white md:grid-cols-5 md:gap-8 md:px-10 md:py-12">
-          {/* Brand */}
+          {/* =============================
+              Brand block
+          ============================== */}
           <div className="flex flex-col">
-            <div className="mb-4 text-xs/none text-white/80">Product of TalentBox Labs</div>
+            {/* Archivo Medium 16 / auto / 2% */}
+            <T
+              as="p"
+              variant="body16"
+              className="mb-4 text-white/80 text-[16px] leading-normal tracking-[0.02em] font-medium"
+            >
+              Product of TalentBox Labs
+            </T>
 
             {/* Logo → home */}
             <div className="mb-4">
@@ -70,86 +114,91 @@ export default function NewFooter() {
               </Link>
             </div>
 
-            <p className="max-w-[260px] text-[13px] leading-5 text-white/80">
-              Connect with opportunities that match your ambitions. <br />
-              Your dream job awaits.
-            </p>
-
-            {/* Desktop copyright */}
-            <div className="mt-auto hidden text-[12px] text-white/60 md:block">
-              © {year}, All rights reserved
-            </div>
+            {/* Blurb — Archivo Medium 14 / 23 / 3% (single line) */}
+            <T
+              as="p"
+              variant="body16"
+              className="max-w-[520px] text-white/80 text-[14px] leading-[23px] tracking-[0.03em] font-medium"
+            >
+              Connect with opportunities that match your ambitions. Your dream job awaits.
+            </T>
           </div>
 
-          {/* Site navigation */}
+          {/* =============================
+              Navigation columns
+          ============================== */}
           <nav aria-label="Footer" className="contents">
             <FooterCol title="For job seekers" items={footerLinks.seekers} />
             <FooterCol title="For recruiters" items={footerLinks.recruiters} />
             <FooterCol title="WorkCrew.ai" items={footerLinks.company} />
           </nav>
 
-          {/* Contact + social */}
+          {/* =============================
+              Contact + Socials
+          ============================== */}
           <div className="flex flex-col">
-            <FooterLabel>Contact</FooterLabel>
+            {/* Section label can remain as-is; spec targeted top caption + blurb + copyright */}
+            <SectionLabel>Contact</SectionLabel>
 
-            <div className="mt-3 space-y-3 text-[14px] leading-[23px] tracking-[0.03em] text-white/90">
+            <div className="mt-3 space-y-3">
+              {/* Contact rows — Archivo Medium 14 / 23 / 3% */}
               <FooterRow icon={<MailIcon />}>
-                <a
-                  href={`mailto:${footerLinks.contact.email1}`}
-                  className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                >
-                  {footerLinks.contact.email1}
-                </a>
-                <br />
-                <a
-                  href={`mailto:${footerLinks.contact.email2}`}
-                  className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                >
-                  {footerLinks.contact.email2}
-                </a>
+                <T as="p" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+                  <a
+                    href={`mailto:${footerLinks.contact.email1}`}
+                    className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    {footerLinks.contact.email1}
+                  </a>
+                  <br />
+                  <a
+                    href={`mailto:${footerLinks.contact.email2}`}
+                    className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    {footerLinks.contact.email2}
+                  </a>
+                </T>
               </FooterRow>
 
               <FooterRow icon={<PhoneIcon />}>
-                <a
-                  href={`tel:${footerLinks.contact.phone.replace(/\s+/g, "")}`}
-                  className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                >
-                  {footerLinks.contact.phone}
-                </a>
+                <T as="p" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+                  <a
+                    href={`tel:${footerLinks.contact.phone.replace(/\s+/g, "")}`}
+                    className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    {footerLinks.contact.phone}
+                  </a>
+                </T>
               </FooterRow>
 
-              {/* WhatsApp */}
               <FooterRow icon={<WhatsAppIcon />}>
-                <a
-                  href={footerLinks.contact.whatsapp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                >
-                  +91 7676161689
-                </a>
+                <T as="p" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+                  <a
+                    href={footerLinks.contact.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    +91 7676161689
+                  </a>
+                </T>
               </FooterRow>
 
-              {/* Address → Google Maps */}
               <FooterRow icon={<LocationIcon />}>
-                <a
-                  href={footerLinks.contact.addressMaps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                >
-                  {footerLinks.contact.addressText.split(", ").map((chunk, i) => (
-                    <React.Fragment key={i}>
-                      {chunk}
-                      {i < footerLinks.contact.addressText.split(", ").length - 1 ? ", " : ""}
-                      {i === 0 && <br />}
-                    </React.Fragment>
-                  ))}
-                </a>
+                <T as="p" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+                  {footerLinks.contact.addressText
+                    .split(", ")
+                    .map((chunk, i, arr) => (
+                      <React.Fragment key={i}>
+                        {chunk}
+                        {i < arr.length - 1 ? ", " : ""}
+                        {i === 0 && <br />}
+                      </React.Fragment>
+                    ))}
+                </T>
               </FooterRow>
             </div>
 
-            {/* Socials */}
             <div className="mt-6 flex items-center gap-4">
               <SocialLink ariaLabel="Instagram" href={footerLinks.socials.instagram}>
                 <InstagramIcon />
@@ -170,44 +219,38 @@ export default function NewFooter() {
           </div>
         </div>
 
-        {/* Mobile copyright */}
-        <div className="px-6 pb-6 text-[12px] text-white/60 md:hidden">© {year}, All rights reserved</div>
+        {/* Bottom-left single-line copyright — Archivo Semibold 14 / 23 / 0% */}
+        <div className="mx-auto max-w-[1280px] px-6 pb-6 md:px-10">
+          <T
+            as="p"
+            variant="body16"
+            className="whitespace-nowrap text-white/60 text-[14px] leading-[23px] tracking-[0em] font-semibold"
+          >
+            © 2023, All rights Reserved
+          </T>
+        </div>
       </div>
     </footer>
   );
 }
 
-/* Column with heading + links (internal/external aware) */
+/* --------------------------------------------
+   Column (title + link list)
+--------------------------------------------- */
 function FooterCol({
   title,
   items,
 }: {
   title: string;
-  items: { label: string; href: string }[];
+  items: FooterItem[];
 }) {
   return (
     <div className="flex flex-col">
-      <FooterLabel>{title}</FooterLabel>
-      <ul className="mt-3 space-y-2 text-[14px] leading-[23px] tracking-[0.03em] text-white/90">
+      <SectionLabel>{title}</SectionLabel>
+      <ul className="mt-3 space-y-2">
         {items.map((it) => (
           <li key={it.label}>
-            {it.href.startsWith("/") ? (
-              <Link
-                href={it.href}
-                className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-              >
-                {it.label}
-              </Link>
-            ) : (
-              <a
-                href={it.href}
-                target={it.href.startsWith("http") ? "_blank" : undefined}
-                rel={it.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                className="hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-              >
-                {it.label}
-              </a>
-            )}
+            <FooterItemLink item={it} />
           </li>
         ))}
       </ul>
@@ -215,12 +258,88 @@ function FooterCol({
   );
 }
 
-function FooterLabel({ children }: { children: React.ReactNode }) {
-  return <h4 className="text-[16px] font-semibold">{children}</h4>;
+/* --------------------------------------------
+   Footer item renderer — normal vs smart link
+--------------------------------------------- */
+function FooterItemLink({ item }: { item: FooterItem }) {
+  const router = useRouter();
+  const linkCls =
+    "hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80";
+
+  if ("href" in item && item.href) {
+    const isExternal = item.href.startsWith("http");
+    return (
+      <T as="span" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+        {isExternal ? (
+          <a href={item.href} target="_blank" rel="noopener noreferrer" className={linkCls}>
+            {item.label}
+          </a>
+        ) : (
+          <Link href={item.href} className={linkCls}>
+            {item.label}
+          </Link>
+        )}
+      </T>
+    );
+  }
+
+  const onSmartClick = () => {
+    const authed = getIsAuthed();
+
+    if (item.smart === "browseJobs") {
+      if (authed) router.push("/find-jobs");
+      else router.push("/login?redirect=/find-jobs");
+      return;
+    }
+
+    if (item.smart === "resumeBuilder") {
+      const uploadPath = "/resume/upload";
+      if (authed) router.push(uploadPath);
+      else router.push(`/login?redirect=${encodeURIComponent(uploadPath)}`);
+      return;
+    }
+  };
+
+  return (
+    <T as="button" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
+      <button
+        type="button"
+        onClick={onSmartClick}
+        className={linkCls}
+        aria-label={item.label}
+      >
+        {item.label}
+      </button>
+    </T>
+  );
 }
 
-/* Icon + text row */
-function FooterRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+/* --------------------------------------------
+   Section label (h4 semantics)
+   (stays consistent; spec didn’t change this one)
+--------------------------------------------- */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <T
+      as="h4"
+      variant="body16"
+      className="text-[16px] leading-[23px] tracking-[0.03em] font-semibold"
+    >
+      {children}
+    </T>
+  );
+}
+
+/* --------------------------------------------
+   Icon row (glyph + content)
+--------------------------------------------- */
+function FooterRow({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-start gap-3">
       <span className="mt-[2px] text-white/80" aria-hidden="true">
@@ -231,7 +350,9 @@ function FooterRow({ icon, children }: { icon: React.ReactNode; children: React.
   );
 }
 
-/* Social icon link */
+/* --------------------------------------------
+   Social link with consistent focus behavior
+--------------------------------------------- */
 function SocialLink({
   href,
   ariaLabel,
@@ -244,8 +365,15 @@ function SocialLink({
   const isExternal = href.startsWith("http");
   const className =
     "grid size-[18.75px] place-items-center text-white/90 transition hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80";
+
   return isExternal ? (
-    <a href={href} aria-label={ariaLabel} target="_blank" rel="noopener noreferrer" className={className}>
+    <a
+      href={href}
+      aria-label={ariaLabel}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+    >
       {children}
     </a>
   ) : (
@@ -255,10 +383,20 @@ function SocialLink({
   );
 }
 
-/* Icons use currentColor so they inherit link/text color */
+/* --------------------------------------------
+   Icons — inherit currentColor
+--------------------------------------------- */
 function MailIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <path d="M4 6h16v12H4z" />
       <path d="M22 6l-10 7L2 6" />
     </svg>
@@ -266,7 +404,15 @@ function MailIcon() {
 }
 function PhoneIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.9 19.9 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.9 19.9 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.12a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92z" />
     </svg>
   );
@@ -280,7 +426,15 @@ function WhatsAppIcon() {
 }
 function LocationIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z" />
       <circle cx="12" cy="11" r="2.5" />
     </svg>
@@ -288,7 +442,15 @@ function LocationIcon() {
 }
 function InstagramIcon() {
   return (
-    <svg width="18.75" height="18.75" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      width="18.75"
+      height="18.75"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />

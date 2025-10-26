@@ -6,7 +6,7 @@ import Image from "next/image";
 type LogoItem = { src: string; alt: string };
 
 type Props = {
-  speed?: number;       // seconds for one full pass (controls animation duration)
+  speed?: number;       // seconds per loop
   caption?: string;
   logos?: LogoItem[];
   heightMax?: number;   // px
@@ -14,7 +14,8 @@ type Props = {
   heightVw?: number;    // vw
   gap?: number;         // px between logo cells
   itemPx?: number;      // px horizontal padding inside each cell
-  repeat?: number;      // number of logos before looping
+  repeat?: number;      // number of logos before looping (doubled internally)
+  className?: string;   // allow callers to add/override classes
 };
 
 const BASE_LOGOS: LogoItem[] = [
@@ -27,12 +28,13 @@ export default function LogoMarquee({
   speed = 100,
   caption = "- Loved by startups, scale-ups, and hiring platforms -",
   logos,
-  heightMax = 128, // increased maximum height
-  heightMin = 80,  // taller baseline height
-  heightVw = 16,   // scales more with viewport width
-  gap = 12,        // slightly more space between logos
-  itemPx = 12,     // more inner padding per logo
+  heightMax = 128,
+  heightMin = 80,
+  heightVw = 16,
+  gap = 12,
+  itemPx = 12,
   repeat = 24,
+  className,
 }: Props) {
   const srcLogos = logos && logos.length > 0 ? logos : BASE_LOGOS;
 
@@ -43,22 +45,15 @@ export default function LogoMarquee({
     return repeat;
   }, [srcLogos.length, repeat]);
 
-  // repeat and duplicate for smooth continuous scroll
   const longList = React.useMemo(
     () => Array.from({ length: safeRepeat }, (_, i) => srcLogos[i % srcLogos.length]),
     [srcLogos, safeRepeat]
   );
   const doubled = React.useMemo(() => [...longList, ...longList], [longList]);
 
-  // build responsive Tailwind classes dynamically
-  const trackHeight = `min-h-[clamp(${heightMin}px,${heightVw}vw,${heightMax}px)]`;
-  const cellHeight = `h-[clamp(${heightMin}px,${heightVw}vw,${heightMax}px)]`;
-  const gapClass = `gap-[${gap}px]`;
-  const padClass = `px-[${itemPx}px]`;
-  const durationClass = `duration-[${speed}s]`;
-
   return (
-    <section className="w-full">
+    // Important: no outer spacing; parent controls rhythm (Option A)
+    <section className={`w-full !my-0 !py-0 ${className ?? ""}`}>
       {caption && (
         <div className="mb-6 flex items-center justify-center">
           <p className="text-center text-[14px] font-medium tracking-[0.01em] text-[#A2A2A2]">
@@ -68,23 +63,34 @@ export default function LogoMarquee({
       )}
 
       <div className="relative w-full overflow-hidden">
-        {/* Track scrolling continuously to the left */}
+        {/* Track */}
         <div
           className={[
             "flex min-w-max items-center will-change-transform translate-z-0",
-            "animate-marquee", // keyframes defined in globals.css
-            durationClass,
-            trackHeight,
-            gapClass,
+            "animate-marquee",
+            // responsive height + spacing using CSS variables
+            "min-h-[clamp(var(--h-min),var(--h-vw),var(--h-max))]",
+            "gap-[var(--gap)]",
           ].join(" ")}
+          style={
+            {
+              // CSS variables (units baked in)
+              ["--dur" as any]: `${speed}s`,
+              ["--h-min" as any]: `${heightMin}px`,
+              ["--h-vw" as any]: `${heightVw}vw`,
+              ["--h-max" as any]: `${heightMax}px`,
+              ["--gap" as any]: `${gap}px`,
+              ["--item-px" as any]: `${itemPx}px`,
+            } as React.CSSProperties
+          }
         >
           {doubled.map((logo, i) => (
             <span
               key={`${logo.src}-${i}`}
               className={[
                 "inline-flex flex-none items-center justify-center",
-                cellHeight,
-                padClass,
+                "h-[clamp(var(--h-min),var(--h-vw),var(--h-max))]",
+                "px-[var(--item-px)]",
               ].join(" ")}
             >
               <span className="relative aspect-[3/1] h-full w-auto min-w-[180px]">

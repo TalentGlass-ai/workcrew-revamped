@@ -2,16 +2,25 @@
 
 import Image from "next/image";
 import React from "react";
+import { useRouter } from "next/navigation";
 import LogoMarquee from "./LogoMarquee";
 import FeatureSlides from "./FeatureSlides";
 import T from "../primitives/Typography";
 import GlassPill from "../primitives/tags/GlassPill";
 
+/* top hero of the landing — keep spacing owned by the page wrapper, not here */
 export default function HeroSection(): React.ReactElement {
+  const router = useRouter();
+
+  /* quick handlers so we don’t inline router.push all over the place */
+  const handleFindWorkClick = () => router.push("/login?role=candidate");
+  const handleStartHiringClick = () => router.push("/login?role=recruiter");
+
   return (
-    <section className="relative">
+    /* root — no outer padding/margins; page <main> decides vertical gaps */
+    <section className="relative !my-0 !py-0">
       <div className="hero-top relative min-h-[740px] overflow-hidden">
-        {/* Layered background: soft gradient + subtle grid */}
+        {/* soft gradient bg + subtle grid — purely decorative */}
         <div
           aria-hidden
           className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(246,247,252,0.95)_0%,rgba(236,239,248,0.92)_100%)]"
@@ -21,38 +30,27 @@ export default function HeroSection(): React.ReactElement {
           className="absolute inset-0 z-0 opacity-30 bg-[linear-gradient(rgba(163,157,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(163,157,255,0.25)_1px,transparent_1px)] [background-size:40px_40px]"
         />
 
-        {/* Content */}
+        {/* main content grid */}
         <div className="relative z-10 mx-auto max-w-[1440px] pl-[51px] pr-[51px] pb-24 md:pb-28">
           <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
+            {/* left column — headline, subcopy, ctas, stats */}
             <div className="mt-[100px]">
-              {/* Eyebrow pill */}
+              {/* tiny brand pill on top */}
               <div className="mb-6">
                 <GlassPill text="The future of hiring is here" iconColor="#4D31EC" />
               </div>
 
-              {/* Headline */}
+              {/* hero headline — split across two lines for better rhythm */}
               <h1>
-                <T
-                  as="div"
-                  variant="hero48"
-                  weight={540}
-                  className="text-left text-[#4D31EC]"
-                  autoLeading
-                >
+                <T as="div" variant="hero48" weight={540} className="text-left text-[#4D31EC]" autoLeading>
                   Hiring or job hunting?
                 </T>
-                <T
-                  as="div"
-                  variant="hero48"
-                  weight={540}
-                  className="mt-5 text-left text-black"
-                  autoLeading
-                >
+                <T as="div" variant="hero48" weight={540} className="mt-5 text-left text-black" autoLeading>
                   You’re in the right place.
                 </T>
               </h1>
 
-              {/* Subcopy */}
+              {/* subcopy — use Variant that already encodes font + tracking; pass exact leading */}
               <T
                 as="p"
                 variant="sub20"
@@ -65,30 +63,30 @@ export default function HeroSection(): React.ReactElement {
                 right role and recruiters hire faster, smarter, better.
               </T>
 
-              {/* Primary CTAs */}
+              {/* primary CTAs — text inside is our T component so we don’t hand-roll styles */}
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <a
-                  href="#"
+                <button
+                  onClick={handleFindWorkClick}
                   className="inline-flex h-[50px] items-center gap-2 rounded-full px-6 leading-none text-[#4D31EC] transition hover:brightness-105 active:translate-y-[1px] border-[1.5px] border-[#6C55FF] bg-[linear-gradient(180deg,rgba(108,85,255,0.06)_0%,rgba(108,85,255,0.03)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_22px_rgba(91,75,255,0.18)]"
                 >
                   <ArrowNortheast />
                   <T as="span" variant="sub14" weight={600} trackingPct={2}>
                     Find work
                   </T>
-                </a>
+                </button>
 
-                <a
-                  href="#"
+                <button
+                  onClick={handleStartHiringClick}
                   className="inline-flex h-[50px] items-center gap-2 rounded-full px-6 leading-none text-white shadow-[0_10px_24px_rgba(91,75,255,0.28)] hover:brightness-105 bg-[#5B4BFF]"
                 >
                   <ArrowNortheast />
                   <T as="span" variant="sub14" weight={600} trackingPct={2}>
                     Start hiring
                   </T>
-                </a>
+                </button>
               </div>
 
-              {/* Quick stats */}
+              {/* quick stats — keep numbers + labels aligned with our T variants */}
               <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
                 <Stat number="5,000+" label="Candidates" />
                 <Stat number="500+" label="Recruiters" />
@@ -99,9 +97,9 @@ export default function HeroSection(): React.ReactElement {
           </div>
         </div>
 
-        {/* Right hero image */}
+        {/* right illustration — sits visually centered relative to the headline on md+ */}
         <div className="relative z-10 mx-auto mt-10 w-[510px] max-w-[92vw] md:absolute md:right-6 md:top-1/2 md:mt-0 md:-translate-y-1/2">
-          <div className="relative overflow-hidden rounded-[24px] w-[510px]">
+          <div className="relative w-[510px] overflow-hidden rounded-[24px]">
             <div className="min-h-[320px]">
               <Image
                 src="/hero-right.png"
@@ -116,31 +114,23 @@ export default function HeroSection(): React.ReactElement {
         </div>
       </div>
 
-      {/* Logo marquee */}
-      <div className="mb-[60px] mt-6 md:mt-8">
+      {/* partner logos — let the marquee manage its own rhythm */}
+      <div className="mt-6 md:mt-8">
         <LogoMarquee heightMax={64} heightMin={40} heightVw={8} repeat={32} speed={28} />
       </div>
 
-      {/* Statement block */}
-      <div className="mx-auto mb-[60px] max-w-4xl px-6">
+      {/* statement block — use our T variants instead of overriding font sizes by hand */}
+      <div className="mx-auto max-w-4xl px-6 py-[80px] md:py-[100px]">
         <div className="mb-14 h-px w-full bg-[#E5E7EB] md:mb-16" />
         <div className="text-center">
-          <T
-            as="div"
-            variant="hero48"
-            weight={540}
-            className="text-[40px] leading-[52px] text-black"
-          >
+          {/* this was hero48 + text-[40px]; use h1 variant (40px) + exact leading so tokens stay honest */}
+          <T as="div" variant="h1" weight={540} lineHeightPx={52} className="text-black">
             “Recruiting &amp; job searching are fundamentally broken” – They say.
           </T>
 
           <div className="mt-5">
-            <T
-              as="div"
-              variant="card36"
-              weight={540}
-              className="leading-[28px] text-[#4D31EC]"
-            >
+            {/* card36 needs a tighter leading here; pass it explicitly instead of tailwind leading class */}
+            <T as="div" variant="card36" weight={540} lineHeightPx={28} className="text-[#4D31EC]">
               But we have solved every problem for you
             </T>
           </div>
@@ -148,13 +138,13 @@ export default function HeroSection(): React.ReactElement {
         <div className="mt-14 h-px w-full bg-[#E5E7EB] md:mt-16" />
       </div>
 
-      {/* Feature slider (60px below the statement block) */}
+      {/* features carousel lives under hero — spacing below is managed by page sections */}
       <FeatureSlides />
     </section>
   );
 }
 
-/* Simple stat block */
+/* small stat block — numbers big, labels supportive; both reuse T so typography is consistent */
 function Stat({ number, label }: { number: string; label: string }) {
   return (
     <div className="text-center md:text-left">
@@ -168,6 +158,7 @@ function Stat({ number, label }: { number: string; label: string }) {
   );
 }
 
+/* lil arrow icon for CTAs — keeps weight light but readable */
 function ArrowNortheast() {
   return (
     <svg

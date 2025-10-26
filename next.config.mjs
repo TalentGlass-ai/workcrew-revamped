@@ -6,9 +6,17 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Build-time stable ID (string) – same on server & client for this build
+const BUILD_ID = String(Date.now());
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Expose a stable build id to both server & client
+  env: {
+    NEXT_PUBLIC_BUILD_ID: BUILD_ID,
+  },
 
   webpack: (config) => {
     config.resolve.alias = {

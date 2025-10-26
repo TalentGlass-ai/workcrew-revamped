@@ -2,12 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useMotionValueEvent,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 type Review = {
   name: string;
@@ -47,55 +42,48 @@ export default function ReviewsSection() {
     offset: ["start 85%", "end 15%"],
   });
 
-  // Map progress to percentages (numbers → then to "%")
-  const x1 = useTransform(scrollYProgress, [0, 1], [-10, -25]);
-  const x2 = useTransform(scrollYProgress, [0, 1], [-15, 15]);
-  const x3 = useTransform(scrollYProgress, [0, 1], [-10, -30]);
-
-  // Push values to CSS variables on :root (no element inline styles)
-  useMotionValueEvent(x1, "change", (v) =>
-    document.documentElement.style.setProperty("--reviews-row1", `${v}%`)
-  );
-  useMotionValueEvent(x2, "change", (v) =>
-    document.documentElement.style.setProperty("--reviews-row2", `${v}%`)
-  );
-  useMotionValueEvent(x3, "change", (v) =>
-    document.documentElement.style.setProperty("--reviews-row3", `${v}%`)
-  );
+  // Bind transforms directly to rows (no CSS var roundtrip)
+  const x1 = useTransform(scrollYProgress, [0, 1], ["-10%", "-25%"]);
+  const x2 = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+  const x3 = useTransform(scrollYProgress, [0, 1], ["-10%", "-30%"]);
 
   return (
+    // No external margins/padding — parent <main> controls the gap
     <section
       ref={ref}
-      className="reviews-section relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden bg-[linear-gradient(180deg,#4D31EC_0%,#4a2fe9_50%,#462ae1_100%)] py-10 text-white"
+      className="reviews-section relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden bg-[linear-gradient(180deg,#4D31EC_0%,#4a2fe9_50%,#462ae1_100%)] !my-0 !py-0 text-white"
     >
-      {/* Centered halo + headline */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-[304px] w-[765px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(77,49,236,1)_0%,rgba(77,49,236,1)_35%,rgba(77,49,236,0.75)_55%,rgba(77,49,236,0.4)_70%,rgba(77,49,236,0)_100%)] shadow-[0_0_100px_rgba(105,81,242,0.65)]">
-          <h2 className="font-display text-[38px] font-semibold leading-[1.2] tracking-[0.01em] text-white">
-            What our users are saying
-          </h2>
+      {/* internal vertical breathing */}
+      <div className="py-12 md:py-16">
+        {/* Centered halo + headline */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex h-[304px] w-[765px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(77,49,236,1)_0%,rgba(77,49,236,1)_35%,rgba(77,49,236,0.75)_55%,rgba(77,49,236,0.4)_70%,rgba(77,49,236,0)_100%)] shadow-[0_0_100px_rgba(105,81,242,0.65)]">
+            <h2 className="font-display text-[38px] font-semibold leading-[1.2] tracking-[0.01em] text-white">
+              What our users are saying
+            </h2>
+          </div>
         </div>
-      </div>
 
-      {/* Rows of reviews with parallax */}
-      <div className="relative z-10 mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
-        <motion.div className="reviews-row-1 flex w-[220%] gap-16">
-          {repeatToFill(ROW1, 10).map((r, i) => (
-            <ReviewCard key={`r1-${i}`} r={r} />
-          ))}
-        </motion.div>
+        {/* Rows of reviews with parallax */}
+        <div className="relative z-10 mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
+          <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW1, 10).map((r, i) => (
+              <ReviewCard key={`r1-${i}`} r={r} />
+            ))}
+          </motion.div>
 
-        <motion.div className="reviews-row-2 flex w-[220%] gap-16">
-          {repeatToFill(ROW2, 10).map((r, i) => (
-            <ReviewCard key={`r2-${i}`} r={r} />
-          ))}
-        </motion.div>
+          <motion.div style={{ x: x2 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW2, 10).map((r, i) => (
+              <ReviewCard key={`r2-${i}`} r={r} />
+            ))}
+          </motion.div>
 
-        <motion.div className="reviews-row-3 flex w-[220%] gap-16">
-          {repeatToFill(ROW3, 10).map((r, i) => (
-            <ReviewCard key={`r3-${i}`} r={r} />
-          ))}
-        </motion.div>
+          <motion.div style={{ x: x3 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW3, 10).map((r, i) => (
+              <ReviewCard key={`r3-${i}`} r={r} />
+            ))}
+          </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -12,6 +12,21 @@ const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+/* =========================
+   EXTERNAL LINKS / PLACEHOLDERS
+   ========================= */
+const SALES_CALENDAR_URL = "https://calendar.app.google/aLFgZjQ3dFf8oBSXA";
+// Replace this with your real demo video URL when ready:
+const DEMO_PLACEHOLDER_URL = "/demo-placeholder"; // e.g. /videos/demo.mp4 or /demo
+
+// Put your Razorpay payment links here (live or test).
+// If a plan link is missing, we fall back to razorpay.com home.
+const RAZORPAY_LINKS: Record<string, string> = {
+  Starter: "https://razorpay.com",  // e.g. "https://rzp.io/l/workcrew-starter"
+  Growth: "https://razorpay.com",   // e.g. "https://rzp.io/l/workcrew-growth"
+  Enterprise: "https://razorpay.com" // rarely used (sales route), kept for completeness
+};
+
 type FeatureRow =
   | { label: string; value: string }
   | { label: string; included: boolean };
@@ -30,6 +45,20 @@ type Plan = {
 export default function PricingPage() {
   const [billing, setBilling] = React.useState<"monthly" | "yearly">("monthly");
   const isYearly = billing === "yearly";
+
+  // Open a Razorpay link (placeholder-safe).
+  const openRazorpay = (planName: string) => {
+    const href = RAZORPAY_LINKS[planName] ?? "https://razorpay.com";
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+
+  // Open Calendar for booking, then route to demo placeholder on current tab.
+  const goToCalendarThenDemo = () => {
+    window.open(SALES_CALENDAR_URL, "_blank", "noopener,noreferrer");
+    setTimeout(() => {
+      window.location.href = DEMO_PLACEHOLDER_URL;
+    }, 800);
+  };
 
   // Plans
   const plans: Plan[] = [
@@ -102,7 +131,7 @@ export default function PricingPage() {
       {/* Header + Pricing */}
       <Section withContainer={false}>
         <div className="relative">
-          {/* decorative grid circle (inline styles -> see notes below) */}
+          {/* decorative grid circle */}
           <div
             aria-hidden
             className="pointer-events-none absolute z-[1] rounded-full"
@@ -124,7 +153,7 @@ export default function PricingPage() {
           <Container>
             <div
               className="relative z-10 flex flex-col items-center text-center space-y-6"
-              style={{ marginTop: "-100px" }} // inline -> see notes
+              style={{ marginTop: "-100px" }}
             >
               <T as="h1" variant="hero48" className="text-black" autoLeading>
                 Pricing
@@ -142,77 +171,78 @@ export default function PricingPage() {
                 talent, and effectively grow your team.
               </T>
 
-              {/* billing toggle (inline -> see notes) */}
-              <div className="relative mt-[100px] flex flex-col items-center gap-4">
-                <div
-                  className="relative rounded-full bg-white/70 shadow-sm"
-                  style={{
-                    width: 227,
-                    height: 62,
-                    border: "1px solid #4D31EC",
-                    boxShadow:
-                      "inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 22px rgba(61,79,255,0.12)",
-                    backdropFilter: "blur(6px)",
-                    WebkitBackdropFilter: "blur(6px)",
-                  }}
-                >
+              {/* ===== Centered billing toggle with arrow+label positioned like Figma ===== */}
+              <div className="relative mt-[88px] w-full flex justify-center">
+                {/* Fixed-width wrapper keeps the pill perfectly centered */}
+                <div className="relative mx-auto" style={{ width: 227, height: 62 }}>
+                  {/* Toggle pill */}
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 rounded-full transition-transform duration-300 ease-out"
+                    className="absolute inset-0 rounded-full bg-white/70 shadow-sm"
                     style={{
-                      width: 100,
-                      height: 47,
-                      transform: `translate(${isYearly ? 119 : 8}px, -50%)`,
-                      background: "linear-gradient(180deg, #4D31EC 0%, #4D31EC 100%)",
+                      border: "1px solid #4D31EC",
                       boxShadow:
-                        "0 6px 18px rgba(77,49,236,0.25), inset 0 1px 0 rgba(255,255,255,0.35)",
-                      border: "none",
+                        "inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 22px rgba(61,79,255,0.12)",
+                      backdropFilter: "blur(6px)",
+                      WebkitBackdropFilter: "blur(6px)",
                     }}
-                  />
-                  <div className="absolute inset-0 grid grid-cols-2">
-                    {["Monthly", "Yearly"].map((label, idx) => {
-                      const active =
-                        (idx === 0 && billing === "monthly") ||
-                        (idx === 1 && billing === "yearly");
-                      return (
-                        <button
-                          key={label}
-                          onClick={() => setBilling(idx === 0 ? "monthly" : "yearly")}
-                          className="relative z-10 flex items-center justify-center"
-                        >
-                          <T
-                            as="span"
-                            variant="body16"
-                            weight={500}
-                            trackingPct={3}
-                            className={active ? "text-white" : "text-[#4D31EC]"}
+                  >
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 rounded-full transition-transform duration-300 ease-out"
+                      style={{
+                        width: 100,
+                        height: 47,
+                        transform: `translate(${isYearly ? 119 : 8}px, -50%)`,
+                        background: "linear-gradient(180deg, #4D31EC 0%, #4D31EC 100%)",
+                        boxShadow:
+                          "0 6px 18px rgba(77,49,236,0.25), inset 0 1px 0 rgba(255,255,255,0.35)",
+                        border: "none",
+                      }}
+                    />
+                    <div className="absolute inset-0 grid grid-cols-2">
+                      {["Monthly", "Yearly"].map((label, idx) => {
+                        const active =
+                          (idx === 0 && billing === "monthly") ||
+                          (idx === 1 && billing === "yearly");
+                        return (
+                          <button
+                            key={label}
+                            onClick={() => setBilling(idx === 0 ? "monthly" : "yearly")}
+                            className="relative z-10 flex items-center justify-center"
                           >
-                            {label}
-                          </T>
-                        </button>
-                      );
-                    })}
+                            <T
+                              as="span"
+                              variant="body16"
+                              weight={500}
+                              trackingPct={3}
+                              className={active ? "text-white" : "text-[#4D31EC]"}
+                            >
+                              {label}
+                            </T>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Arrow + “10% off” — single row, top-right of the pill pointing to Yearly */}
+                  <div
+                    className="pointer-events-none absolute -top-6 right-[-78px] flex items-center gap-2 whitespace-nowrap"
+                    aria-hidden
+                  >
+                    <img
+                      src="/icons/curved-arrow.svg"
+                      alt=""
+                      width={54}
+                      height={28}
+                      style={{ objectFit: "contain" }}
+                    />
+                    <T as="span" variant="sub14" weight={700} trackingPct={2} className="text-black">
+                      10% off
+                    </T>
                   </div>
                 </div>
-
-                <div
-                  className="absolute flex items-center gap-2"
-                  style={{ left: "calc(100% - 16px)", top: "-10px" }} // inline -> see notes
-                >
-                  <img
-                    src="/icons/curved-arrow.svg"
-                    alt="Curved arrow"
-                    width={64}
-                    height={34}
-                    style={{
-                      objectFit: "contain",
-                      transform: "translate(20px, -10px)", // inline -> see notes
-                    }}
-                  />
-                  <T as="span" variant="sub14" weight={600} trackingPct={2} className="text-black">
-                    10% off
-                  </T>
-                </div>
               </div>
+              {/* ===== /Centered billing toggle ===== */}
             </div>
           </Container>
 
@@ -223,6 +253,11 @@ export default function PricingPage() {
                 const isHighlight = !!plan.highlight;
                 const baseCard =
                   "relative rounded-xl bg-white flex flex-col overflow-visible min-h-[600px] p-6 pb-12 border border-gray-200 shadow-sm";
+
+                const handlePrimaryCTA =
+                  plan.cta.toLowerCase().includes("contact")
+                    ? goToCalendarThenDemo
+                    : () => openRazorpay(plan.name);
 
                 return (
                   <div
@@ -240,7 +275,7 @@ export default function PricingPage() {
                         ? {
                             borderWidth: 2.5,
                             boxShadow:
-                              "0 12px 30px rgba(77,49,236,0.25), 0 0 0 3px rgba(77,49,236,0.18)", // inline -> see notes
+                              "0 12px 30px rgba(77,49,236,0.25), 0 0 0 3px rgba(77,49,236,0.18)",
                           }
                         : undefined
                     }
@@ -258,7 +293,7 @@ export default function PricingPage() {
                           borderTopLeftRadius: 14,
                           borderTopRightRadius: 14,
                           background: "#4D31EC",
-                          boxShadow: "0 10px 24px rgba(77,49,236,0.35)", // inline -> see notes
+                          boxShadow: "0 10px 24px rgba(77,49,236,0.35)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -270,7 +305,7 @@ export default function PricingPage() {
                       </div>
                     )}
 
-                    {/* fixed header height keeps CTAs aligned across cards */}
+                    {/* header */}
                     <div className="flex flex-col items-center text-center min-h-[150px] justify-end">
                       <T as="h3" variant="sub20" weight={560} className="text-[#101828]">
                         {plan.name}
@@ -284,7 +319,7 @@ export default function PricingPage() {
                               color: "#4D31EC",
                               fontFamily: "Archivo, var(--font-display)",
                               fontWeight: 700,
-                              fontSize: 32, // inline -> see notes
+                              fontSize: 32,
                               letterSpacing: "0.005em",
                             }}
                           >
@@ -308,6 +343,7 @@ export default function PricingPage() {
                     <button
                       type="button"
                       aria-label={plan.cta}
+                      onClick={handlePrimaryCTA}
                       className="mt-5 mb-3 inline-flex w-full items-center justify-center gap-3 rounded-[14px] bg-[#4D31EC] px-5 py-3 text-white hover:bg-[#4029c8] transition"
                     >
                       <T as="span" variant="sub14" weight={500}>
@@ -339,7 +375,7 @@ export default function PricingPage() {
                                 alt="Not included"
                                 width={20}
                                 height={20}
-                                style={{ opacity: 0.7 }} // inline -> see notes
+                                style={{ opacity: 0.7 }}
                               />
                             )}
                           </li>
@@ -354,7 +390,7 @@ export default function PricingPage() {
         </div>
       </Section>
 
-      {/* custom plan banner (inline gradient -> see notes) */}
+      {/* custom plan banner */}
       <Section withContainer={false}>
         <div
           className="rounded-[16px] flex items-center gap-6"
@@ -379,6 +415,7 @@ export default function PricingPage() {
 
           <button
             type="button"
+            onClick={goToCalendarThenDemo}
             className="inline-flex items-center justify-center rounded-full text-white"
             style={{
               width: 173,

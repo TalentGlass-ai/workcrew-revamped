@@ -1,5 +1,4 @@
 export { default as HeroSection } from "./HeroSection";
-export { default as NewFeaturedJob } from "./NewFeaturedJob";
 export { default as NewNavbar } from "./NewNavbar";
 export { default as NewFooter } from "./NewFooter";
 export { default as LogoMarquee } from "./LogoMarquee";

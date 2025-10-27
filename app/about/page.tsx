@@ -55,59 +55,29 @@ const CORE_TABS = [
 ];
 
 const JOURNEY_STEPS = [
-  {
-    id: "research",
-    topLabel: "Research & exploration",
-    year: "2019",
-    iconPath: "M9 2l2 4 4 1-3 3 .7 4-3.7-2-3.7 2 .7-4-3-3 4-1 2-4z",
-    title: "Research & exploration",
-    blurb:
-      "We began by engaging early users, listening closely to candidates and recruiters, and experimenting to understand what truly worked.",
-  },
-  {
-    id: "talentbox",
-    topLabel: "TalentBox Labs launch",
-    year: "2019",
-    iconPath: "M12 2l-2 6H5l5 3-2 6 4-3 4 3-2-6 5-3h-5l-2-6z",
-    title: "TalentBox Labs launch",
-    blurb:
-      "TalentBox was born with a vision to bring empathy and thoughtfulness into the hiring journey while keeping the human element at the core.",
-  },
-  {
-    id: "prototypes",
-    topLabel: "Prototype & development",
-    year: "2021",
-    iconPath: "M4 14l8-8 8 8-8 8-8-8zm8-5l5 5-5 5-5-5 5-5z",
-    title: "Prototypes & development",
-    blurb:
-      "Turning insights into action, we built and refined prototypes, tested possibilities, and iterated on feedback to shape a scalable product.",
-  },
-  {
-    id: "launch",
-    topLabel: "WorkCrew.ai launch",
-    year: "2023",
-    iconPath: "M2 12h20M12 2v20",
-    title: "WorkCrew.ai launch",
-    blurb:
-      "Our one-stop AI solution took shape—making hiring smarter, faster, and more transparent while centering people in every decision.",
-  },
-  {
-    id: "closed-roles",
-    topLabel: "Roles closed",
-    year: "2025",
-    iconPath: "M3 12l5 5L21 4",
-    title: "Closed 500+ roles",
-    blurb:
-      "We focused on adoption and continuous improvement, integrating assessments and helping teams close 500+ roles with meaning.",
-  },
+  { id: "research", topLabel: "Research & exploration", year: "2019", iconPath: "M9 2l2 4 4 1-3 3 .7 4-3.7-2-3.7 2 .7-4-3-3 4-1 2-4z", title: "Research & exploration", blurb: "We began by engaging early users, listening closely to candidates and recruiters, and experimenting to understand what truly worked." },
+  { id: "talentbox", topLabel: "TalentBox Labs launch", year: "2019", iconPath: "M12 2l-2 6H5l5 3-2 6 4-3 4 3-2-6 5-3h-5l-2-6z", title: "TalentBox Labs launch", blurb: "TalentBox was born with a vision to bring empathy and thoughtfulness into the hiring journey while keeping the human element at the core." },
+  { id: "prototypes", topLabel: "Prototype & development", year: "2021", iconPath: "M4 14l8-8 8 8-8 8-8-8zm8-5l5 5-5 5-5-5 5-5z", title: "Prototypes & development", blurb: "Turning insights into action, we built and refined prototypes, tested possibilities, and iterated on feedback to shape a scalable product." },
+  { id: "launch", topLabel: "WorkCrew.ai launch", year: "2023", iconPath: "M2 12h20M12 2v20", title: "WorkCrew.ai launch", blurb: "Our one-stop AI solution took shape—making hiring smarter, faster, and more transparent while centering people in every decision." },
+  { id: "closed-roles", topLabel: "Roles closed", year: "2025", iconPath: "M3 12l5 5L21 4", title: "Closed 500+ roles", blurb: "We focused on adoption and continuous improvement, integrating assessments and helping teams close 500+ roles with meaning." },
 ];
 
-const TESTIMONIALS = [
-  { name: "James Lee", role: "Product Manager at Google", quote: "The collaborative environment here has really elevated my skills and career!" },
-  { name: "Priya S", role: "HR Lead at FintechCo", quote: "Rahi helped us screen faster without compromising quality." },
-  { name: "Arun K", role: "Talent Partner at StartUpX", quote: "Our time-to-hire dropped noticeably after moving to WorkCrew.ai." },
-  { name: "Meera D", role: "Recruiter at HealthTech", quote: "The pipeline visibility and assessment fit are game-changers." },
-  { name: "Vikram N", role: "Operations @ SaaSCo", quote: "Clean UX, thoughtful flows, and top-notch support." },
+/* 12 hard-coded testimonials; avatars from /public/avatars/ */
+type Testimonial = { name: string; role: string; quote: string; avatar: string };
+
+const TESTIMONIALS: Testimonial[] = [
+  { name: "James Lee", role: "Product Manager at Google", quote: "The collaborative environment here has really elevated my skills and career!", avatar: "/avatars/1.png" },
+  { name: "Priya S", role: "HR Lead at FintechCo", quote: "Rahi helped us screen faster without compromising quality.", avatar: "/avatars/2.png" },
+  { name: "Arun K", role: "Talent Partner at StartUpX", quote: "Our time-to-hire dropped noticeably after moving to WorkCrew.ai.", avatar: "/avatars/3.png" },
+  { name: "Meera D", role: "Recruiter at HealthTech", quote: "The pipeline visibility and assessment fit are game-changers.", avatar: "/avatars/4.png" },
+  { name: "Vikram N", role: "Operations @ SaaSCo", quote: "Clean UX, thoughtful flows, and top-notch support.", avatar: "/avatars/5.png" },
+  { name: "Alejandro Ruiz", role: "People Ops @ RetailCo", quote: "Shortlists are sharper and interviews stay focused—huge win for our stores.", avatar: "/avatars/6.png" },
+  { name: "Mina Park", role: "TA Lead @ MedTech", quote: "We finally have consistency in screening without burning the team out.", avatar: "/avatars/7.png" },
+  { name: "Rohan Gupta", role: "Founder @ NeoCloud", quote: "Loved the assessments—signal is high and noise is low.", avatar: "/avatars/8.png" },
+  { name: "Fatima Noor", role: "Recruiter @ EduLabs", quote: "The team’s responsiveness and the product velocity are impressive.", avatar: "/avatars/9.png" },
+  { name: "Lucia Rossi", role: "HRBP @ FinServe", quote: "Internal mobility got easier once we plugged WorkCrew into our stack.", avatar: "/avatars/10.png" },
+  { name: "Tom Becker", role: "Sr. Recruiter @ BuildIt", quote: "Sourcing and screening time dropped by days, not hours.", avatar: "/avatars/1.png" },
+  { name: "Yuki Tanaka", role: "People Partner @ StudioX", quote: "Candidates actually compliment our process now. That’s new!", avatar: "/avatars/2.png" },
 ];
 
 const STATS = [
@@ -120,58 +90,71 @@ const STATS = [
 export default function AboutPage() {
   const [activeTab, setActiveTab] = React.useState(CORE_TABS[0].id);
 
+  // CTA demo modal
+  const [showDemo, setShowDemo] = React.useState(false);
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowDemo(false);
+    if (showDemo) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showDemo]);
+
   /* auto-advance the journey progress bar label */
   const [jIndex, setJIndex] = React.useState(0);
   React.useEffect(() => {
-    const id = setInterval(
-      () => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length),
-      2000
-    );
+    const id = setInterval(() => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length), 2000);
     return () => clearInterval(id);
   }, []);
 
-  /* conversations carousel: resettable 5s autoplay with hover pause */
-  const convoImages = React.useMemo(
-    () => ["/about-team.png", "/about-team-2.png", "/about-team-3.png"],
-    []
-  );
+  /* conversations carousel — slower autoplay, only when in view */
+  const convoImages = React.useMemo(() => ["/about-team.png", "/about-team-2.png", "/about-team-3.png"], []);
   const [convoIdx, setConvoIdx] = React.useState(0);
-  const convoPausedRef = React.useRef(false);
-  const convoTimerRef = React.useRef<number | null>(null);
+  const [isVisible, setIsVisible] = React.useState(false);
+  const pausedRef = React.useRef(false);
+  const timerRef = React.useRef<number | null>(null);
+  const convoSectionRef = React.useRef<HTMLDivElement | null>(null);
 
-  const clearConvoTimer = React.useCallback(() => {
-    if (convoTimerRef.current) {
-      window.clearTimeout(convoTimerRef.current);
-      convoTimerRef.current = null;
+  const clearTick = React.useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
   }, []);
 
-  const scheduleConvoTick = React.useCallback(() => {
-    clearConvoTimer();
-    convoTimerRef.current = window.setTimeout(() => {
-      if (!convoPausedRef.current) {
+  const scheduleTick = React.useCallback(() => {
+    clearTick();
+    timerRef.current = window.setTimeout(() => {
+      if (!pausedRef.current && isVisible) {
         setConvoIdx((i) => (i + 1) % convoImages.length);
       }
-    }, 5000);
-  }, [clearConvoTimer, convoImages.length]);
+    }, 10000);
+  }, [clearTick, convoImages.length, isVisible]);
 
   React.useEffect(() => {
-    scheduleConvoTick();           // (re)schedule after each index change
-    return clearConvoTimer;        // cleanup on unmount
-  }, [convoIdx, scheduleConvoTick, clearConvoTimer]);
+    const node = convoSectionRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => setIsVisible(entry.isIntersecting)),
+      { threshold: 0.3 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    clearTick();
+    if (isVisible) scheduleTick();
+    return clearTick;
+  }, [convoIdx, isVisible, scheduleTick, clearTick]);
 
   const onConvoEnter = () => {
-    convoPausedRef.current = true;
-    clearConvoTimer();
+    pausedRef.current = true;
+    clearTick();
   };
   const onConvoLeave = () => {
-    convoPausedRef.current = false;
-    scheduleConvoTick();
+    pausedRef.current = false;
+    if (isVisible) scheduleTick();
   };
-
-  const onConvoDotClick = (i: number) => {
-    setConvoIdx(i);     // timer will be rescheduled by the effect above (5s gap)
-  };
+  const onConvoDotClick = (i: number) => setConvoIdx(i);
 
   return (
     <main className="relative min-h-screen bg-white">
@@ -186,33 +169,16 @@ export default function AboutPage() {
             </div>
 
             <div className="px-2">
-              <T
-                as="h1"
-                variant="hero48"
-                className="mx-auto text-center font-medium text-black"
-                trackingPct={-1}
-                lineHeightPx={66}
-              >
+              <T as="h1" variant="hero48" className="mx-auto text-center font-medium text-black" trackingPct={-1} lineHeightPx={66}>
                 <span className="block text-[52px]">
                   <span className="text-black">Your </span>
                   <span className="text-[#4D31EC]">one-stop AI</span>
                 </span>
-                <span className="block text-[52px] text-black">
-                  recruitment platform
-                </span>
+                <span className="block text-[52px] text-black">recruitment platform</span>
               </T>
 
-              <T
-                as="p"
-                variant="sub20"
-                weight={400}
-                lineHeightPx={27}
-                className="mx-auto mt-4 max-w-[820px] text-center text-black"
-              >
-                WorkCrew.ai is more than a hiring tool. It&apos;s an AI-powered
-                recruitment platform that helps companies find and hire talent
-                efficiently. We simplify the recruitment journey with one
-                intelligent, human-first platform.
+              <T as="p" variant="sub20" weight={400} lineHeightPx={27} className="mx-auto mt-4 max-w-[820px] text-center text-black">
+                WorkCrew.ai is more than a hiring tool. It&apos;s an AI-powered recruitment platform that helps companies find and hire talent efficiently. We simplify the recruitment journey with one intelligent, human-first platform.
               </T>
             </div>
 
@@ -226,15 +192,7 @@ export default function AboutPage() {
                     "shadow-[0_6px_18px_rgba(77,49,236,0.35)]"
                   )}
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    aria-hidden
-                  >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" aria-hidden>
                     <path d="M7 17L17 7M9 7h8v8" />
                   </svg>
                   <span>Book demo</span>
@@ -263,89 +221,62 @@ export default function AboutPage() {
         />
       </Section>
 
-      {/* CONVERSATIONS */}
+      {/* CONVERSATIONS (autoplay when visible) */}
       <Section>
-        <Container className="grid grid-cols-1 items-center gap-12 px-[50px] lg:grid-cols-12">
-          <div className="lg:col-span-6">
-            <div className="mb-6">
-              <GlassPill className="px-4">How we started</GlassPill>
+        <div ref={convoSectionRef}>
+          <Container className="grid grid-cols-1 items-center gap-12 px-[50px] lg:grid-cols-12">
+            <div className="lg:col-span-6">
+              <div className="mb-6">
+                <GlassPill className="px-4">How we started</GlassPill>
+              </div>
+
+              <T as="h2" variant="hero48" className="text-left" lineHeightPx={56}>
+                Built through conversations
+              </T>
+
+              <T as="p" variant="body16" weight={400} lineHeightPx={27} className="mt-5 text-left text-black">
+                WorkCrew.ai grew out of countless conversations with people who live and breathe hiring. They shared their frustrations, their ideas, and their hopes for something better.
+                <br />
+                <br />
+                We owe much of our vision to the incredible HRs and recruiters who helped us see the bigger picture. Their experiences shaped our features, their honesty shaped our purpose, and their belief in something better continues to inspire us as we grow. These are the
+                people behind the idea, the ones who made WorkCrew.ai possible.
+              </T>
             </div>
 
-            <T as="h2" variant="hero48" className="text-left" lineHeightPx={56}>
-              Built through conversations
-            </T>
-
-            <T
-              as="p"
-              variant="body16"
-              weight={400}
-              lineHeightPx={27}
-              className="mt-5 text-left text-black"
-            >
-              WorkCrew.ai grew out of countless conversations with people who
-              live and breathe hiring. They shared their frustrations, their
-              ideas, and their hopes for something better.
-              <br />
-              <br />
-              We owe much of our vision to the incredible HRs and recruiters who
-              helped us see the bigger picture. Their experiences shaped our
-              features, their honesty shaped our purpose, and their belief in
-              something better continues to inspire us as we grow. These are the
-              people behind the idea, the ones who made WorkCrew.ai possible.
-            </T>
-          </div>
-
-          {/* small image carousel with 5s gap autoplay */}
-          <div className="flex flex-col items-center lg:col-span-6">
-            <div
-              className="relative h-[381px] w-[386px] select-none overflow-hidden rounded-3xl"
-              aria-roledescription="carousel"
-              onMouseEnter={onConvoEnter}
-              onMouseLeave={onConvoLeave}
-            >
+            {/* small image carousel */}
+            <div className="flex flex-col items-center lg:col-span-6">
               <div
-                style={
-                  {
-                    "--slide-idx": convoIdx,
-                    "--slide-count": convoImages.length,
-                  } as React.CSSProperties
-                }
-                className="absolute inset-0 flex transition-transform duration-700 ease-out
-                           [transform:translateX(calc(-1*var(--slide-idx)*100%))]
-                           [width:calc(var(--slide-count)*100%)]"
+                className="relative h-[381px] w-[386px] select-none overflow-hidden rounded-3xl"
+                aria-roledescription="carousel"
+                onMouseEnter={onConvoEnter}
+                onMouseLeave={onConvoLeave}
               >
-                {convoImages.map((src, i) => (
-                  <div
+                <div
+                  className="absolute inset-0 flex transition-transform duration-1500 ease-out
+                             [transform:translateX(calc(-1*var(--slide-idx)*100%))]"
+                  style={{ ["--slide-idx" as any]: convoIdx } as React.CSSProperties}
+                >
+                  {convoImages.map((src, i) => (
+                    <div key={i} className="relative h-full w-[386px] shrink-0">
+                      <Image src={src} alt={`Team photo ${i + 1}`} fill className="object-cover" priority={i === 0} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                {convoImages.map((_, i) => (
+                  <button
                     key={i}
-                    className="relative h-full [width:calc(100%/var(--slide-count))]"
-                  >
-                    <Image
-                      src={src}
-                      alt={`Team photo ${i + 1}`}
-                      fill
-                      className="object-cover"
-                      priority={i === 0}
-                    />
-                  </div>
+                    onClick={() => onConvoDotClick(i)}
+                    aria-label={`Go to slide ${i + 1}`}
+                    className={cx("h-[6px] rounded-full transition-all", i === convoIdx ? "w-[42px] bg-[#6D5EF0]" : "w-[10px] bg-[rgba(109,94,240,0.35)]")}
+                  />
                 ))}
               </div>
             </div>
-
-            <div className="mt-3 flex items-center gap-2">
-              {convoImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => onConvoDotClick(i)}
-                  aria-label={`Go to slide ${i + 1}`}
-                  className={cx(
-                    "h-[6px] rounded-full transition-all",
-                    i === convoIdx ? "w-[42px] bg-[#6D5EF0]" : "w-[10px] bg-[rgba(109,94,240,0.35)]"
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-        </Container>
+          </Container>
+        </div>
       </Section>
 
       {/* CORE VALUES / VISION / FOUNDER */}
@@ -357,29 +288,16 @@ export default function AboutPage() {
               {CORE_TABS.map((t) => {
                 const activeNow = activeTab === t.id;
                 return (
-                  <button
-                    key={t.id}
-                    onClick={() => setActiveTab(t.id)}
-                    className="relative w-full py-4 text-left"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      {activeNow && <Bolt size={16} fill="#4D31EC" />}
-                      <T
-                        as="span"
-                        variant="body16"
-                        weight={500}
-                        lineHeightPx={27}
-                        className={activeNow ? "text-[#4D31EC]" : "text-[#A2A2A2]"}
-                      >
-                        {t.title}
-                      </T>
+                  <button key={t.id} onClick={() => setActiveTab(t.id)} className="w-full py-4 text-left">
+                    <span className="inline-flex flex-col">
+                      <span className="inline-flex items-center gap-2">
+                        {activeNow && <Bolt size={16} fill="#4D31EC" />}
+                        <T as="span" variant="body16" weight={500} lineHeightPx={27} className={activeNow ? "text-[#4D31EC]" : "text-[#A2A2A2]"}>
+                          {t.title}
+                        </T>
+                      </span>
+                      {activeNow && <span className="mt-1 h-[2px] w-full rounded-full bg-gradient-to-r from-transparent via-[#4D31EC] to-transparent" />}
                     </span>
-                    {activeNow && (
-                      <span
-                        className="absolute left-0 right-0 block h-[2px] bottom-[6px]
-                                   bg-[linear-gradient(90deg,rgba(77,49,236,0)_0%,#4D31EC_20%,#4D31EC_80%,rgba(77,49,236,0)_100%)]"
-                      />
-                    )}
                   </button>
                 );
               })}
@@ -387,10 +305,7 @@ export default function AboutPage() {
           </div>
 
           {/* right content card */}
-          <div
-            className="flex flex-1 items-center gap-10 rounded-3xl border border-transparent px-7 py-16 shadow-sm md:flex-row
-                       bg-[linear-gradient(135deg,#F1EEFF_0%,#F6F8FF_60%,#F9FBFF_100%)]"
-          >
+          <div className="flex flex-1 items-center gap-10 rounded-3xl border border-transparent px-7 py-16 shadow-sm md:flex-row bg-[linear-gradient(135deg,#F1EEFF_0%,#F6F8FF_60%,#F9FBFF_100%)]">
             {activeTab === "values" && (
               <>
                 <div className="max-w-[780px] flex-1 text-left">
@@ -424,12 +339,8 @@ export default function AboutPage() {
               <>
                 <div className="shrink-0">
                   <div className="relative h-[220px] w-[220px] overflow-hidden rounded-full ring-8 ring-white/60">
-                    <Image
-                      src="/cyril.png"
-                      alt="Cyril Thomas"
-                      fill
-                      className="object-cover object-[65%_50%]"
-                    />
+                    {/* tighter crop: 1.2x, +10px right, -10px up */}
+                    <Image src="/cyril.png" alt="Cyril Thomas" fill className="object-cover scale-[1.2] translate-x-[10px] -translate-y-[10px]" />
                   </div>
                 </div>
                 <div className="max-w-[780px] flex-1">
@@ -448,7 +359,7 @@ export default function AboutPage() {
 
       {/* OUR JOURNEY */}
       <section className="relative bg-[#4D31EC]">
-        <Container className="relative py-[96px] text-white">
+        <Container className="relative py:[96px] py-[96px] text-white">
           <div className="grid min-h-[520px] grid-cols-1 items-center gap-10 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <GlassPill iconColor="#FFFFFF" className="bg-white/10 px-4 text-white/95 ring-1 ring-inset ring-white/30">
@@ -465,31 +376,15 @@ export default function AboutPage() {
                 <div className="relative w-full">
                   <div className="h-[6px] w-full rounded-full bg-white/25" />
                   <div
-                    style={
-                      {
-                    
-                        "--progress": `${
-                          JOURNEY_STEPS.length > 1
-                            ? (jIndex / (JOURNEY_STEPS.length - 1)) * 100
-                            : 0
-                        }%`,
-                      } as React.CSSProperties
-                    }
-                    className="absolute left-0 top-0 h-[6px] rounded-full bg-white transition-all duration-500 [width:var(--progress)]"
+                    className="absolute left-0 top-0 h-[6px] rounded-full bg-white transition-all duration-500"
+                    style={{ ["--progress" as any]: `${JOURNEY_STEPS.length > 1 ? (jIndex / (JOURNEY_STEPS.length - 1)) * 100 : 0}%`, width: "var(--progress)" } as React.CSSProperties}
                   />
                   <div className="absolute inset-0 flex items-center justify-between">
                     {JOURNEY_STEPS.map((_, i) => {
                       const reached = i <= jIndex;
                       return (
                         <span key={i} className="relative grid translate-y-[-2px] place-items-center">
-                          <span
-                            className={cx(
-                              "h-4 w-4 rounded-full border-2 border-white/90 ring-2 transition-all",
-                              reached
-                                ? "bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)]"
-                                : "bg-transparent shadow-none"
-                            )}
-                          />
+                          <span className={cx("h-4 w-4 rounded-full border-2 border-white/90 ring-2 transition-all", reached ? "bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" : "bg-transparent shadow-none")} />
                         </span>
                       );
                     })}
@@ -541,17 +436,13 @@ export default function AboutPage() {
             </T>
 
             <T as="p" variant="body16" weight={400} lineHeightPx={27} className="mt-5 text-left text-black">
-              Rahi is the AI assistant built into WorkCrew.ai, designed to simplify, automate, and humanize recruitment.
-              She helps companies screen thousands of resumes, conduct smart interviews, and assess culture-fit. From
-              matching candidates to the right roles to running interviews and assessments, Rahi supports both sides of
-              the hiring journey with precision and empathy.
+              Rahi is the AI assistant built into WorkCrew.ai, designed to simplify, automate, and humanize recruitment. She helps companies screen thousands of resumes, conduct smart interviews, and assess culture-fit. From matching candidates to the right roles to running interviews and assessments, Rahi supports both sides of the hiring journey with precision and empathy.
             </T>
           </div>
 
-          {/* concentric rings + avatar (blue ONLY inside central circle) */}
+          {/* concentric rings + avatar */}
           <div className="lg:col-span-5">
             <div className="relative mx-auto h-[227px] w-[227px]">
-              {/* removed the large outer blue fill */}
               <span className="absolute left-1/2 top-1/2 h-[208px] w-[208px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#C778F8]" aria-hidden />
               <span className="absolute left-1/2 top-1/2 h-[187px] w-[187px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#4D31EC]" aria-hidden />
               <div className="absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full ring-8 ring-[#3C34D9]/20 bg-[#3C34D9]">
@@ -572,16 +463,14 @@ export default function AboutPage() {
 
         {/* full-bleed scroller */}
         <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
-          <CarouselEndless items={TESTIMONIALS} cardW={410} cardH={215} />
+          <CarouselEndless items={TESTIMONIALS} cardW={360} cardH={215} />
         </div>
 
         <Container className="px-[50px]">
           <div className="mt-12 grid grid-cols-2 gap-4 rounded-2xl bg-gradient-to-r from-[#F2F4FF] to-[#F9FAFF] p-8 sm:grid-cols-4">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
-                <div className="text-[28px] font-semibold leading-[32px] text-[#111827]">
-                  {s.value}
-                </div>
+                <div className="text-[28px] font-semibold leading-[32px] text-[#111827]">{s.value}</div>
                 <div className="text-sm text-[#7A8595]">{s.label}</div>
               </div>
             ))}
@@ -595,32 +484,32 @@ export default function AboutPage() {
           <div className="relative overflow-hidden rounded-3xl bg-[#4D31EC]">
             <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-12 lg:p-12">
               <div className="lg:col-span-8">
-                <T
-                  as="h3"
-                  variant="sub20"
-                  className="text-white"
-                  lineHeightPx={42}
-                  trackingPct={1}
-                  weight={500}
-                >
+                <T as="h3" variant="sub20" className="text-white" lineHeightPx={42} trackingPct={1} weight={500}>
                   Curious how WorkCrew.ai can fit into your hiring workflow?
                 </T>
 
                 <T as="p" variant="body16" className="mt-3 text-white/90">
-                  Let’s talk. Our team can walk you through how it works, what it solves, and how fast you can get
-                  started.
+                  Let’s talk. Our team can walk you through how it works, what it solves, and how fast you can get started.
                 </T>
 
                 <div className="mt-6">
-                  <Link href="/contact" className="inline-block" aria-label="Contact sales">
+                  <Link
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowDemo(true);
+                    }}
+                    aria-label="Book a demo"
+                    className="inline-block"
+                  >
                     <LayeredPill
-                      label="Contact sales"
+                      label="Book a demo"
                       size="md"
                       className={cx(
                         "text-[#4D31EC]",
                         "[--pill-middle-bg:#FFFFFF]",
                         "[--pill-shadow:0_1px_0_rgba(17,24,39,0.06)]",
-                        "[&_svg]:text-[#4D31EC] [&_svg]:stroke-[#4D31EC]"
+                        "[&_svg]:h-5 [&_svg]:w-5 [&_svg]:stroke-[#4D31EC] [&_svg]:text-[#4D31EC]"
                       )}
                     />
                   </Link>
@@ -629,14 +518,7 @@ export default function AboutPage() {
 
               <div className="relative lg:col-span-4">
                 <div className="relative ml-auto h-[267px] w-[220px]">
-                  <Image
-                    src="/cta-lady.png"
-                    alt="Friendly team member"
-                    width={220}
-                    height={267}
-                    className="object-contain"
-                    priority
-                  />
+                  <Image src="/cta-lady.png" alt="Friendly team member" width={220} height={267} className="object-contain" priority />
                 </div>
               </div>
             </div>
@@ -644,18 +526,51 @@ export default function AboutPage() {
         </Container>
       </Section>
 
+      {/* Demo Video Modal (placeholder) */}
+      {showDemo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowDemo(false)}
+        >
+          <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-2">
+              <h3 className="text-lg font-semibold text-[#111827]">WorkCrew.ai — Demo</h3>
+              <button
+                onClick={() => setShowDemo(false)}
+                className="rounded-md p-2 text-[#6B7280] transition hover:bg-gray-100 hover:text-[#111827]"
+                aria-label="Close demo modal"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M6 6l12 12M18 6l-12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[#0B0F19]">
+              <div className="absolute inset-0 grid place-items-center">
+                <div className="flex flex-col items-center">
+                  <svg viewBox="0 0 24 24" className="mb-3 h-12 w-12" fill="white">
+                    <path d="M7 17L17 7M9 7h8v8" />
+                  </svg>
+                  <p className="text-sm text-white/80">Demo video placeholder</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <NewFooter />
     </main>
   );
 }
 
-type Testimonial = { name: string; role: string; quote: string };
-
-/* horizontally-looping testimonial cards with arrow controls.
-   Arrows already call slideBy() which scrolls the track and normalizes the loop. */
+/* ===== Endless carousel, one-card-per-click, no autoplay ===== */
 function CarouselEndless({
   items,
-  cardW = 410,
+  cardW = 360,   // card width used in layout
   cardH = 215,
 }: {
   items: Testimonial[];
@@ -664,87 +579,71 @@ function CarouselEndless({
 }) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
-  const frameRef = React.useRef<number | null>(null);
-  const speedRef = React.useRef<number>(0.4);
-  const pausedRef = React.useRef<boolean>(false);
 
+  // duplicate to enable seamless looping
   const LOOPED = React.useMemo(() => [...items, ...items, ...items], [items]);
+
+  const GAP = 24; // px; must match gap-6
+  const SINGLE_SET_WIDTH = React.useMemo(
+    () => LOOPED.length > 0 ? (items.length * (cardW + GAP)) - GAP : 0,
+    [items.length, cardW, LOOPED.length]
+  );
+
+  const initScroll = React.useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    // jump to start of the middle set
+    el.scrollLeft = SINGLE_SET_WIDTH;
+  }, [SINGLE_SET_WIDTH]);
 
   const normalizeScroll = React.useCallback(() => {
     const el = containerRef.current;
-    const track = trackRef.current;
-    if (!el || !track) return;
-    const singleSetWidth = track.scrollWidth / 3;
-    if (el.scrollLeft <= singleSetWidth * 0.2) el.scrollLeft += singleSetWidth;
-    else if (el.scrollLeft >= singleSetWidth * 1.8) el.scrollLeft -= singleSetWidth;
-  }, []);
-
-  const step = React.useCallback(() => {
-    const el = containerRef.current;
-    if (!el || pausedRef.current) {
-      frameRef.current = requestAnimationFrame(step);
-      return;
+    if (!el) return;
+    const left = el.scrollLeft;
+    const total = SINGLE_SET_WIDTH * 3;
+    if (left < SINGLE_SET_WIDTH * 0.5) {
+      // near the first copy -> jump forward one set
+      el.scrollLeft = left + SINGLE_SET_WIDTH;
+    } else if (left > SINGLE_SET_WIDTH * 1.5) {
+      // near the last copy -> jump back one set
+      el.scrollLeft = left - SINGLE_SET_WIDTH;
     }
-    el.scrollLeft += speedRef.current;
-    normalizeScroll();
-    frameRef.current = requestAnimationFrame(step);
-  }, [normalizeScroll]);
+  }, [SINGLE_SET_WIDTH]);
 
   React.useEffect(() => {
-    const el = containerRef.current;
-    const track = trackRef.current;
-    if (!el || !track) return;
+    // wait for first paint to know widths
+    const id = requestAnimationFrame(initScroll);
+    return () => cancelAnimationFrame(id);
+  }, [initScroll]);
 
-    el.scrollLeft = track.scrollWidth / 3;
-
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (!media.matches) frameRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [step]);
-
-  const onMouseEnter = () => {
-    pausedRef.current = true;
-  };
-  const onMouseLeave = () => {
-    pausedRef.current = false;
-  };
-
-  const slideBy = (dir: "left" | "right") => {
+  const slideByOne = (dir: "left" | "right") => {
     const el = containerRef.current;
     if (!el) return;
-    const delta = (dir === "left" ? -1 : 1) * Math.round(el.clientWidth * 0.8);
+    const delta = (dir === "left" ? -1 : 1) * (cardW + GAP);
     el.scrollBy({ left: delta, behavior: "smooth" });
-    setTimeout(() => normalizeScroll(), 400);
+    // after the smooth scroll, normalize position
+    window.setTimeout(normalizeScroll, 400);
   };
 
   return (
     <div
       className="relative"
-      style={
-        {
-          "--card-w": `${cardW}px`,
-          "--card-h": `${cardH}px`,
-        } as React.CSSProperties
-      }
+      style={{ ["--card-w" as any]: `${cardW}px`, ["--card-h" as any]: `${cardH}px` } as React.CSSProperties}
     >
-      <div
-        ref={containerRef}
-        className="overflow-x-hidden"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
-        <div ref={trackRef} className="flex w-max gap-6 px-6 pb-2 sm:px-10">
+      <div ref={containerRef} className="overflow-x-hidden">
+        <div
+          ref={trackRef}
+          className="flex w-max gap-6 px-6 pb-2 sm:px-10"
+          style={{ ["--gap" as any]: `${GAP}px` } as React.CSSProperties}
+        >
           {LOOPED.map((t, i) => (
             <article
               key={`${t.name}-${i}`}
-              className="flex h-[var(--card-h)] w-[var(--card-w)] flex-col justify-between rounded-2xl border border-[#E7EBF2] bg-white p-6 shadow-[0_2px_8px_rgba(17,24,39,0.04)]"
+              className="flex h-[var(--card-h)] w-[var(--card-w)] shrink-0 flex-col justify-between rounded-2xl border border-[#E7EBF2] bg-white p-6 shadow-[0_2px_8px_rgba(17,24,39,0.04)]"
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-[#EEF2FF]">
-                  <Image src="/Rah.png" alt="" width={40} height={40} className="object-cover" />
+                  <Image src={t.avatar} alt={`${t.name} avatar`} width={40} height={40} className="object-cover" />
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-[20px] font-semibold leading-[28px] text-[#111827]">
@@ -762,22 +661,23 @@ function CarouselEndless({
         </div>
       </div>
 
-      <div className="mt-6 flex w-full items-center justify-center gap-4">
+      {/* chevrons: one-card-per-click */}
+      <div className="mt-6 flex w-full items-center justify-center gap-8">
         <button
-          onClick={() => slideBy("left")}
+          onClick={() => slideByOne("left")}
           aria-label="Slide testimonials left"
-          className="grid h-10 w-10 place-items-center rounded-full border border-[#E7EBF2] bg-white shadow-sm transition hover:bg-[#F7F9FF]"
+          className="p-2 text-[#111827] transition hover:-translate-x-0.5 hover:opacity-80 focus:outline-none"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75}>
             <path d="M15 6l-6 6 6 6" />
           </svg>
         </button>
         <button
-          onClick={() => slideBy("right")}
+          onClick={() => slideByOne("right")}
           aria-label="Slide testimonials right"
-          className="grid h-10 w-10 place-items-center rounded-full border border-[#E7EBF2] bg-white shadow-sm transition hover:bg-[#F7F9FF]"
+          className="p-2 text-[#111827] transition hover:translate-x-0.5 hover:opacity-80 focus:outline-none"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75}>
             <path d="M9 6l6 6-6 6" />
           </svg>
         </button>

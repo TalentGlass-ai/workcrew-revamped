@@ -7,30 +7,39 @@ import LeftRail from "../_lib/LeftRail";
 import { OnboardStepper, EMP_STEPS } from "../_lib/stepper";
 import { loadDraft } from "../_lib/draft";
 
-/* Small helper: if it's a URL, render a link; else plain text. */
-function LinkOrText({ value }: { value?: string }) {
-  if (!value) return <span>—</span>;
-  const looksUrl = /^https?:\/\//i.test(value);
-  return looksUrl ? (
+function LinkOrText({ value }: { value?: string | null }) {
+  const clean = value?.trim();
+
+  if (!clean) {
+    return <span>—</span>;
+  }
+
+  const isUrl =
+    clean.startsWith("http://") ||
+    clean.startsWith("https://") ||
+    clean.includes(".") ||
+    false;
+
+  return isUrl ? (
     <a
-      href={value}
+      href={clean}
       target="_blank"
-      rel="noreferrer"
-      className="text-[#4D31EC] underline break-words"
+      rel="noopener noreferrer"
+      className="text-[#4D31EC] underline underline-offset-2"
     >
-      {value}
+      {clean}
     </a>
   ) : (
-    <span>{value}</span>
+    <span>{clean}</span>
   );
 }
 
 /* Single row with left label + right value (like screenshot) */
-function Row({ label, value }: { label: string; value?: string }) {
+function Row({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="text-sm text-gray-600">{label}</div>
-      <div className="text-sm font-medium text-gray-900 text-right max-w-[380px]">
+      <div className="max-w-[380px] text-right text-sm font-medium text-gray-900">
         {value ? <LinkOrText value={value} /> : "—"}
       </div>
     </div>
@@ -38,8 +47,19 @@ function Row({ label, value }: { label: string; value?: string }) {
 }
 
 export default function EmployerVerify() {
-  const d = loadDraft();
+  const [d, setD] = React.useState<any>({}); // SSR-safe initial draft
   const active = 2;
+
+  // Load real draft data only on the client after mount
+  React.useEffect(() => {
+    try {
+      const draft = loadDraft();
+      setD(draft || {});
+    } catch (err) {
+      console.error("Failed to load employer draft", err);
+      setD({});
+    }
+  }, []);
 
   return (
     <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
@@ -123,10 +143,11 @@ export default function EmployerVerify() {
 
                 {/* Description full width */}
                 <div className="md:col-span-2">
-                  <div className="text-sm text-gray-600">Company description</div>
+                  <div className="text-sm text-gray-600">
+                    Company description
+                  </div>
                   <div className="mt-1 text-sm font-medium leading-6 text-gray-900">
-                    {d.companyDescription ||
-                      "—"}
+                    {d.companyDescription || "—"}
                   </div>
                 </div>
               </div>
@@ -149,13 +170,17 @@ export default function EmployerVerify() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Row
                   label="Name"
-                  value={`${d.contactFirst ?? ""} ${d.contactLast ?? ""}`.trim()}
+                  value={`${d.contactFirst ?? ""} ${
+                    d.contactLast ?? ""
+                  }`.trim()}
                 />
                 <Row label="Email" value={d.contactEmail} />
                 <Row
                   label="Phone"
                   value={
-                    [d.phoneCountry, d.phone].filter(Boolean).join(" ") || undefined
+                    [d.phoneCountry, d.phone]
+                      .filter(Boolean)
+                      .join(" ") || undefined
                   }
                 />
                 <Row label="Job title" value={d.jobTitle} />

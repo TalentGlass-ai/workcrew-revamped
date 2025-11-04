@@ -10,8 +10,51 @@ import GlassPill from "../../workcrew-ui/components/primitives/tags/GlassPill";
 import LayeredPill from "../../workcrew-ui/components/primitives/buttons/LayeredPill";
 import T from "../../workcrew-ui/components/primitives/Typography";
 
-/* tiny helper for class merging */
-const cx = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(" ");
+/* helper */
+const cx = (...xs: (string | false | undefined)[]) =>
+  xs.filter(Boolean).join(" ");
+
+/* fallback icons if /icons/* not found */
+const IconResearch = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+  >
+    <circle cx="10.5" cy="10.5" r="6" />
+    <path d="M15 15l4.5 4.5" />
+    <path d="M8 12V9M10.5 12V7.5M13 12V10" />
+  </svg>
+);
+
+const IconMonitor = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+  >
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M8 20h8M12 16v4" />
+  </svg>
+);
+
+const IconGrowth = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+  >
+    <path d="M3 21h18" />
+    <path d="M6 17V9M11 17V7M16 17v-5" />
+    <path d="M12 6l3 3 5-5" />
+  </svg>
+);
 
 const Bolt = ({
   className = "",
@@ -22,10 +65,17 @@ const Bolt = ({
   fill?: string;
   size?: number;
 }) => (
-  <svg width={size} height={size} viewBox="0 0 11 18" className={className} aria-hidden>
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 11 18"
+    className={className}
+    aria-hidden
+  >
     <path d="M6.3 0L0 9.1h3.9L2.7 18 11 7.8H7.1L8.3 0H6.3z" fill={fill} />
   </svg>
 );
+
 
 const CORE_TABS = [
   {
@@ -54,30 +104,152 @@ const CORE_TABS = [
   },
 ];
 
-const JOURNEY_STEPS = [
-  { id: "research", topLabel: "Research & exploration", year: "2019", iconPath: "M9 2l2 4 4 1-3 3 .7 4-3.7-2-3.7 2 .7-4-3-3 4-1 2-4z", title: "Research & exploration", blurb: "We began by engaging early users, listening closely to candidates and recruiters, and experimenting to understand what truly worked." },
-  { id: "talentbox", topLabel: "TalentBox Labs launch", year: "2019", iconPath: "M12 2l-2 6H5l5 3-2 6 4-3 4 3-2-6 5-3h-5l-2-6z", title: "TalentBox Labs launch", blurb: "TalentBox was born with a vision to bring empathy and thoughtfulness into the hiring journey while keeping the human element at the core." },
-  { id: "prototypes", topLabel: "Prototype & development", year: "2021", iconPath: "M4 14l8-8 8 8-8 8-8-8zm8-5l5 5-5 5-5-5 5-5z", title: "Prototypes & development", blurb: "Turning insights into action, we built and refined prototypes, tested possibilities, and iterated on feedback to shape a scalable product." },
-  { id: "launch", topLabel: "WorkCrew.ai launch", year: "2023", iconPath: "M2 12h20M12 2v20", title: "WorkCrew.ai launch", blurb: "Our one-stop AI solution took shape—making hiring smarter, faster, and more transparent while centering people in every decision." },
-  { id: "closed-roles", topLabel: "Roles closed", year: "2025", iconPath: "M3 12l5 5L21 4", title: "Closed 500+ roles", blurb: "We focused on adoption and continuous improvement, integrating assessments and helping teams close 500+ roles with meaning." },
+/* journey data */
+type JourneyStep = {
+  id: string;
+  topLabel: string;
+  year: string;
+  title: string;
+  blurb: string;
+  altBodyIcon?: React.ReactNode;
+};
+
+const JOURNEY_STEPS: JourneyStep[] = [
+  {
+    id: "talentbox",
+    topLabel: "TalentBox Labs launch",
+    year: "2019",
+    title: "TalentBox Labs launch",
+    blurb:
+      "TalentBox was born with a vision to bring empathy and thoughtfulness into the hiring journey. The idea was to simplify recruitment while keeping the human element at the core.",
+  },
+  {
+    id: "research",
+    topLabel: "Research & exploration",
+    year: "2019",
+    title: "Research & exploration",
+    blurb:
+      "We began by engaging early users, listening closely to candidates and recruiters, and experimenting with different approaches to understand what truly worked.",
+    altBodyIcon: <IconResearch className="h-[20px] w-[20px] text-white" />,
+  },
+  {
+    id: "prototypes",
+    topLabel: "Prototype & development",
+    year: "2019",
+    title: "Prototypes & development",
+    blurb:
+      "Turning insights into action, we built and refined prototypes. This phase was about testing possibilities, iterating on feedback, and shaping the foundation for a scalable product.",
+    altBodyIcon: <IconMonitor className="h-[20px] w-[20px] text-white" />,
+  },
+  {
+    id: "launch",
+    topLabel: "WorkCrew.ai launch",
+    year: "2023",
+    title: "WorkCrew.ai launch",
+    blurb:
+      "The vision took form with the launch of WorkCrew.ai, designed to make hiring smarter, faster, and more transparent. It marked our official step into the market.",
+  },
+  {
+    id: "closed-roles",
+    topLabel: "Roles closed",
+    year: "2025",
+    title: "Closed 500+ roles",
+    blurb:
+      "After the launch, we focused on adoption and continuous improvement. We integrated assessments into candidate profiling and went on to close 500+ roles, shaping a stronger, more meaningful hiring experience.",
+    altBodyIcon: <IconGrowth className="h-[20px] w-[20px] text-white" />,
+  },
 ];
 
-/* 12 hard-coded testimonials; avatars from /public/avatars/ */
-type Testimonial = { name: string; role: string; quote: string; avatar: string };
+/* testimonials */
+type Testimonial = {
+  name: string;
+  role: string;
+  quote: string;
+  avatar: string;
+};
 
 const TESTIMONIALS: Testimonial[] = [
-  { name: "James Lee", role: "Product Manager at Google", quote: "The collaborative environment here has really elevated my skills and career!", avatar: "/avatars/1.png" },
-  { name: "Priya S", role: "HR Lead at FintechCo", quote: "Rahi helped us screen faster without compromising quality.", avatar: "/avatars/2.png" },
-  { name: "Arun K", role: "Talent Partner at StartUpX", quote: "Our time-to-hire dropped noticeably after moving to WorkCrew.ai.", avatar: "/avatars/3.png" },
-  { name: "Meera D", role: "Recruiter at HealthTech", quote: "The pipeline visibility and assessment fit are game-changers.", avatar: "/avatars/4.png" },
-  { name: "Vikram N", role: "Operations @ SaaSCo", quote: "Clean UX, thoughtful flows, and top-notch support.", avatar: "/avatars/5.png" },
-  { name: "Alejandro Ruiz", role: "People Ops @ RetailCo", quote: "Shortlists are sharper and interviews stay focused—huge win for our stores.", avatar: "/avatars/6.png" },
-  { name: "Mina Park", role: "TA Lead @ MedTech", quote: "We finally have consistency in screening without burning the team out.", avatar: "/avatars/7.png" },
-  { name: "Rohan Gupta", role: "Founder @ NeoCloud", quote: "Loved the assessments—signal is high and noise is low.", avatar: "/avatars/8.png" },
-  { name: "Fatima Noor", role: "Recruiter @ EduLabs", quote: "The team’s responsiveness and the product velocity are impressive.", avatar: "/avatars/9.png" },
-  { name: "Lucia Rossi", role: "HRBP @ FinServe", quote: "Internal mobility got easier once we plugged WorkCrew into our stack.", avatar: "/avatars/10.png" },
-  { name: "Tom Becker", role: "Sr. Recruiter @ BuildIt", quote: "Sourcing and screening time dropped by days, not hours.", avatar: "/avatars/1.png" },
-  { name: "Yuki Tanaka", role: "People Partner @ StudioX", quote: "Candidates actually compliment our process now. That’s new!", avatar: "/avatars/2.png" },
+  {
+    name: "James Lee",
+    role: "Product Manager at Google",
+    quote:
+      "The collaborative environment here has really elevated my skills and career!",
+    avatar: "/avatars/1.png",
+  },
+  {
+    name: "Priya S",
+    role: "HR Lead at FintechCo",
+    quote: "Rahi helped us screen faster without compromising quality.",
+    avatar: "/avatars/2.png",
+  },
+  {
+    name: "Arun K",
+    role: "Talent Partner at StartUpX",
+    quote:
+      "Our time-to-hire dropped noticeably after moving to WorkCrew.ai.",
+    avatar: "/avatars/3.png",
+  },
+  {
+    name: "Meera D",
+    role: "Recruiter at HealthTech",
+    quote:
+      "The pipeline visibility and assessment fit are game-changers.",
+    avatar: "/avatars/4.png",
+  },
+  {
+    name: "Vikram N",
+    role: "Operations @ SaaSCo",
+    quote: "Clean UX, thoughtful flows, and top-notch support.",
+    avatar: "/avatars/5.png",
+  },
+  {
+    name: "Alejandro Ruiz",
+    role: "People Ops @ RetailCo",
+    quote:
+      "Shortlists are sharper and interviews stay focused—huge win for our stores.",
+    avatar: "/avatars/6.png",
+  },
+  {
+    name: "Mina Park",
+    role: "TA Lead @ MedTech",
+    quote:
+      "We finally have consistency in screening without burning the team out.",
+    avatar: "/avatars/7.png",
+  },
+  {
+    name: "Rohan Gupta",
+    role: "Founder @ NeoCloud",
+    quote:
+      "Loved the assessments—signal is high and noise is low.",
+    avatar: "/avatars/8.png",
+  },
+  {
+    name: "Fatima Noor",
+    role: "Recruiter @ EduLabs",
+    quote:
+      "The team’s responsiveness and the product velocity are impressive.",
+    avatar: "/avatars/9.png",
+  },
+  {
+    name: "Lucia Rossi",
+    role: "HRBP @ FinServe",
+    quote:
+      "Internal mobility got easier once we plugged WorkCrew into our stack.",
+    avatar: "/avatars/10.png",
+  },
+  {
+    name: "Tom Becker",
+    role: "Sr. Recruiter @ BuildIt",
+    quote: "Sourcing and screening time dropped by days, not hours.",
+    avatar: "/avatars/1.png",
+  },
+  {
+    name: "Yuki Tanaka",
+    role: "People Partner @ StudioX",
+    quote:
+      "Candidates actually compliment our process now. That’s new!",
+    avatar: "/avatars/2.png",
+  },
 ];
 
 const STATS = [
@@ -90,23 +262,30 @@ const STATS = [
 export default function AboutPage() {
   const [activeTab, setActiveTab] = React.useState(CORE_TABS[0].id);
 
-  // CTA demo modal
+  // demo modal
   const [showDemo, setShowDemo] = React.useState(false);
   React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowDemo(false);
+    const onKey = (e: KeyboardEvent) =>
+      e.key === "Escape" && setShowDemo(false);
     if (showDemo) document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [showDemo]);
 
-  /* auto-advance the journey progress bar label */
+  // journey index autoplay
   const [jIndex, setJIndex] = React.useState(0);
   React.useEffect(() => {
-    const id = setInterval(() => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length), 2000);
+    const id = setInterval(
+      () => setJIndex((i) => (i + 1) % JOURNEY_STEPS.length),
+      3500
+    );
     return () => clearInterval(id);
   }, []);
 
-  /* conversations carousel — slower autoplay, only when in view */
-  const convoImages = React.useMemo(() => ["/about-team.png", "/about-team-2.png", "/about-team-3.png"], []);
+  // convo carousel
+  const convoImages = React.useMemo(
+    () => ["/about-team.png", "/about-team-2.png", "/about-team-3.png"],
+    []
+  );
   const [convoIdx, setConvoIdx] = React.useState(0);
   const [isVisible, setIsVisible] = React.useState(false);
   const pausedRef = React.useRef(false);
@@ -133,7 +312,8 @@ export default function AboutPage() {
     const node = convoSectionRef.current;
     if (!node) return;
     const observer = new IntersectionObserver(
-      (entries) => entries.forEach((entry) => setIsVisible(entry.isIntersecting)),
+      (entries) =>
+        entries.forEach((entry) => setIsVisible(entry.isIntersecting)),
       { threshold: 0.3 }
     );
     observer.observe(node);
@@ -156,6 +336,34 @@ export default function AboutPage() {
   };
   const onConvoDotClick = (i: number) => setConvoIdx(i);
 
+  // rocket icons
+  const SmallRocket = (
+    <Image
+      src="/icons/smolrocket.png"
+      alt=""
+      width={15}
+      height={15}
+      className="inline-block"
+    />
+  );
+  const BigRocket = (
+    <Image
+      src="/icons/biggrocket.png"
+      alt=""
+      width={20}
+      height={20}
+      className="inline-block"
+    />
+  );
+
+  // timeline % helper
+  const stepCount = JOURNEY_STEPS.length;
+  const getLeftPct = (i: number) => {
+    if (stepCount === 1) return "0%";
+    const pct = (i / (stepCount - 1)) * 100;
+    return `${pct}%`;
+  };
+
   return (
     <main className="relative min-h-screen bg-white">
       <NewNavbar />
@@ -169,16 +377,33 @@ export default function AboutPage() {
             </div>
 
             <div className="px-2">
-              <T as="h1" variant="hero48" className="mx-auto text-center font-medium text-black" trackingPct={-1} lineHeightPx={66}>
+              <T
+                as="h1"
+                variant="hero48"
+                className="mx-auto text-center font-medium text-black"
+                trackingPct={-1}
+                lineHeightPx={66}
+              >
                 <span className="block text-[52px]">
                   <span className="text-black">Your </span>
                   <span className="text-[#4D31EC]">one-stop AI</span>
                 </span>
-                <span className="block text-[52px] text-black">recruitment platform</span>
+                <span className="block text-[52px] text-black">
+                  recruitment platform
+                </span>
               </T>
 
-              <T as="p" variant="sub20" weight={400} lineHeightPx={27} className="mx-auto mt-4 max-w-[820px] text-center text-black">
-                WorkCrew.ai is more than a hiring tool. It&apos;s an AI-powered recruitment platform that helps companies find and hire talent efficiently. We simplify the recruitment journey with one intelligent, human-first platform.
+              <T
+                as="p"
+                variant="sub20"
+                weight={400}
+                lineHeightPx={27}
+                className="mx-auto mt-4 max-w-[820px] text-center text-black"
+              >
+                WorkCrew.ai is more than a hiring tool. It&apos;s an
+                AI-powered recruitment platform that helps companies find and
+                hire talent efficiently. We simplify the recruitment journey
+                with one intelligent, human-first platform.
               </T>
             </div>
 
@@ -192,7 +417,15 @@ export default function AboutPage() {
                     "shadow-[0_6px_18px_rgba(77,49,236,0.35)]"
                   )}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" aria-hidden>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    aria-hidden
+                  >
                     <path d="M7 17L17 7M9 7h8v8" />
                   </svg>
                   <span>Book demo</span>
@@ -205,10 +438,22 @@ export default function AboutPage() {
         {/* hero decoration images */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute z-20 drop-shadow-2xl [top:calc(10%-10px)] left-[-280px] rotate-[30deg]">
-            <Image src="/hero-right.png" alt="Left hero image" width={435} height={480} priority />
+            <Image
+              src="/hero-right.png"
+              alt="Left hero image"
+              width={435}
+              height={480}
+              priority
+            />
           </div>
           <div className="absolute z-10 drop-shadow-2xl top-[8%] right-[-300px] rotate-[-30deg] opacity-95">
-            <Image src="/hero-right.png" alt="Right hero image" width={435} height={480} priority />
+            <Image
+              src="/hero-right.png"
+              alt="Right hero image"
+              width={435}
+              height={480}
+              priority
+            />
           </div>
         </div>
 
@@ -221,7 +466,7 @@ export default function AboutPage() {
         />
       </Section>
 
-      {/* CONVERSATIONS (autoplay when visible) */}
+      {/* CONVERSATIONS */}
       <Section>
         <div ref={convoSectionRef}>
           <Container className="grid grid-cols-1 items-center gap-12 px-[50px] lg:grid-cols-12">
@@ -234,12 +479,24 @@ export default function AboutPage() {
                 Built through conversations
               </T>
 
-              <T as="p" variant="body16" weight={400} lineHeightPx={27} className="mt-5 text-left text-black">
-                WorkCrew.ai grew out of countless conversations with people who live and breathe hiring. They shared their frustrations, their ideas, and their hopes for something better.
+              <T
+                as="p"
+                variant="body16"
+                weight={400}
+                lineHeightPx={27}
+                className="mt-5 text-left text-black"
+              >
+                WorkCrew.ai grew out of countless conversations with people who
+                live and breathe hiring. They shared their frustrations, their
+                ideas, and their hopes for something better.
                 <br />
                 <br />
-                We owe much of our vision to the incredible HRs and recruiters who helped us see the bigger picture. Their experiences shaped our features, their honesty shaped our purpose, and their belief in something better continues to inspire us as we grow. These are the
-                people behind the idea, the ones who made WorkCrew.ai possible.
+                We owe much of our vision to the incredible HRs and recruiters
+                who helped us see the bigger picture. Their experiences shaped
+                our features, their honesty shaped our purpose, and their belief
+                in something better continues to inspire us as we grow. These
+                are the people behind the idea, the ones who made WorkCrew.ai
+                possible.
               </T>
             </div>
 
@@ -254,23 +511,35 @@ export default function AboutPage() {
                 <div
                   className="absolute inset-0 flex transition-transform duration-1500 ease-out
                              [transform:translateX(calc(-1*var(--slide-idx)*100%))]"
-                  style={{ ["--slide-idx" as any]: convoIdx } as React.CSSProperties}
+                  style={
+                    { ["--slide-idx" as any]: convoIdx } as React.CSSProperties
+                  }
                 >
                   {convoImages.map((src, i) => (
                     <div key={i} className="relative h-full w-[386px] shrink-0">
-                      <Image src={src} alt={`Team photo ${i + 1}`} fill className="object-cover" priority={i === 0} />
+                      <Image
+                        src={src}
+                        alt={`Team photo ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        priority={i === 0}
+                      />
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
+              {/* nav bars */}
+              <div className="mt-6 flex items-center gap-2">
                 {convoImages.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => onConvoDotClick(i)}
                     aria-label={`Go to slide ${i + 1}`}
-                    className={cx("h-[6px] rounded-full transition-all", i === convoIdx ? "w-[42px] bg-[#6D5EF0]" : "w-[10px] bg-[rgba(109,94,240,0.35)]")}
+                    className={cx(
+                      "h-[6px] w-[20px] rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-[#6D5EF0]/50",
+                      i === convoIdx ? "bg-[#6D5EF0]" : "bg-[#D7DBFF]"
+                    )}
                   />
                 ))}
               </div>
@@ -288,15 +557,27 @@ export default function AboutPage() {
               {CORE_TABS.map((t) => {
                 const activeNow = activeTab === t.id;
                 return (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)} className="w-full py-4 text-left">
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className="w-full py-4 text-left"
+                  >
                     <span className="inline-flex flex-col">
                       <span className="inline-flex items-center gap-2">
                         {activeNow && <Bolt size={16} fill="#4D31EC" />}
-                        <T as="span" variant="body16" weight={500} lineHeightPx={27} className={activeNow ? "text-[#4D31EC]" : "text-[#A2A2A2]"}>
+                        <T
+                          as="span"
+                          variant="body16"
+                          weight={500}
+                          lineHeightPx={27}
+                          className={activeNow ? "text-[#4D31EC]" : "text-[#A2A2A2]"}
+                        >
                           {t.title}
                         </T>
                       </span>
-                      {activeNow && <span className="mt-1 h-[2px] w-full rounded-full bg-gradient-to-r from-transparent via-[#4D31EC] to-transparent" />}
+                      {activeNow && (
+                        <span className="mt-1 h-[2px] w-full rounded-full bg-gradient-to-r from-transparent via-[#4D31EC] to-transparent" />
+                      )}
                     </span>
                   </button>
                 );
@@ -312,13 +593,23 @@ export default function AboutPage() {
                   <T as="h3" variant="card36" className="text-left">
                     Human first always
                   </T>
-                  <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                  <T
+                    as="p"
+                    variant="body16"
+                    lineHeightPx={27}
+                    className="mt-4 text-black"
+                  >
                     {CORE_TABS[0].body}
                   </T>
                 </div>
                 <div className="shrink-0">
                   <div className="relative h-[220px] w-[220px] overflow-hidden rounded-full ring-8 ring-white/60">
-                    <Image src={"/Ellipse 87.png"} alt="Human first always" fill className="object-cover" />
+                    <Image
+                      src={"/Ellipse 87.png"}
+                      alt="Human first always"
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               </>
@@ -329,7 +620,12 @@ export default function AboutPage() {
                 <T as="h3" variant="card36" className="text-left">
                   Make hiring simple, fair, and fast
                 </T>
-                <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                <T
+                  as="p"
+                  variant="body16"
+                  lineHeightPx={27}
+                  className="mt-4 text-black"
+                >
                   {CORE_TABS[1].body}
                 </T>
               </div>
@@ -339,15 +635,24 @@ export default function AboutPage() {
               <>
                 <div className="shrink-0">
                   <div className="relative h-[220px] w-[220px] overflow-hidden rounded-full ring-8 ring-white/60">
-                    {/* tighter crop: 1.2x, +10px right, -10px up */}
-                    <Image src="/cyril.png" alt="Cyril Thomas" fill className="object-cover scale-[1.2] translate-x-[10px] -translate-y-[10px]" />
+                    <Image
+                      src="/cyril.png"
+                      alt="Cyril Thomas"
+                      fill
+                      className="object-cover scale-[1.2] translate-x-[10px] -translate-y-[10px]"
+                    />
                   </div>
                 </div>
                 <div className="max-w-[780px] flex-1">
                   <T as="h3" variant="card36" className="text-left">
                     Hi, I’m <span className="text-[#4D31EC]">Cyril Thomas!</span>
                   </T>
-                  <T as="p" variant="body16" lineHeightPx={27} className="mt-4 text-black">
+                  <T
+                    as="p"
+                    variant="body16"
+                    lineHeightPx={27}
+                    className="mt-4 text-black"
+                  >
                     {CORE_TABS[2].body}
                   </T>
                 </div>
@@ -359,67 +664,152 @@ export default function AboutPage() {
 
       {/* OUR JOURNEY */}
       <section className="relative bg-[#4D31EC]">
-        <Container className="relative py:[96px] py-[96px] text-white">
-          <div className="grid min-h-[520px] grid-cols-1 items-center gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-4">
-              <GlassPill iconColor="#FFFFFF" className="bg-white/10 px-4 text-white/95 ring-1 ring-inset ring-white/30">
-                How we started
-              </GlassPill>
-              <T as="h2" variant="hero48" className="mt-6 text-white" autoLeading>
-                Our journey
-              </T>
+        <Container className="relative text-white pt-[96px] pb-[96px]">
+          <div className="grid min-h-[540px] grid-cols-1 gap-12 lg:grid-cols-12">
+            {/* LEFT HALF:
+               Vertically center the pill + heading within this purple block */}
+            <div className="lg:col-span-4 flex items-center">
+              <div className="flex flex-col">
+                {/* pill: fixed 157x38 */}
+                <div
+                  className={cx(
+                    "flex items-center justify-center rounded-full",
+                    "bg-white/10 text-white/95 ring-1 ring-inset ring-white/30",
+                    "text-[14px] leading-[normal] font-normal tracking-[0.03em] font-archivo",
+                    "w-[157px] h-[38px] px-4"
+                  )}
+                >
+                  How we started
+                </div>
+
+                {/* Our journey heading (Schibsted Grotesk) */}
+                <div className="mt-6 text-white">
+                  <h2
+                    className={cx(
+                      "text-[48px] leading-[normal] tracking-[0.01em]",
+                      "font-medium font-schibsted"
+                    )}
+                  >
+                    Our journey
+                  </h2>
+                </div>
+              </div>
             </div>
 
-            <div className="lg:col-span-8">
-              {/* progress rail + checkpoints */}
-              <div className="mt-2">
-                <div className="relative w-full">
-                  <div className="h-[6px] w-full rounded-full bg-white/25" />
-                  <div
-                    className="absolute left-0 top-0 h-[6px] rounded-full bg-white transition-all duration-500"
-                    style={{ ["--progress" as any]: `${JOURNEY_STEPS.length > 1 ? (jIndex / (JOURNEY_STEPS.length - 1)) * 100 : 0}%`, width: "var(--progress)" } as React.CSSProperties}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-between">
-                    {JOURNEY_STEPS.map((_, i) => {
-                      const reached = i <= jIndex;
+            {/* RIGHT HALF:
+               We'll create a flex column = rail (top) / mid content / bottom bars.
+               The rail itself is absolutely positioned inside a fixed-height top box
+               so we can measure spacing symmetrically.
+            */}
+            <div className="lg:col-span-8 flex flex-col justify-between relative">
+              {/* TOP BOX containing rail */}
+              <div className="relative h-[120px]">
+                {/* timeline rail sits 50px from top of purple like before */}
+                <div className="absolute left-0 right-0 top-[50px]">
+                  <div className="relative h-[2px] w-full bg-white">
+                    {JOURNEY_STEPS.map((step, i) => {
+                      const active = i === jIndex;
+                      const leftPct = getLeftPct(i);
                       return (
-                        <span key={i} className="relative grid translate-y-[-2px] place-items-center">
-                          <span className={cx("h-4 w-4 rounded-full border-2 border-white/90 ring-2 transition-all", reached ? "bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" : "bg-transparent shadow-none")} />
-                        </span>
+                        <React.Fragment key={step.id}>
+                          {active && (
+                            <div
+                              className={cx(
+                                "absolute -translate-x-1/2 -translate-y-[calc(100%+12px)]",
+                                "flex flex-col text-left text-white font-archivo"
+                              )}
+                              style={{ left: leftPct }}
+                            >
+                              <span
+                                className={cx(
+                                  "flex items-center gap-2",
+                                  "text-[16px] leading-[normal] font-normal tracking-[0.03em]"
+                                )}
+                              >
+                                <span className="inline-flex h-[16px] w-[16px] items-center justify-center">
+                                  {SmallRocket}
+                                </span>
+                                {step.topLabel}
+                              </span>
+
+                              <span className="mt-[2px] text-[16px] leading-[normal] font-normal tracking-[0.03em]">
+                                {step.year}
+                              </span>
+                            </div>
+                          )}
+
+                          <button
+                            onClick={() => setJIndex(i)}
+                            aria-label={`Go to ${step.title}`}
+                            className={cx(
+                              "absolute rounded-full bg-white transition-all",
+                              active ? "h-[16px] w-[16px]" : "h-[8px] w-[8px]"
+                            )}
+                            style={{
+                              left: leftPct,
+                              top: "50%",
+                              transform: "translate(-50%, -50%)",
+                            }}
+                          />
+                        </React.Fragment>
                       );
                     })}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 mb-6 flex items-center justify-between text-sm opacity-90">
-                <div />
-                <div className="flex items-center gap-2">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="opacity-90" aria-hidden>
-                    <path d={JOURNEY_STEPS[jIndex].iconPath} />
-                  </svg>
-                  <T as="span" variant="body16" weight={500} lineHeightPx={22} className="text-white/90">
-                    {JOURNEY_STEPS[jIndex].topLabel}
-                  </T>
+              {/* MIDDLE CONTENT BOX:
+                 This sits in the natural middle because parent flex-col uses justify-between.
+                 Typography spec:
+                 - heading: Schibsted Grotesk, weight 540 (~custom), 36px, tracking 1%, leading auto
+                 - body: Archivo regular 16px / 27px lh / 3% tracking
+              */}
+              <div className="pr-4">
+                {/* rocket / icon pill */}
+                <div className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+                  {JOURNEY_STEPS[jIndex].altBodyIcon ? (
+                    JOURNEY_STEPS[jIndex].altBodyIcon
+                  ) : (
+                    <span className="inline-flex h-[20px] w-[20px] items-center justify-center">
+                      {BigRocket}
+                    </span>
+                  )}
                 </div>
-                <T as="span" variant="body16" weight={500} lineHeightPx={22} className="opacity-90">
-                  {JOURNEY_STEPS[jIndex].year}
-                </T>
+
+                <h3
+                  className={cx(
+                    "text-white font-[540] font-schibsted",
+                    "text-[36px] leading-[normal] tracking-[0.01em]"
+                  )}
+                >
+                  {JOURNEY_STEPS[jIndex].title}
+                </h3>
+
+                <p
+                  className={cx(
+                    "mt-4 max-w-3xl text-white/95 font-archivo",
+                    "text-[16px] font-normal leading-[27px] tracking-[0.03em]"
+                  )}
+                >
+                  {JOURNEY_STEPS[jIndex].blurb}
+                </p>
               </div>
 
-              <div>
-                <div className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d={JOURNEY_STEPS[jIndex].iconPath} />
-                  </svg>
+              {/* BOTTOM BARS box (height ~50px space below like you wanted) */}
+              <div className="pt-10">
+                <div className="flex flex-wrap items-center gap-4">
+                  {JOURNEY_STEPS.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setJIndex(i)}
+                      aria-label={`Go to journey step ${i + 1}`}
+                      className={cx(
+                        "h-[6px] w-[90px] rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50",
+                        i === jIndex ? "bg-white" : "bg-white/35"
+                      )}
+                    />
+                  ))}
                 </div>
-
-                <T as="h3" variant="card36" weight={540} className="text-white">
-                  {JOURNEY_STEPS[jIndex].title}
-                </T>
-                <T as="p" variant="body16" lineHeightPx={26} className="mt-4 max-w-3xl text-white/95">
-                  {JOURNEY_STEPS[jIndex].blurb}
-                </T>
               </div>
             </div>
           </div>
@@ -435,18 +825,40 @@ export default function AboutPage() {
               Say Hi to <span className="text-[#4D31EC]">Rahi</span>!
             </T>
 
-            <T as="p" variant="body16" weight={400} lineHeightPx={27} className="mt-5 text-left text-black">
-              Rahi is the AI assistant built into WorkCrew.ai, designed to simplify, automate, and humanize recruitment. She helps companies screen thousands of resumes, conduct smart interviews, and assess culture-fit. From matching candidates to the right roles to running interviews and assessments, Rahi supports both sides of the hiring journey with precision and empathy.
+            <T
+              as="p"
+              variant="body16"
+              weight={400}
+              lineHeightPx={27}
+              className="mt-5 text-left text-black"
+            >
+              Rahi is the AI assistant built into WorkCrew.ai, designed to
+              simplify, automate, and humanize recruitment. She helps companies
+              screen thousands of resumes, conduct smart interviews, and assess
+              culture-fit. From matching candidates to the right roles to
+              running interviews and assessments, Rahi supports both sides of
+              the hiring journey with precision and empathy.
             </T>
           </div>
 
           {/* concentric rings + avatar */}
           <div className="lg:col-span-5">
             <div className="relative mx-auto h-[227px] w-[227px]">
-              <span className="absolute left-1/2 top-1/2 h-[208px] w-[208px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#C778F8]" aria-hidden />
-              <span className="absolute left-1/2 top-1/2 h-[187px] w-[187px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#4D31EC]" aria-hidden />
+              <span
+                className="absolute left-1/2 top-1/2 h-[208px] w-[208px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#C778F8]"
+                aria-hidden
+              />
+              <span
+                className="absolute left-1/2 top-1/2 h-[187px] w-[187px] -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#4D31EC]"
+                aria-hidden
+              />
               <div className="absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full ring-8 ring-[#3C34D9]/20 bg-[#3C34D9]">
-                <Image src="/Rah.png" alt="Rahi" fill className="object-cover object-[50%_25%]" />
+                <Image
+                  src="/Rah.png"
+                  alt="Rahi"
+                  fill
+                  className="object-cover object-[50%_25%]"
+                />
               </div>
             </div>
           </div>
@@ -456,7 +868,13 @@ export default function AboutPage() {
       {/* TESTIMONIALS + STATS */}
       <Section>
         <Container className="px-[50px]">
-          <T as="h2" variant="hero48" weight={600} lineHeightPx={60} className="mb-12 text-center">
+          <T
+            as="h2"
+            variant="hero48"
+            weight={600}
+            lineHeightPx={60}
+            className="mb-12 text-center"
+          >
             Testimonials
           </T>
         </Container>
@@ -470,7 +888,9 @@ export default function AboutPage() {
           <div className="mt-12 grid grid-cols-2 gap-4 rounded-2xl bg-gradient-to-r from-[#F2F4FF] to-[#F9FAFF] p-8 sm:grid-cols-4">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
-                <div className="text-[28px] font-semibold leading-[32px] text-[#111827]">{s.value}</div>
+                <div className="text-[28px] font-semibold leading-[32px] text-[#111827]">
+                  {s.value}
+                </div>
                 <div className="text-sm text-[#7A8595]">{s.label}</div>
               </div>
             ))}
@@ -484,12 +904,20 @@ export default function AboutPage() {
           <div className="relative overflow-hidden rounded-3xl bg-[#4D31EC]">
             <div className="grid grid-cols-1 gap-6 p-8 lg:grid-cols-12 lg:p-12">
               <div className="lg:col-span-8">
-                <T as="h3" variant="sub20" className="text-white" lineHeightPx={42} trackingPct={1} weight={500}>
+                <T
+                  as="h3"
+                  variant="sub20"
+                  className="text-white"
+                  lineHeightPx={42}
+                  trackingPct={1}
+                  weight={500}
+                >
                   Curious how WorkCrew.ai can fit into your hiring workflow?
                 </T>
 
                 <T as="p" variant="body16" className="mt-3 text-white/90">
-                  Let’s talk. Our team can walk you through how it works, what it solves, and how fast you can get started.
+                  Let’s talk. Our team can walk you through how it works, what
+                  it solves, and how fast you can get started.
                 </T>
 
                 <div className="mt-6">
@@ -518,7 +946,14 @@ export default function AboutPage() {
 
               <div className="relative lg:col-span-4">
                 <div className="relative ml-auto h-[267px] w-[220px]">
-                  <Image src="/cta-lady.png" alt="Friendly team member" width={220} height={267} className="object-contain" priority />
+                  <Image
+                    src="/cta-lady.png"
+                    alt="Friendly team member"
+                    width={220}
+                    height={267}
+                    className="object-contain"
+                    priority
+                  />
                 </div>
               </div>
             </div>
@@ -526,7 +961,7 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* Demo Video Modal (placeholder) */}
+      {/* Demo Video Modal */}
       {showDemo && (
         <div
           role="dialog"
@@ -534,15 +969,26 @@ export default function AboutPage() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setShowDemo(false)}
         >
-          <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-2">
-              <h3 className="text-lg font-semibold text-[#111827]">WorkCrew.ai — Demo</h3>
+              <h3 className="text-lg font-semibold text-[#111827]">
+                WorkCrew.ai — Demo
+              </h3>
               <button
                 onClick={() => setShowDemo(false)}
                 className="rounded-md p-2 text-[#6B7280] transition hover:bg-gray-100 hover:text-[#111827]"
                 aria-label="Close demo modal"
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
                   <path d="M6 6l12 12M18 6l-12 12" />
                 </svg>
               </button>
@@ -554,7 +1000,9 @@ export default function AboutPage() {
                   <svg viewBox="0 0 24 24" className="mb-3 h-12 w-12" fill="white">
                     <path d="M7 17L17 7M9 7h8v8" />
                   </svg>
-                  <p className="text-sm text-white/80">Demo video placeholder</p>
+                  <p className="text-sm text-white/80">
+                    Demo video placeholder
+                  </p>
                 </div>
               </div>
             </div>
@@ -567,10 +1015,10 @@ export default function AboutPage() {
   );
 }
 
-/* ===== Endless carousel, one-card-per-click, no autoplay ===== */
+/* endless testimonials carousel */
 function CarouselEndless({
   items,
-  cardW = 360,   // card width used in layout
+  cardW = 360,
   cardH = 215,
 }: {
   items: Testimonial[];
@@ -580,19 +1028,19 @@ function CarouselEndless({
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
 
-  // duplicate to enable seamless looping
+  // triple for seamless loop
   const LOOPED = React.useMemo(() => [...items, ...items, ...items], [items]);
 
-  const GAP = 24; // px; must match gap-6
+  const GAP = 24;
   const SINGLE_SET_WIDTH = React.useMemo(
-    () => LOOPED.length > 0 ? (items.length * (cardW + GAP)) - GAP : 0,
+    () => (LOOPED.length > 0 ? items.length * (cardW + GAP) - GAP : 0),
     [items.length, cardW, LOOPED.length]
   );
 
   const initScroll = React.useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    // jump to start of the middle set
+    // center on middle set
     el.scrollLeft = SINGLE_SET_WIDTH;
   }, [SINGLE_SET_WIDTH]);
 
@@ -600,18 +1048,14 @@ function CarouselEndless({
     const el = containerRef.current;
     if (!el) return;
     const left = el.scrollLeft;
-    const total = SINGLE_SET_WIDTH * 3;
     if (left < SINGLE_SET_WIDTH * 0.5) {
-      // near the first copy -> jump forward one set
       el.scrollLeft = left + SINGLE_SET_WIDTH;
     } else if (left > SINGLE_SET_WIDTH * 1.5) {
-      // near the last copy -> jump back one set
       el.scrollLeft = left - SINGLE_SET_WIDTH;
     }
   }, [SINGLE_SET_WIDTH]);
 
   React.useEffect(() => {
-    // wait for first paint to know widths
     const id = requestAnimationFrame(initScroll);
     return () => cancelAnimationFrame(id);
   }, [initScroll]);
@@ -621,14 +1065,18 @@ function CarouselEndless({
     if (!el) return;
     const delta = (dir === "left" ? -1 : 1) * (cardW + GAP);
     el.scrollBy({ left: delta, behavior: "smooth" });
-    // after the smooth scroll, normalize position
     window.setTimeout(normalizeScroll, 400);
   };
 
   return (
     <div
       className="relative"
-      style={{ ["--card-w" as any]: `${cardW}px`, ["--card-h" as any]: `${cardH}px` } as React.CSSProperties}
+      style={
+        {
+          ["--card-w" as any]: `${cardW}px`,
+          ["--card-h" as any]: `${cardH}px`,
+        } as React.CSSProperties
+      }
     >
       <div ref={containerRef} className="overflow-x-hidden">
         <div
@@ -643,13 +1091,21 @@ function CarouselEndless({
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-[#EEF2FF]">
-                  <Image src={t.avatar} alt={`${t.name} avatar`} width={40} height={40} className="object-cover" />
+                  <Image
+                    src={t.avatar}
+                    alt={`${t.name} avatar`}
+                    width={40}
+                    height={40}
+                    className="object-cover"
+                  />
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-[20px] font-semibold leading-[28px] text-[#111827]">
                     {t.name}
                   </div>
-                  <div className="truncate text-sm text-[#6B7280]">{t.role}</div>
+                  <div className="truncate text-sm text-[#6B7280]">
+                    {t.role}
+                  </div>
                 </div>
               </div>
 
@@ -661,14 +1117,20 @@ function CarouselEndless({
         </div>
       </div>
 
-      {/* chevrons: one-card-per-click */}
+      {/* chevrons */}
       <div className="mt-6 flex w-full items-center justify-center gap-8">
         <button
           onClick={() => slideByOne("left")}
           aria-label="Slide testimonials left"
           className="p-2 text-[#111827] transition hover:-translate-x-0.5 hover:opacity-80 focus:outline-none"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75}>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+          >
             <path d="M15 6l-6 6 6 6" />
           </svg>
         </button>
@@ -677,7 +1139,13 @@ function CarouselEndless({
           aria-label="Slide testimonials right"
           className="p-2 text-[#111827] transition hover:translate-x-0.5 hover:opacity-80 focus:outline-none"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75}>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.75}
+          >
             <path d="M9 6l6 6-6 6" />
           </svg>
         </button>

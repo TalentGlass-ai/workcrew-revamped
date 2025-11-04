@@ -2,30 +2,14 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "*"
-      ],
-      "workcrew-ui/*": [
-        "workcrew-ui/*"
-      ],
-      "components/*": [
-        "components/*"
-      ],
-      "styles/*": [
-        "styles/*"
-      ],
-      "lib/*": [
-        "lib/*"
-      ],
-      "hooks/*": [
-        "hooks/*"
-      ],
-      "utils/*": [
-        "utils/*"
-      ],
-      "app/*": [
-        "app/*"
-      ]
+      "*": ["*"],
+      "workcrew-ui/*": ["workcrew-ui/*"],
+      "components/*": ["components/*"],
+      "styles/*": ["styles/*"],
+      "lib/*": ["lib/*"],
+      "hooks/*": ["hooks/*"],
+      "utils/*": ["utils/*"],
+      "app/*": ["app/*"]
     },
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -38,34 +22,29 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": [
-      "node",
-      "react",
-      "react-dom"
-    ],
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "types": ["node", "react", "react-dom"],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "incremental": true,
     "esModuleInterop": true,
+
+    // ✅ Add this block so custom .d.ts files are recognized
+    "typeRoots": ["./types", "./node_modules/@types"],
+
     "plugins": [
       {
         "name": "next"
       }
     ]
   },
-  
   "include": [
     "**/*.js",
     "**/*.jsx",
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
-, "postcss.config.mjs"  ],
-  "exclude": [
-    "node_modules"
-  ]
+    ".next/types/**/*.ts",
+    "postcss.config.mjs",
+    "types"                
+  ],
+  "exclude": ["node_modules"]
 }

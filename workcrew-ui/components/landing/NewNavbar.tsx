@@ -7,7 +7,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import LayeredPill from "../primitives/buttons/LayeredPill";
 
-// main nav config
 const links = [
   { href: "/", label: "Home" },
   { href: "/find-jobs", label: "Find jobs" },
@@ -24,6 +23,10 @@ const NewNavbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
 
+  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const [profileImg, setProfileImg] = React.useState<string | null>(null);
+  const profileRef = React.useRef<HTMLDivElement | null>(null);
+
   React.useEffect(() => {
     const onScroll = () =>
       document.body.classList.toggle("scrolled", window.scrollY > 8);
@@ -32,12 +35,38 @@ const NewNavbar: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  React.useEffect(() => {
+    if (!isProfileOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isProfileOpen]);
+
   const isActive = (href: string) => {
     if (href.startsWith("/#")) return pathname === "/";
     return pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
   };
 
   const goLogin = () => router.push("/login");
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    setIsProfileOpen(false);
+    router.push("/");
+  };
+
+  const handleProfileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setProfileImg(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleContactOnHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (pathname !== "/") return;
@@ -65,12 +94,9 @@ const NewNavbar: React.FC = () => {
                 className="logo"
                 priority
               />
-              <span className="brandFallback">
-                Work<span className="brand-pill">crew</span>.ai
-              </span>
             </Link>
 
-            {/* main navigation */}
+            {/* main nav */}
             <ul className="menu">
               {links.map((l) => (
                 <li key={l.href}>
@@ -105,31 +131,77 @@ const NewNavbar: React.FC = () => {
               ))}
             </ul>
 
-            {/* login */}
+            {/* login + profile */}
             <div className="login">
+              {/* Login button */}
               <LayeredPill label="Login" size="sm" onClick={goLogin} />
+
+              {/* Profile icon + dropdown */}
+              <div className="profileWrapper" ref={profileRef}>
+                <button
+                  type="button"
+                  className="profileButton"
+                  onClick={() => setIsProfileOpen((v) => !v)}
+                >
+                  <span className="avatarCircle">
+                    {profileImg ? (
+                      <Image
+                        src={profileImg}
+                        alt="Profile"
+                        width={36}
+                        height={36}
+                        className="avatarImage"
+                      />
+                    ) : (
+                      <svg viewBox="0 0 24 24" className="avatarIcon">
+                        <circle cx="12" cy="9" r="3.2" />
+                        <path d="M5.5 19.2c1.4-3 3.3-4.5 6.5-4.5s5.1 1.5 6.5 4.5" />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+
+                {isProfileOpen && (
+                  <div className="profileMenu" role="menu">
+                    <label className="profileMenuItem">
+                      Edit profile
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileUpload}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+
+                    {profileImg && (
+                      <button
+                        type="button"
+                        className="profileMenuItem"
+                        onClick={() => setProfileImg(null)}
+                      >
+                        Remove profile
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="profileMenuItem logout"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </nav>
 
         <style jsx>{`
-          /* smooth scrolling */
-          :global(html) {
-            scroll-behavior: smooth;
-          }
-          /* ensure content starts below fixed header */
           :global(body) {
             padding-top: ${NAV_HEIGHT}px;
           }
-          /* anchor offsets */
-          :global([id]) {
-            scroll-margin-top: ${ANCHOR_OFFSET}px;
-          }
-          :global(#contact) {
-            scroll-margin-top: ${ANCHOR_OFFSET}px;
-          }
 
-          /* fixed header, always full width */
           .wc-header {
             position: fixed;
             top: 0;
@@ -137,66 +209,17 @@ const NewNavbar: React.FC = () => {
             right: 0;
             z-index: 60;
             height: ${NAV_HEIGHT}px;
-            transition: box-shadow 0.3s ease, transform 0.2s ease;
-          }
-          /* floated state: keep edge-to-edge rectangle (no inset, no pill) */
-          :global(body.scrolled) .wc-header {
-            top: 0;
-            left: 0;
-            right: 0;
           }
 
-          /* glass background card — rectangular in both states */
           .wc-nav {
             position: relative;
             height: 100%;
-            overflow: hidden;
-            background: transparent;
             backdrop-filter: blur(14px) saturate(140%);
-            -webkit-backdrop-filter: blur(14px) saturate(140%);
             border: 1.5px solid rgba(163, 157, 255, 0.11);
-            box-shadow: 0 4px 10px rgba(16, 22, 40, 0.08);
-            transition: box-shadow 0.3s ease;
-            border-radius: 0; /* keep rectangular */
-          }
-          :global(body.scrolled) .wc-nav {
-            border-radius: 0;
-            box-shadow: 0 8px 18px rgba(16, 22, 40, 0.12);
+            background: rgba(255, 255, 255, 0.9);
           }
 
-          .wc-nav::before,
-          .wc-nav::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            pointer-events: none;
-          }
-          .wc-nav::before {
-            background: linear-gradient(
-              180deg,
-              rgba(246, 247, 252, 0.95) 0%,
-              rgba(236, 239, 248, 0.92) 100%
-            );
-          }
-          .wc-nav::after {
-            background-image: linear-gradient(
-                rgba(163, 157, 255, 0.22) 1px,
-                transparent 1px
-              ),
-              linear-gradient(
-                90deg,
-                rgba(163, 157, 255, 0.22) 1px,
-                transparent 1px
-              );
-            background-size: 40px 40px;
-            opacity: 0.26;
-          }
-
-          /* grid */
           .row {
-            position: relative;
-            z-index: 1;
             height: ${NAV_HEIGHT}px;
             display: grid;
             grid-template-columns: auto 1fr auto;
@@ -204,80 +227,115 @@ const NewNavbar: React.FC = () => {
             padding: 0 20px;
           }
 
-          /* brand */
-          .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            justify-self: start;
-          }
-          .logo {
-            display: block;
-          }
-          .brandFallback {
-            display: none;
-            font-weight: 800;
-            color: #1c2140;
-          }
-          .brand-pill {
-            padding: 0 6px;
-            border-radius: 6px;
-            color: #fff;
-            background: linear-gradient(135deg, #6d5cf5 0%, #3b82f6 100%);
-          }
-
-          /* center menu */
           .menu {
             justify-self: center;
             display: none;
             list-style: none;
-            margin: 0;
-            padding: 0;
             gap: 36px;
           }
+
           @media (min-width: 768px) {
             .menu {
               display: inline-flex;
             }
           }
 
-          /* links */
           .link {
             text-decoration: none;
             color: #1c2140;
             font-weight: 550;
-            letter-spacing: 0.005em;
-            transition: color 0.25s ease, transform 0.2s ease;
-          }
-          .menu :global(a.link:hover),
-          .menu :global(a.link:focus-visible) {
-            color: #2563eb !important;
-          }
-          .link:hover {
-            transform: translateY(-1px);
-          }
-          .link.active {
-            color: #3b82f6;
-            text-decoration: underline;
-          }
-          .link.active:hover {
-            color: #2563eb !important;
-            text-decoration: underline;
+            transition: color 0.25s;
           }
 
-          /* login container */
+          /* login group – shifted 40px right, 25px gap */
           .login {
-            justify-self: end;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            transform: translateX(30px); /* moves both login + profile 40px right */
           }
-          /* make login pill 1.75× wider */
-          .login :global(button) {
-            padding-inline: 28px !important; /* wider pill */
+
+          /* make login pill at least 160px long and move it 40px more (total 80px) */
+          .login :global(button:first-of-type) {
+            min-width: 160px;
+            padding-inline: 10px !important;
+            justify-content: center;
+            transform: translateX(30px); /* extra 40px → 80px total from original */
           }
-          .login :global(button:focus),
-          .login :global(button:focus-visible) {
-            outline: none !important;
-            box-shadow: none !important;
+
+          .profileWrapper {
+            position: relative;
+          }
+
+          .profileButton {
+            border: none;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+          }
+
+          .avatarCircle {
+            width: 38px;
+            height: 38px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border: 2.5px solid #4f46e5; /* blue circle stroke */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            overflow: hidden;
+          }
+
+          .avatarImage {
+            object-fit: cover;
+            border-radius: 9999px;
+          }
+
+          .avatarIcon {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #1f2937;
+            stroke-width: 1.6;
+          }
+
+          .profileMenu {
+            position: absolute;
+            right: 0;
+            margin-top: 10px;
+            background: #fff;
+            border: 1px solid rgba(147, 163, 255, 0.35);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            border-radius: 12px;
+            padding: 8px 0;
+            min-width: 170px;
+            z-index: 100;
+          }
+
+          .profileMenuItem {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #111827;
+            transition: background 0.15s;
+          }
+
+          .profileMenuItem:hover {
+            background: rgba(226, 232, 255, 0.6);
+          }
+
+          .logout {
+            color: #dc2626;
+          }
+
+          .logout:hover {
+            background: rgba(254, 226, 226, 0.9);
           }
         `}</style>
       </header>

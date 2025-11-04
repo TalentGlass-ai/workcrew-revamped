@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 
-/* Step type shared across onboarding pages */
+// step label shape we reuse
 type Step = { key: string; label: string };
 
-/* Connector between circles — width animates 0 → 100%, vertically centered */
+// tiny connector between the step circles
 function Connector({
   filled,
   animate = false,
@@ -38,7 +38,7 @@ function Connector({
   );
 }
 
-/* Stepper used on all onboarding pages */
+// same stepper for all onboarding pages
 function OnboardStepper({
   steps,
   active,
@@ -63,8 +63,12 @@ function OnboardStepper({
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
                     isDone ? "bg-[#4D31EC] text-white" : "",
-                    isCurrent ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]" : "",
-                    isUpcoming ? "bg-white ring-1 ring-gray-300 text-gray-400" : "",
+                    isCurrent
+                      ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]"
+                      : "",
+                    isUpcoming
+                      ? "bg-white ring-1 ring-gray-300 text-gray-400"
+                      : "",
                   ].join(" ")}
                 >
                   {isDone ? "✓" : i + 1}
@@ -75,7 +79,10 @@ function OnboardStepper({
               </div>
 
               {i < steps.length - 1 && (
-                <Connector filled={i < active} animate={advancing && i === active} />
+                <Connector
+                  filled={i < active}
+                  animate={advancing && i === active}
+                />
               )}
             </React.Fragment>
           );
@@ -85,7 +92,7 @@ function OnboardStepper({
   );
 }
 
-/* Draft helpers */
+// quick localStorage helpers
 function loadDraft<T = any>(): T {
   if (typeof window === "undefined") return {} as T;
   try {
@@ -100,7 +107,7 @@ function saveDraft(patch: Record<string, any>) {
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
 }
 
-/* Steps in order (keep consistent with the rest) */
+// keep this in sync with other onboarding pages
 const STEPS: Step[] = [
   { key: "personal", label: "Personal details" },
   { key: "work", label: "Work experience" },
@@ -112,15 +119,16 @@ export default function ProfessionalSummaryPage() {
   const router = useRouter();
   const draft = loadDraft();
 
-  // Local state (limit to 500 chars in UI)
+  // summary text, capped in the UI at 500 chars
   const [summary, setSummary] = React.useState<string>(draft.summary || "");
   const [advancing, setAdvancing] = React.useState(false);
 
-  // 3 = this step
+  // 3 = summary step in the flow
   const activeStep = 3;
 
-  // Require non-empty and ≤ 500 chars
-  const requiredFilled = summary.trim().length > 0 && summary.length <= 500;
+  // needs some text and max 500 chars
+  const requiredFilled =
+    summary.trim().length > 0 && summary.length <= 500;
 
   function next() {
     if (!requiredFilled || advancing) return;
@@ -130,85 +138,95 @@ export default function ProfessionalSummaryPage() {
       router.push("/onboarding/review");
     }, 500);
   }
+
   function prev() {
     saveDraft({ summary });
     router.back();
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left: logo, illustration, helper text */}
-      <section className="relative flex flex-col justify-center bg-[#F6F5FF] px-10 py-16 md:px-20">
-        <Image
-          src="/logo.png"
-          alt="WorkCrew.ai"
-          width={116}
-          height={21}
-          className="absolute left-[50px] top-[50px]"
-          priority
-        />
-
-        <div className="mt-10 flex flex-col items-center justify-center space-y-6 md:items-start">
+    <main className="min-h-screen flex bg-white">
+      {/* left side stays fixed on desktop and explains the step */}
+      <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
+        <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <Image
-            src="/proffesional-summary.png"
-            alt="Professional summary illustration"
-            width={180}
-            height={180}
-            className="object-contain"
+            src="/logo.png"
+            alt="WorkCrew.ai"
+            width={116}
+            height={21}
+            className="absolute left-[50px] top-[50px]"
             priority
           />
 
-          <div className="text-center md:text-left">
-            <h1 className="text-xl font-semibold text-black md:text-2xl">
-              Form your professional summary
-            </h1>
-            <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
-              Add a professional summary to showcase your strengths, career goals, and what makes you
-              stand out to employers.
-            </p>
-          </div>
-        </div>
+          <div className="mt-10 flex h-full flex-col items-center justify-center space-y-6 md:items-start">
+            <Image
+              src="/proffesional-summary.png"
+              alt="Professional summary illustration"
+              width={180}
+              height={180}
+              className="object-contain"
+              priority
+            />
 
-        <button
-          onClick={() => router.push("/onboarding/review")}
-          className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
-        >
-          Skip for now
-        </button>
+            <div className="text-center md:text-left">
+              <h1 className="text-xl font-semibold text-black md:text-2xl">
+                Form your professional summary
+              </h1>
+              <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
+                Add a short summary that shows your strengths, goals, and why
+                you stand out to employers.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/onboarding/review")}
+            className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
+          >
+            Skip for now
+          </button>
+        </div>
       </section>
 
-      {/* Right: stepper + form */}
-      <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
+      {/* right side scrolls with the stepper and textarea */}
+      <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          {/* Stepper */}
+          {/* stepper on top */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
-            <OnboardStepper steps={STEPS} active={activeStep} advancing={advancing} />
+            <OnboardStepper
+              steps={STEPS}
+              active={activeStep}
+              advancing={advancing}
+            />
           </div>
 
-          {/* Title */}
+          {/* title */}
           <h2 className="mb-6 text-center text-2xl font-semibold text-[#4D31EC]">
             Professional summary
           </h2>
 
-          {/* Tip box */}
+          {/* tip bar */}
           <div className="mx-auto mb-6 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
-              Keep it concise (2–3 sentences). Highlight your experience, key skills, and career
-              goals. Use action words and quantify achievements when possible.
+              Keep it to 2–3 sentences. Highlight your experience, core
+              skills, and what you want next. Use action words and numbers
+              where you can.
             </p>
           </div>
 
-          {/* Summary input */}
+          {/* textarea for the summary */}
           <div className="mx-auto w-full max-w-3xl">
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-sm font-medium">Professional summary</label>
+              <label className="text-sm font-medium">
+                Professional summary
+              </label>
               <button
                 type="button"
                 className="text-sm font-medium text-[#4D31EC] hover:underline"
                 onClick={() => {
                   if (!summary) {
                     setSummary(
-                      "Results-driven professional with X years of experience in Y. Proven track record of Z, with strengths in A, B, and C. Seeking to leverage skills to deliver measurable impact at a growth-focused team."
+                      "Results-driven professional with X years of experience in Y. Proven track record of Z, with strengths in A, B, and C. Looking to create measurable impact in a growth-focused team."
                     );
                   }
                 }}
@@ -223,7 +241,7 @@ export default function ProfessionalSummaryPage() {
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className="w-full rounded-xl border px-4 py-3 outline-none focus:border-[#4D31EC]"
-              placeholder="Write a compelling summary that highlights your professional background, key insights and career objectives…"
+              placeholder="Write a short summary that covers your background, skills, and what you are looking for next…"
             />
 
             <div className="mt-1 text-right text-sm text-gray-500">
@@ -231,7 +249,7 @@ export default function ProfessionalSummaryPage() {
             </div>
           </div>
 
-          {/* Actions (pill buttons with arrows) */}
+          {/* previous / next buttons */}
           <div className="mx-auto mt-8 flex w-full max-w-3xl items-center justify-between">
             <button
               onClick={prev}

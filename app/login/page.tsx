@@ -10,18 +10,16 @@ import T from "../../workcrew-ui/components/primitives/Typography";
 export default function LoginPage() {
   const router = useRouter();
 
-  // Default the toggle to employer per your recruiter view
+  // Default toggle to employer (for recruiter version)
   const [role, setRole] = React.useState<"candidate" | "employer">("employer");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // Route by role:
-    // - Employer: into the new employer onboarding flow (Create account screen)
-    // - Candidate: keep your existing resume-upload entry
+    // ✅ Corrected route logic
     const next =
       role === "employer"
-        ? "/onboarding-employer/signup"
+        ? "/onboarding-employer/company" // <-- fixed destination
         : "/onboarding/upload-resume";
 
     router.push(next);
@@ -177,10 +175,14 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
                 <input name="remember" type="checkbox" className="accent-[#4D31EC]" />
-                <T as="span" variant="sub14">Remember me</T>
+                <T as="span" variant="sub14">
+                  Remember me
+                </T>
               </label>
               <Link href="/forgot-password" className="text-[#4D31EC]">
-                <T as="span" variant="sub14" weight={600}>Forgot password?</T>
+                <T as="span" variant="sub14" weight={600}>
+                  Forgot password?
+                </T>
               </Link>
             </div>
 
@@ -188,12 +190,16 @@ export default function LoginPage() {
               type="submit"
               className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5]"
             >
-              <T as="span" variant="button">Login →</T>
+              <T as="span" variant="button">
+                Login →
+              </T>
             </button>
 
             <div className="flex items-center gap-3">
               <span className="h-px w-full bg-gray-200" />
-              <T as="span" variant="sub14" weight={600} className="text-black">or</T>
+              <T as="span" variant="sub14" weight={600} className="text-black">
+                or
+              </T>
               <span className="h-px w-full bg-gray-200" />
             </div>
 
@@ -203,8 +209,15 @@ export default function LoginPage() {
                 className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
                 aria-label="Continue with Google"
               >
-                <Image src="/flat-color-icons_google.png" alt="Google" width={16} height={16} />
-                <T as="span" variant="sub14" weight={600}>Google</T>
+                <Image
+                  src="/flat-color-icons_google.png"
+                  alt="Google"
+                  width={16}
+                  height={16}
+                />
+                <T as="span" variant="sub14" weight={600}>
+                  Google
+                </T>
               </button>
 
               <button
@@ -212,18 +225,31 @@ export default function LoginPage() {
                 className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
                 aria-label="Continue with Microsoft"
               >
-                <Image src="/logos_microsoft-icon.png" alt="Microsoft" width={16} height={16} />
-                <T as="span" variant="sub14" weight={600}>Microsoft</T>
+                <Image
+                  src="/logos_microsoft-icon.png"
+                  alt="Microsoft"
+                  width={16}
+                  height={16}
+                />
+                <T as="span" variant="sub14" weight={600}>
+                  Microsoft
+                </T>
               </button>
             </div>
 
             <T as="p" variant="sub14" className="text-center">
               Don’t have an account?{" "}
               <Link
-                href={role === "employer" ? "/onboarding-employer/signup" : "/signup"}
+                href={
+                  role === "employer"
+                    ? "/onboarding-employer/signup"
+                    : "/signup"
+                }
                 className="font-semibold text-[#4D31EC]"
               >
-                <T as="span" variant="sub14" weight={600}>Sign up</T>
+                <T as="span" variant="sub14" weight={600}>
+                  Sign up
+                </T>
               </Link>
             </T>
           </form>

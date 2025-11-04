@@ -26,13 +26,13 @@ type FeatureRow =
 
 type Plan = {
   name: "Starter" | "Growth" | "Enterprise";
-  price: number;
+  price: number | null;
   priceSuffix?: string;
-  durationLine: string;
+  durationLine?: string;
   highlight?: boolean;
   cta: string;
   features: FeatureRow[];
-  note?: string;
+  hidePrice?: boolean;
 };
 
 export default function EmployerPricingOnboarding() {
@@ -49,6 +49,7 @@ export default function EmployerPricingOnboarding() {
     window.open(href, "_blank", "noopener,noreferrer");
   };
 
+  // 🔁 Plans aligned with main /pricing page
   const plans: Plan[] = [
     {
       name: "Starter",
@@ -58,17 +59,18 @@ export default function EmployerPricingOnboarding() {
       cta: "Choose plan",
       features: [
         { label: "Seat", value: "1 Seat" },
-        { label: "Role posting", value: "Upto 1 role" },
-        { label: "Resume access", value: "75" },
+        {
+          label: "Resume access",
+          value: "Premium DB - Assessment & interviews",
+        },
+        { label: "Contact credits", value: "250" },
+        { label: "Role posting", value: "Upto 3 roles" },
         { label: "Usage analytics", included: true },
-        { label: "Priority support", value: "Email" },
+        { label: "Priority support", included: false },
         { label: "Onboarding & training", included: true },
-        { label: "Account manager", included: false },
-        { label: "Evaluation tools", value: "Assessment & interviews" },
+        { label: "Customer success", included: false },
         { label: "Hiring support fee", value: "5%" },
       ],
-      note:
-        "Note: Additional costs apply for assessments and interviews in this plan. Contact sales for customisation.",
     },
     {
       name: "Growth",
@@ -79,31 +81,37 @@ export default function EmployerPricingOnboarding() {
       cta: "Choose plan",
       features: [
         { label: "Seat", value: "1 Seat" },
-        { label: "Role posting", value: "Upto 10 roles" },
-        { label: "Resume access", value: "200" },
+        {
+          label: "Resume access",
+          value: "Premium DB - Assessment & interviews",
+        },
+        { label: "Contact credits", value: "750" },
+        { label: "Role posting", value: "Unlimited" },
         { label: "Usage analytics", included: true },
-        { label: "Priority support", value: "Email, Chat" },
+        { label: "Priority support", value: "Email, chat, Slack" },
         { label: "Onboarding & training", included: true },
-        { label: "Account manager", included: true },
-        { label: "Evaluation tools", value: "Assessment & interviews" },
+        { label: "Customer success", included: true },
         { label: "Hiring support fee", value: "5%" },
       ],
     },
     {
       name: "Enterprise",
-      price: billing === "monthly" ? 35000 : Math.round(35000 * 12 * 0.9),
-      priceSuffix: "/-",
-      durationLine: "/month",
+      price: null,
+      // no durationLine & no price — mirrors main pricing page
+      hidePrice: true,
       cta: "Contact sales",
       features: [
         { label: "Seat", value: "1 Seat" },
-        { label: "Role posting", value: "Unlimited" },
-        { label: "Resume access", value: "Unlimited" },
+        {
+          label: "Resume access",
+          value: "Premium DB - Assessment & interviews",
+        },
+        { label: "Contact credits", value: "750" },
+        { label: "Role posting", included: false },
         { label: "Usage analytics", included: true },
-        { label: "Priority support", value: "Email, Chat, Slack" },
+        { label: "Priority support", value: "Email, chat, Slack" },
         { label: "Onboarding & training", included: true },
-        { label: "Account manager", included: true },
-        { label: "Evaluation tools", value: "Assessment & interviews" },
+        { label: "Customer success", included: true },
         { label: "Hiring support fee", value: "5%" },
       ],
     },
@@ -123,7 +131,12 @@ export default function EmployerPricingOnboarding() {
       {/* All other content shifted down by 100px */}
       <section className="mx-auto max-w-6xl px-6 pt-[150px]">
         {/* Title + subtitle using same Typography system */}
-        <T as="h1" variant="hero48" className="text-center text-black" autoLeading>
+        <T
+          as="h1"
+          variant="hero48"
+          className="text-center text-black"
+          autoLeading
+        >
           Choose your <span className="text-[#4D31EC]">plan</span>
         </T>
 
@@ -135,7 +148,8 @@ export default function EmployerPricingOnboarding() {
           lineHeightPx={27}
           trackingPct={3}
         >
-          Select the perfect plan to start posting jobs and discovering top talent on WorkCrew.ai
+          Select the perfect plan to start posting jobs and discovering top
+          talent on WorkCrew.ai
         </T>
 
         {/* Billing Toggle (Typography for labels & badge) */}
@@ -170,7 +184,9 @@ export default function EmployerPricingOnboarding() {
                   return (
                     <button
                       key={label}
-                      onClick={() => setBilling(idx === 0 ? "monthly" : "yearly")}
+                      onClick={() =>
+                        setBilling(idx === 0 ? "monthly" : "yearly")
+                      }
                       className="relative z-10 flex items-center justify-center"
                     >
                       <T
@@ -193,20 +209,32 @@ export default function EmployerPricingOnboarding() {
               className="pointer-events-none absolute -top-6 right-[-78px] flex items-center gap-2"
               aria-hidden
             >
-              <img src="/icons/curved-arrow.svg" alt="" width={54} height={28} />
-              <T as="span" variant="sub14" weight={700} trackingPct={2} className="text-black">
+              <img
+                src="/icons/curved-arrow.svg"
+                alt=""
+                width={54}
+                height={28}
+              />
+              <T
+                as="span"
+                variant="sub14"
+                weight={700}
+                trackingPct={2}
+                className="text-black"
+              >
                 10% off
               </T>
             </div>
           </div>
         </div>
 
-        {/* Cards (Typography everywhere to match app/pricing) */}
+        {/* Cards (aligned with app/pricing) */}
         <div className="mt-[150px] grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => {
             const highlight = !!plan.highlight;
             const base =
               "relative rounded-xl bg-white flex flex-col overflow-visible min-h-[600px] p-6 pb-12 border border-gray-200 shadow-sm";
+
             const handleCTA =
               plan.cta.toLowerCase().includes("contact")
                 ? goToCalendarThenDemo
@@ -217,14 +245,18 @@ export default function EmployerPricingOnboarding() {
                 key={plan.name}
                 className={
                   highlight
-                    ? `${base.replace("border-gray-200", "border-[#4D31EC]")} -translate-y-4 pt-16 px-6`
+                    ? `${base.replace(
+                        "border-gray-200",
+                        "border-[#4D31EC]"
+                      )} -translate-y-4 pt-16 px-6`
                     : base
                 }
                 style={
                   highlight
                     ? {
                         borderWidth: 2.5,
-                        boxShadow: "0 12px 30px rgba(77,49,236,0.25), 0 0 0 3px rgba(77,49,236,0.18)",
+                        boxShadow:
+                          "0 12px 30px rgba(77,49,236,0.25), 0 0 0 3px rgba(77,49,236,0.18)",
                       }
                     : undefined
                 }
@@ -248,7 +280,12 @@ export default function EmployerPricingOnboarding() {
                       justifyContent: "center",
                     }}
                   >
-                    <T as="span" variant="sub14" weight={600} className="text-white">
+                    <T
+                      as="span"
+                      variant="sub14"
+                      weight={600}
+                      className="text-white"
+                    >
                       Recommended
                     </T>
                   </div>
@@ -256,34 +293,46 @@ export default function EmployerPricingOnboarding() {
 
                 {/* Header */}
                 <div className="flex min-h-[150px] flex-col items-center justify-end text-center">
-                  <T as="h3" variant="sub20" weight={560} className="text-[#101828]">
+                  <T
+                    as="h3"
+                    variant="sub20"
+                    weight={560}
+                    className="text-[#101828]"
+                  >
                     {plan.name}
                   </T>
 
                   <div className="mt-3">
-                    <div
-                      className="leading-none"
-                      style={{
-                        color: "#4D31EC",
-                        fontFamily: "Archivo, var(--font-display)",
-                        fontWeight: 700,
-                        fontSize: 32,
-                        letterSpacing: "0.005em",
-                      }}
-                    >
-                      ₹{plan.price.toLocaleString()}
-                      {plan.priceSuffix ?? ""}
-                    </div>
-                    <T
-                      as="div"
-                      variant="sub20"
-                      weight={500}
-                      lineHeightPx={27}
-                      trackingPct={3}
-                      className="mt-[14px] text-[#808080]"
-                    >
-                      {plan.durationLine}
-                    </T>
+                    {/* price only when not hidden (Enterprise hides) */}
+                    {!plan.hidePrice && plan.price !== null && (
+                      <div
+                        className="leading-none"
+                        style={{
+                          color: "#4D31EC",
+                          fontFamily: "Archivo, var(--font-display)",
+                          fontWeight: 700,
+                          fontSize: 32,
+                          letterSpacing: "0.005em",
+                        }}
+                      >
+                        ₹{plan.price.toLocaleString()}
+                        {plan.priceSuffix ?? ""}
+                      </div>
+                    )}
+
+                    {/* duration line: also hidden for Enterprise */}
+                    {!plan.hidePrice && plan.durationLine && (
+                      <T
+                        as="div"
+                        variant="sub20"
+                        weight={500}
+                        lineHeightPx={27}
+                        trackingPct={3}
+                        className="mt-[14px] text-[#808080]"
+                      >
+                        {plan.durationLine}
+                      </T>
+                    )}
                   </div>
                 </div>
 
@@ -304,19 +353,40 @@ export default function EmployerPricingOnboarding() {
                 <ul className="mt-1 flex-1">
                   {plan.features.map((f, i) => {
                     const isValue = "value" in f;
-                    const divider = f.label === "Hiring support fee" ? "border-t border-gray-100" : "";
+                    const divider =
+                      f.label === "Hiring support fee"
+                        ? "border-t border-gray-100"
+                        : "";
                     return (
-                      <li key={i} className={`flex items-center justify-between py-3 ${divider}`}>
-                        <T as="span" variant="sub14" weight={500} className="text-[#444953]">
+                      <li
+                        key={i}
+                        className={`flex items-center justify-between py-3 ${divider}`}
+                      >
+                        <T
+                          as="span"
+                          variant="sub14"
+                          weight={500}
+                          className="text-[#444953]"
+                        >
                           {f.label}
                         </T>
 
                         {isValue ? (
-                          <T as="span" variant="sub14" weight={500} className="text-right text-black">
+                          <T
+                            as="span"
+                            variant="sub14"
+                            weight={500}
+                            className="text-right text-black"
+                          >
                             {f.value}
                           </T>
                         ) : f.included ? (
-                          <img src="/icons/hugeicons_tick-02.png" alt="Included" width={20} height={20} />
+                          <img
+                            src="/icons/hugeicons_tick-02.png"
+                            alt="Included"
+                            width={20}
+                            height={20}
+                          />
                         ) : (
                           <img
                             src="/icons/uim_multiply.png"
@@ -330,21 +400,20 @@ export default function EmployerPricingOnboarding() {
                     );
                   })}
                 </ul>
-
-                {/* Starter footnote */}
-                {plan.note && (
-                  <T as="p" variant="sub14" weight={500} className="mt-4 text-gray-500">
-                    {plan.note}
-                  </T>
-                )}
               </div>
             );
           })}
         </div>
 
         {/* Bottom footnote using Typography */}
-        <T as="p" variant="sub20" weight={400} className="mt-10 pb-16 text-center text-black">
-          Not sure yet? Get a <span className="underline">free trial</span> for a week
+        <T
+          as="p"
+          variant="sub20"
+          weight={400}
+          className="mt-10 pb-16 text-center text-black"
+        >
+          Not sure yet? Get a <span className="underline">free trial</span> for
+          a week
         </T>
       </section>
     </main>

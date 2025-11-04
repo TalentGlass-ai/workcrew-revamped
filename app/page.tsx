@@ -15,18 +15,6 @@ import {
 import JobRoles from "../workcrew-ui/components/landing/JobRoles";
 import { Section } from "../workcrew-ui/components/primitives";
 
-/* Build badge for dev */
-const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
-
-function DevBuildBadge() {
-  if (process.env.NODE_ENV !== "development") return null;
-  return (
-    <div className="fixed right-2 top-2 z-[9999] bg-[#ffe58f] p-[6px]">
-      BUILD: {BUILD_ID}
-    </div>
-  );
-}
-
 /* Wrapper with no default vertical padding */
 function GapSection({ children }: { children: React.ReactNode }) {
   return (
@@ -42,7 +30,7 @@ function GapSection({ children }: { children: React.ReactNode }) {
 export default function HomePage(): React.ReactElement {
   return (
     <>
-      <DevBuildBadge />
+      {/* Navbar */}
       <NewNavbar />
 
       <style jsx global>{`
@@ -254,17 +242,23 @@ function ContactInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...rest}
-      className={`h-[52px] w-full rounded-xl border-0 bg-[#F5F6F7] px-4 font-alt text-[16px] font-medium tracking-[0.03em] text-[#929292] placeholder:text-[#929292] transition focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/20 ${className ?? ""}`}
+      className={`h-[52px] w-full rounded-xl border-0 bg-[#F5F6F7] px-4 font-alt text-[16px] font-medium tracking-[0.03em] text-[#929292] placeholder:text-[#929292] transition focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/20 ${
+        className ?? ""
+      }`}
     />
   );
 }
 
-function ContactTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+function ContactTextarea(
+  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>
+) {
   const { className, ...rest } = props;
   return (
     <textarea
       {...rest}
-      className={`w-full rounded-xl border-0 bg-[#F5F6F7] px-4 py-3 font-alt text-[16px] font-medium tracking-[0.03em] text-[#929292] placeholder:text-[#929292] transition focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/20 ${className ?? ""}`}
+      className={`w-full rounded-xl border-0 bg-[#F5F6F7] px-4 py-3 font-alt text-[16px] font-medium tracking-[0.03em] text-[#929292] placeholder:text-[#929292] transition focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#5A3BFF]/20 ${
+        className ?? ""
+      }`}
     />
   );
 }

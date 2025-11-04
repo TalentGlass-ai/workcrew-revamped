@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 
-/* Step type shared across onboarding pages */
+// step label shape we reuse
 type Step = { key: string; label: string };
 
-/* Connector between circles — width animates 0 → 100%, vertically centered */
+// tiny connector between the step circles
 function Connector({
   filled,
   animate = false,
@@ -38,7 +38,7 @@ function Connector({
   );
 }
 
-/* Figma-like stepper (same as personal/work pages) */
+// same stepper as personal and work pages
 function OnboardStepper({
   steps,
   active,
@@ -63,8 +63,12 @@ function OnboardStepper({
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
                     isDone ? "bg-[#4D31EC] text-white" : "",
-                    isCurrent ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]" : "",
-                    isUpcoming ? "bg-white ring-1 ring-gray-300 text-gray-400" : "",
+                    isCurrent
+                      ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]"
+                      : "",
+                    isUpcoming
+                      ? "bg-white ring-1 ring-gray-300 text-gray-400"
+                      : "",
                   ].join(" ")}
                 >
                   {isDone ? "✓" : i + 1}
@@ -75,7 +79,10 @@ function OnboardStepper({
               </div>
 
               {i < steps.length - 1 && (
-                <Connector filled={i < active} animate={advancing && i === active} />
+                <Connector
+                  filled={i < active}
+                  animate={advancing && i === active}
+                />
               )}
             </React.Fragment>
           );
@@ -85,7 +92,7 @@ function OnboardStepper({
   );
 }
 
-/* Draft helpers */
+// quick localStorage helpers for the draft
 function loadDraft<T = any>(): T {
   if (typeof window === "undefined") return {} as T;
   try {
@@ -100,7 +107,7 @@ function saveDraft(patch: Record<string, any>) {
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
 }
 
-/* Keep order consistent across pages */
+// step order stays the same across onboarding
 const STEPS: Step[] = [
   { key: "personal", label: "Personal details" },
   { key: "work", label: "Work experience" },
@@ -112,7 +119,7 @@ export default function EducationPage() {
   const router = useRouter();
   const draft = loadDraft();
 
-  // Form state seeded from draft
+  // form state coming from the draft if it exists
   const [edu, setEdu] = React.useState({
     institution: draft.edu?.institution || "",
     degree: draft.edu?.degree || "",
@@ -121,19 +128,16 @@ export default function EducationPage() {
     gpa: draft.edu?.gpa || "",
   });
 
-  // Animate connector before routing
+  // flag to let the connector animate before we move to next page
   const [advancing, setAdvancing] = React.useState(false);
 
-  // 2 = this step
+  // 2 = education in the step list
   const activeStep = 2;
 
-  // Required fields gate (GPA optional)
-  const requiredFilled = [
-    edu.institution,
-    edu.degree,
-    edu.field,
-    edu.year,
-  ].every((v) => v.trim().length > 0);
+  // gpa is optional, the rest should not be empty
+  const requiredFilled = [edu.institution, edu.degree, edu.field, edu.year].every(
+    (v) => v.trim().length > 0
+  );
 
   function next() {
     if (!requiredFilled || advancing) return;
@@ -150,68 +154,75 @@ export default function EducationPage() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left: logo, illustration, helper text */}
-      <section className="relative flex flex-col justify-center bg-[#F6F5FF] px-10 py-16 md:px-20">
-        <Image
-          src="/logo.png"
-          alt="WorkCrew.ai"
-          width={116}
-          height={21}
-          className="absolute left-[50px] top-[50px]"
-          priority
-        />
-
-        <div className="mt-10 flex flex-col items-center justify-center space-y-6 md:items-start">
+    <main className="min-h-screen flex bg-white">
+      {/* left side stays fixed on desktop and gives the story */}
+      <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
+        <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <Image
-            src="/education.png"
-            alt="Education illustration"
-            width={180}
-            height={180}
-            className="object-contain"
+            src="/logo.png"
+            alt="WorkCrew.ai"
+            width={116}
+            height={21}
+            className="absolute left-[50px] top-[50px]"
             priority
           />
 
-          <div className="text-center md:text-left">
-            <h1 className="text-xl font-semibold text-black md:text-2xl">
-              Add details of your education
-            </h1>
-            <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
-              Showcasing your education helps employers understand your qualifications and makes your
-              profile stand out.
-            </p>
-          </div>
-        </div>
+          <div className="mt-10 flex h-full flex-col items-center justify-center space-y-6 md:items-start">
+            <Image
+              src="/education.png"
+              alt="Education illustration"
+              width={180}
+              height={180}
+              className="object-contain"
+              priority
+            />
 
-        <button
-          onClick={() => router.push("/onboarding/professional-summary")}
-          className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
-        >
-          Skip for now
-        </button>
+            <div className="text-center md:text-left">
+              <h1 className="text-xl font-semibold text-black md:text-2xl">
+                Add details of your education
+              </h1>
+              <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
+                Showcasing your education helps employers understand your
+                qualifications and makes your profile stand out.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/onboarding/professional-summary")}
+            className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
+          >
+            Skip for now
+          </button>
+        </div>
       </section>
 
-      {/* Right: stepper + form */}
-      <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
+      {/* right side scrolls with the form */}
+      <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          {/* Stepper */}
+          {/* stepper on top */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
-            <OnboardStepper steps={STEPS} active={activeStep} advancing={advancing} />
+            <OnboardStepper
+              steps={STEPS}
+              active={activeStep}
+              advancing={advancing}
+            />
           </div>
 
-          {/* Page title */}
+          {/* small headline just to anchor the page */}
           <h2 className="mb-6 text-center text-2xl font-semibold text-[#4D31EC]">
             Education
           </h2>
 
-          {/* Tip box */}
+          {/* soft tip bar to nudge the user */}
           <div className="mx-auto mb-8 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
-              List your highest degree first. Include relevant coursework, honors, or academic achievements.
+              List your highest degree first. Include relevant coursework,
+              honors, or academic achievements.
             </p>
           </div>
 
-          {/* Form */}
+          {/* main form area */}
           <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">
@@ -219,7 +230,9 @@ export default function EducationPage() {
               </label>
               <input
                 value={edu.institution}
-                onChange={(e) => setEdu({ ...edu, institution: e.target.value })}
+                onChange={(e) =>
+                  setEdu({ ...edu, institution: e.target.value })
+                }
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="eg: National Institute of Technology"
               />
@@ -272,7 +285,7 @@ export default function EducationPage() {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* navigation buttons */}
           <div className="mt-8 flex justify-between">
             <button
               onClick={prev}

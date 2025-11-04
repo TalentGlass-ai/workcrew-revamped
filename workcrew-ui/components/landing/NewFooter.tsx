@@ -300,17 +300,22 @@ function FooterItemLink({ item }: { item: FooterItem }) {
     }
   };
 
+  // ✅ FIX: single interactive element (button) — no nested <button>
   return (
-    <T as="button" variant="body16" className="text-[14px] leading-[23px] tracking-[0.03em] font-medium">
-      <button
-        type="button"
-        onClick={onSmartClick}
-        className={linkCls}
-        aria-label={item.label}
+    <button
+      type="button"
+      onClick={onSmartClick}
+      className={linkCls}
+      aria-label={item.label}
+    >
+      <T
+        as="span"
+        variant="body16"
+        className="text-[14px] leading-[23px] tracking-[0.03em] font-medium"
       >
         {item.label}
-      </button>
-    </T>
+      </T>
+    </button>
   );
 }
 
@@ -413,7 +418,7 @@ function PhoneIcon() {
       strokeWidth="1.8"
       aria-hidden="true"
     >
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.9 19.9 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.9 19.9 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.12a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92z" />
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.9 19.9 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.9 19.9 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a 2 2 0 0 1 2 1.72c.12.9.32 1.78.6 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.12a2 2 0 0 1 2.11-.45c.85.28 1.73.48 2.63.6A2 2 0 0 1 22 16.92z" />
     </svg>
   );
 }

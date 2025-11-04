@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 
+// quick helpers for the onboarding draft
 function loadDraft<T = any>(): T {
   try {
     if (typeof window === "undefined") return {} as T;
@@ -19,7 +20,7 @@ function clearDraft() {
 export default function ReviewPage() {
   const router = useRouter();
 
-  // Hydration-safe: load from localStorage after mount
+  // we pull the data from localStorage once the page mounts
   const [data, setData] = React.useState<any>({});
   React.useEffect(() => {
     setData(loadDraft());
@@ -31,12 +32,11 @@ export default function ReviewPage() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left rail (sticky) — positions match Professional Summary */}
-      <section className="relative bg-[#F6F5FF]">
+    <main className="min-h-screen flex bg-white">
+      {/* left side stays fixed on desktop and explains what this step is */}
+      <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
         <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <div className="relative h-full">
-            {/* Logo: 50px from top & left */}
             <Image
               src="/logo.png"
               alt="WorkCrew.ai"
@@ -46,8 +46,7 @@ export default function ReviewPage() {
               priority
             />
 
-            {/* Illustration + copy: left-aligned, vertically centered */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-[50px] right-[50px] md:right-auto flex w-[min(440px,calc(100%-100px))] flex-col items-start text-left">
+            <div className="absolute top-1/2 left-[50px] right-[50px] -translate-y-1/2 flex w-[min(440px,calc(100%-100px))] flex-col items-start text-left">
               <Image
                 src="/reviewdata.png"
                 alt="Review data illustration"
@@ -60,12 +59,11 @@ export default function ReviewPage() {
                 Review your details and submit
               </h1>
               <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
-                Add a professional summary to showcase your strengths, career goals, and what makes you
-                stand out to employers.
+                Take a quick look at everything you have filled in so far and
+                make sure it reflects you the way you want.
               </p>
             </div>
 
-            {/* Skip for now: 30px from bottom, 50px from left (same as reference) */}
             <button
               onClick={() => router.push("/find-jobs")}
               className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
@@ -76,13 +74,15 @@ export default function ReviewPage() {
         </div>
       </section>
 
-      {/* Right content (scrollable) */}
-      <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
+      {/* right side scrolls and shows the review cards */}
+      <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          <h2 className="mb-6 text-2xl font-semibold text-[#4D31EC] md:mb-8">Review data</h2>
+          <h2 className="mb-6 text-2xl font-semibold text-[#4D31EC] md:mb-8">
+            Review data
+          </h2>
 
           <div className="space-y-6">
-            {/* Personal */}
+            {/* personal info card */}
             <div className="rounded-xl border bg-white p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Personal information</h3>
@@ -96,7 +96,9 @@ export default function ReviewPage() {
               <div className="grid gap-4 text-sm md:grid-cols-2">
                 <div>
                   <span className="font-medium">Name:</span>{" "}
-                  {data.firstName ? `${data.firstName} ${data.lastName ?? ""}` : "—"}
+                  {data.firstName
+                    ? `${data.firstName} ${data.lastName ?? ""}`
+                    : "—"}
                 </div>
                 <div>
                   <span className="font-medium">Email:</span>{" "}
@@ -104,7 +106,9 @@ export default function ReviewPage() {
                 </div>
                 <div>
                   <span className="font-medium">Phone:</span>{" "}
-                  {[data.phoneCountry, data.phone].filter(Boolean).join(" ") || "—"}
+                  {[data.phoneCountry, data.phone]
+                    .filter(Boolean)
+                    .join(" ") || "—"}
                 </div>
                 <div>
                   <span className="font-medium">Location:</span>{" "}
@@ -121,7 +125,7 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            {/* Work experience */}
+            {/* work experience card */}
             <div className="rounded-xl border bg-white p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Work experience</h3>
@@ -139,23 +143,32 @@ export default function ReviewPage() {
                     {data.exp.title} at {data.exp.company}
                   </div>
                   <div className="text-gray-600">
-                    {data.exp.start} – {data.exp.current ? "Present" : data.exp.end}
+                    {data.exp.start} –{" "}
+                    {data.exp.current ? "Present" : data.exp.end}
                   </div>
                   <pre className="whitespace-pre-wrap rounded-lg bg-[#F8F9FC] p-3">
                     {data.exp.bullets}
                   </pre>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">Leadership</span>
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">Python</span>
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">SQL</span>
+                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
+                      Leadership
+                    </span>
+                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
+                      Python
+                    </span>
+                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
+                      SQL
+                    </span>
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">No experience added.</div>
+                <div className="text-sm text-gray-500">
+                  No experience added.
+                </div>
               )}
             </div>
 
-            {/* Education */}
+            {/* education card */}
             <div className="rounded-xl border bg-white p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Education</h3>
@@ -169,22 +182,30 @@ export default function ReviewPage() {
 
               {data.edu ? (
                 <div className="space-y-1 text-sm">
-                  <div className="font-medium">{data.edu.degree} — {data.edu.field}</div>
-                  <div>{data.edu.institution}, {data.edu.year}</div>
+                  <div className="font-medium">
+                    {data.edu.degree} — {data.edu.field}
+                  </div>
+                  <div>
+                    {data.edu.institution}, {data.edu.year}
+                  </div>
                   {data.edu.gpa && <div>CGPA: {data.edu.gpa}</div>}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">No education added.</div>
+                <div className="text-sm text-gray-500">
+                  No education added.
+                </div>
               )}
             </div>
 
-            {/* Summary */}
+            {/* summary card */}
             <div className="rounded-xl border bg-white p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Professional summary</h3>
                 <button
                   className="text-[#4D31EC] hover:underline"
-                  onClick={() => router.push("/onboarding/professional-summary")}
+                  onClick={() =>
+                    router.push("/onboarding/professional-summary")
+                  }
                 >
                   Edit
                 </button>
@@ -192,7 +213,7 @@ export default function ReviewPage() {
               <p className="text-sm">{data.summary || "—"}</p>
             </div>
 
-            {/* Actions */}
+            {/* final actions */}
             <div className="flex items-center justify-between">
               <button
                 onClick={() => router.back()}

@@ -16,20 +16,56 @@ type Feature = {
   posterSrc?: string;
 };
 
-/* recruiter defaults — videos optional */
+/* recruiter defaults — videos live here */
 const DEFAULT_RECRUITER_FEATURES: Feature[] = [
-  { id: "jds", title: "Post roles in minutes with AI generated JDs", blurb: "Generate optimized job descriptions instantly with AI.", videoSrc: "/videos/JD.mp4" },
-  { id: "screen", title: "Screen for quality", blurb: "Quality screening filters candidates, showing the best qualified.", videoSrc: "/videos/Screening.mp4" },
-  { id: "assess", title: "View assessment backed profiles", blurb: "Explore profiles supported by our comprehensive skill assessments.", videoSrc: "/videos/Assessment insights.mp4" },
-  { id: "match", title: "Real time candidate matching", blurb: "Get the top candidate matches when you post a job.", videoSrc: "/videos/candidate matching.mp4" },
+  {
+    id: "jds",
+    title: "Post roles in minutes with AI generated JDs",
+    blurb: "Generate optimized job descriptions instantly with AI.",
+    videoSrc: "/videos/JD.mp4",
+  },
+  {
+    id: "screen",
+    title: "Screen for quality",
+    blurb: "Quality screening filters candidates, showing the best qualified.",
+    videoSrc: "/videos/Screening.mp4",
+  },
+  {
+    id: "assess",
+    title: "View assessment backed profiles",
+    blurb: "Explore profiles supported by our comprehensive skill assessments.",
+    videoSrc: "/videos/Assessment insights.mp4",
+  },
+  {
+    id: "match",
+    title: "Real time candidate matching",
+    blurb: "Get the top candidate matches when you post a job.",
+    videoSrc: "/videos/candidate matching.mp4",
+  },
 ];
 
-/* candidate defaults — right side shows a placeholder card */
+/* candidate defaults */
 const CANDIDATE_FEATURES: Feature[] = [
-  { id: "profile", title: "Profile optimisation", blurb: "Get AI tips to improve your profile and attract top recruiters." },
-  { id: "quickapply", title: "One click applications", blurb: "Apply to jobs instantly with pre-filled details, no extra forms." },
-  { id: "interview", title: "Interview and showcase skills", blurb: "Share your strengths through AI-led interviews and assessments." },
-  { id: "tracking", title: "Application tracking", blurb: "Track every application with real-time status updates." },
+  {
+    id: "profile",
+    title: "Profile optimisation",
+    blurb: "Get AI tips to improve your profile and attract top recruiters.",
+  },
+  {
+    id: "quickapply",
+    title: "One click applications",
+    blurb: "Apply to jobs instantly with pre-filled details, no extra forms.",
+  },
+  {
+    id: "interview",
+    title: "Interview and showcase skills",
+    blurb: "Share your strengths through AI-led interviews and assessments.",
+  },
+  {
+    id: "tracking",
+    title: "Application tracking",
+    blurb: "Track every application with real-time status updates.",
+  },
 ];
 
 export default function RethinkingSection({
@@ -43,16 +79,35 @@ export default function RethinkingSection({
 }) {
   const groupId = useId();
   const sectionRef = useRef<HTMLElement | null>(null);
+
   const [mode, setMode] = useState<"recruiter" | "candidate">("recruiter");
   const isRecruiter = mode === "recruiter";
   const modeRef = useRef(mode);
-  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   const [activeRecruiter, setActiveRecruiter] = useState(0);
   const [activeCandidate, setActiveCandidate] = useState(0);
-  const featuresToShow = isRecruiter ? features : CANDIDATE_FEATURES;
+
+  // in candidate mode only the "profile" card borrows the first recruiter video
+  const candidateFeaturesWithVideo = useMemo(() => {
+    const recruiterProfile =
+      features.find((f) => f.id === "jds") ?? DEFAULT_RECRUITER_FEATURES[0];
+
+    return CANDIDATE_FEATURES.map((cf) => ({
+      ...cf,
+      videoSrc: cf.id === "profile" ? recruiterProfile?.videoSrc : undefined,
+      posterSrc: cf.id === "profile" ? recruiterProfile?.posterSrc : undefined,
+    }));
+  }, [features]);
+
+  const featuresToShow = isRecruiter ? features : candidateFeaturesWithVideo;
   const activeIndex = isRecruiter ? activeRecruiter : activeCandidate;
-  const activeFeature = useMemo(() => featuresToShow[activeIndex], [featuresToShow, activeIndex]);
+  const activeFeature = useMemo(
+    () => featuresToShow[activeIndex],
+    [featuresToShow, activeIndex]
+  );
 
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const intervalRef = useRef<number | null>(null);
@@ -72,10 +127,12 @@ export default function RethinkingSection({
       obs.disconnect();
       clearOnlyTimer();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     manageInterval();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlayEnabled, mode, features.length]);
 
   const clearOnlyTimer = () => {
@@ -84,29 +141,40 @@ export default function RethinkingSection({
       intervalRef.current = null;
     }
   };
+
   const clearAutoPlay = () => {
     clearOnlyTimer();
     setAutoPlayEnabled(false);
   };
+
   const manageInterval = () => {
     clearOnlyTimer();
     if (!inViewRef.current || !autoPlayEnabled) return;
-    const len = modeRef.current === "recruiter" ? features.length : CANDIDATE_FEATURES.length;
+    const len =
+      modeRef.current === "recruiter"
+        ? features.length
+        : CANDIDATE_FEATURES.length;
     intervalRef.current = window.setInterval(() => {
-      if (modeRef.current === "recruiter") setActiveRecruiter((p) => (p + 1) % len);
-      else setActiveCandidate((p) => (p + 1) % len);
+      if (modeRef.current === "recruiter") {
+        setActiveRecruiter((p) => (p + 1) % len);
+      } else {
+        setActiveCandidate((p) => (p + 1) % len);
+      }
     }, 2000);
   };
+
   const setActive = (i: number) => {
     clearAutoPlay();
     if (isRecruiter) setActiveRecruiter(i);
     else setActiveCandidate(i);
   };
+
   const switchMode = (m: "recruiter" | "candidate") => {
     clearOnlyTimer();
     setMode(m);
     setAutoPlayEnabled(true);
   };
+
   const handleMouseEnter = () => clearAutoPlay();
   const handleMouseLeave = () => {
     setAutoPlayEnabled(true);
@@ -114,18 +182,38 @@ export default function RethinkingSection({
   };
 
   return (
-    <section ref={sectionRef as any} id="rethinking" className={`relative !my-0 !py-0 ${className}`}>
+    <section
+      ref={sectionRef as any}
+      id="rethinking"
+      className={`relative !my-0 !py-0 ${className}`}
+    >
       <div className="py-8 md:py-10">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8">
           <div className="md:ml-[60px] max-w-[1094px]">
             <div className="flex items-center">
               <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
             </div>
-            <T as="h2" id={`${groupId}-label`} variant="hero48" weight={500} className="text-left text-black md:text-[48px] text-[40px]" autoLeading>
-              <span className="text-[#4D31EC]">Rethinking</span> how you hire and get hired
+            <T
+              as="h2"
+              id={`${groupId}-label`}
+              variant="hero48"
+              weight={500}
+              className="text-left text-black md:text-[48px] text-[40px]"
+              autoLeading
+            >
+              <span className="text-[#4D31EC]">Rethinking</span> how you hire
+              and get hired
             </T>
-            <T as="p" variant="body18" weight={400} trackingPct={3} className="mt-2 text-left text-[#111827] md:text-[20px]" lineHeightPx={27}>
-              Build your dream team or find your next move with WorkCrew.ai, all in one place, without clutter or chaos.
+            <T
+              as="p"
+              variant="body18"
+              weight={400}
+              trackingPct={3}
+              className="mt-2 text-left text-[#111827] md:text-[20px]"
+              lineHeightPx={27}
+            >
+              Build your dream team or find your next move with WorkCrew.ai, all
+              in one place, without clutter or chaos.
             </T>
           </div>
 
@@ -134,8 +222,8 @@ export default function RethinkingSection({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <div className="grid min-h-[420px] md:min-h-[460px] grid-cols-1 gap-6 md:grid-cols-2 items-center">
-              {/* LEFT SIDE */}
+            <div className="grid min-h-[420px] md:minh-[460px] grid-cols-1 gap-6 md:grid-cols-2 items-center">
+              {/* LEFT SIDE: feature list */}
               <div
                 role="tablist"
                 aria-labelledby={`${groupId}-label`}
@@ -160,11 +248,21 @@ export default function RethinkingSection({
                             "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4D31EC]/60",
                           ].join(" ")}
                         >
-                          <T as="div" variant="body16" className="text-gray-900 md:text-[17px]" weight={600}>
+                          <T
+                            as="div"
+                            variant="body16"
+                            className="text-gray-900 md:text-[17px]"
+                            weight={600}
+                          >
                             {f.title}
                           </T>
                           {selected && (
-                            <T as="div" variant="sub14" className="mt-2 text-gray-700" lineHeightPx={24}>
+                            <T
+                              as="div"
+                              variant="sub14"
+                              className="mt-2 text-gray-700"
+                              lineHeightPx={24}
+                            >
                               {f.blurb}
                             </T>
                           )}
@@ -175,16 +273,31 @@ export default function RethinkingSection({
                   <li className="h-2 md:h-3" aria-hidden />
                 </ul>
 
-                {/* Footer */}
+                {/* footer with CTA and mode switch */}
                 <div className="mt-3 border-t border-white/50 pt-3">
-                  <LayeredPill label="Hire now" icon={<ArrowNortheastIcon />} onClick={onHireNow} size="md" />
+                  <LayeredPill
+                    label="Hire now"
+                    icon={<ArrowNortheastIcon />}
+                    onClick={onHireNow}
+                    size="md"
+                  />
                   <div className="mt-3">
-                    <T as="span" variant="sub14" className="text-black">I’m a{" "}</T>
+                    <T as="span" variant="sub14" className="text-black">
+                      I’m a{" "}
+                    </T>
                     <button
                       className="no-underline decoration-transparent hover:no-underline focus:no-underline active:no-underline"
-                      onClick={() => switchMode(isRecruiter ? "candidate" : "recruiter")}
+                      onClick={() =>
+                        switchMode(isRecruiter ? "candidate" : "recruiter")
+                      }
                     >
-                      <T as="span" variant="body16" weight={500} className="text-[#4D31EC]" autoLeading>
+                      <T
+                        as="span"
+                        variant="body16"
+                        weight={500}
+                        className="text-[#4D31EC]"
+                        autoLeading
+                      >
                         {isRecruiter ? "candidate!" : "recruiter"}
                       </T>
                     </button>
@@ -192,7 +305,7 @@ export default function RethinkingSection({
                 </div>
               </div>
 
-              {/* RIGHT SIDE — centered video, white bg, lifted 50px upward */}
+              {/* RIGHT SIDE: video or candidate placeholder */}
               <div
                 role="tabpanel"
                 id={`${groupId}-panel`}
@@ -201,7 +314,7 @@ export default function RethinkingSection({
                 className="flex items-center justify-center justify-self-center"
               >
                 <div className="relative h-[300px] w-[300px] md:h-[320px] md:w-[340px] overflow-hidden rounded-[12px] bg-white -translate-y-[50px]">
-                  {isRecruiter && activeFeature.videoSrc ? (
+                  {activeFeature?.videoSrc ? (
                     <video
                       key={activeFeature.videoSrc}
                       className="absolute inset-0 h-full w-full rounded-[12px] object-cover"
@@ -214,7 +327,7 @@ export default function RethinkingSection({
                       controls={false}
                     />
                   ) : (
-                    <CandidatePreview id={activeFeature.id} />
+                    <CandidatePreview id={activeFeature?.id} />
                   )}
                 </div>
               </div>
@@ -226,8 +339,8 @@ export default function RethinkingSection({
   );
 }
 
-/* Candidate placeholder */
-function CandidatePreview({ id }: { id: string }) {
+/* Candidate placeholder when we don't have a video */
+function CandidatePreview({ id }: { id?: string }) {
   return (
     <div className="flex h-full items-center justify-center">
       <T as="span" variant="sub14" className="text-gray-500">

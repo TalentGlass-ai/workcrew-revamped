@@ -16,9 +16,12 @@ const ArrowRight = (props: React.SVGProps<SVGSVGElement>) => (
 export default function EmployerCompany() {
   const router = useRouter();
   const d = loadDraft();
+
+  // stepper state
   const [advancing, setAdvancing] = React.useState(false);
   const active = 0;
 
+  // company form state seeded from whatever we already have
   const [f, setF] = React.useState({
     companyName: d.companyName || "",
     companySize: d.companySize || "",
@@ -31,6 +34,7 @@ export default function EmployerCompany() {
     companyDescription: d.companyDescription || "",
   });
 
+  // basic required fields
   const canNext = f.companyName.trim() && f.industry.trim();
 
   function next() {
@@ -42,14 +46,14 @@ export default function EmployerCompany() {
 
   return (
     <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* LEFT rail — copy + illustration from screenshot */}
+      {/* left rail handles the static visuals and copy */}
       <LeftRail
         title="Enter your company details"
         blurb="Enter your company details to set up your hiring account. This information helps us create a professional profile for your organization so candidates can easily recognize and trust your brand."
         illustration="/cuate.png"
       />
 
-      {/* RIGHT pane — grid backdrop like mock */}
+      {/* right side gets the grid background and form */}
       <section
         className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16"
         style={{
@@ -58,19 +62,22 @@ export default function EmployerCompany() {
         }}
       >
         <div className="w-full max-w-4xl">
-          {/* Stepper */}
+          {/* stepper on top to show progress for employers */}
           <div className="mx-auto mb-6 mt-2 w-full max-w-3xl">
-            <OnboardStepper steps={EMP_STEPS} active={active} advancing={advancing} />
+            <OnboardStepper
+              steps={EMP_STEPS}
+              active={active}
+              advancing={advancing}
+            />
           </div>
 
-          {/* Title */}
           <h2 className="mb-8 text-center text-xl font-semibold text-[#4D31EC]">
             Company details
           </h2>
 
-          {/* Form — arranged to match screenshot */}
+          {/* main company form */}
           <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Company name (full width) */}
+            {/* company name spans full width */}
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">
                 Company name <span className="text-red-500">*</span>
@@ -83,9 +90,11 @@ export default function EmployerCompany() {
               />
             </div>
 
-            {/* Size + Industry (side by side) */}
+            {/* size and industry side by side */}
             <div>
-              <label className="mb-1 block text-sm font-medium">Company size</label>
+              <label className="mb-1 block text-sm font-medium">
+                Company size
+              </label>
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
                 value={f.companySize}
@@ -105,7 +114,7 @@ export default function EmployerCompany() {
               />
             </div>
 
-            {/* Location (full width) */}
+            {/* company location full width */}
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">
                 Company location <span className="text-red-500">*</span>
@@ -113,12 +122,14 @@ export default function EmployerCompany() {
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
                 value={f.companyLocation}
-                onChange={(e) => setF({ ...f, companyLocation: e.target.value })}
+                onChange={(e) =>
+                  setF({ ...f, companyLocation: e.target.value })
+                }
                 placeholder="CA, San Francisco"
               />
             </div>
 
-            {/* LinkedIn + Social (side by side) */}
+            {/* linkedin and other socials */}
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Company LinkedIn profile
@@ -126,7 +137,9 @@ export default function EmployerCompany() {
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
                 value={f.companyLinkedin}
-                onChange={(e) => setF({ ...f, companyLinkedin: e.target.value })}
+                onChange={(e) =>
+                  setF({ ...f, companyLinkedin: e.target.value })
+                }
                 placeholder="https://linkedin.com/in/yourcompany"
               />
             </div>
@@ -137,31 +150,39 @@ export default function EmployerCompany() {
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
                 value={f.companySocial}
-                onChange={(e) => setF({ ...f, companySocial: e.target.value })}
-                placeholder="https://johndoe.com"
+                onChange={(e) =>
+                  setF({ ...f, companySocial: e.target.value })
+                }
+                placeholder="https://twitter.com/yourcompany"
               />
             </div>
 
-            {/* Website (full) + startup checkbox */}
+            {/* website and startup toggle */}
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium">Company website</label>
+              <label className="mb-1 block text-sm font-medium">
+                Company website
+              </label>
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
                 value={f.companyWebsite}
-                onChange={(e) => setF({ ...f, companyWebsite: e.target.value })}
+                onChange={(e) =>
+                  setF({ ...f, companyWebsite: e.target.value })
+                }
                 placeholder="https://company.com"
               />
               <label className="mt-3 flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={f.startupNoSite}
-                  onChange={(e) => setF({ ...f, startupNoSite: e.target.checked })}
+                  onChange={(e) =>
+                    setF({ ...f, startupNoSite: e.target.checked })
+                  }
                 />
                 <span>We’re a startup and we don’t have a website yet</span>
               </label>
             </div>
 
-            {/* Description (full) with “Enhance with AI” on the right */}
+            {/* company description and future AI helper */}
             <div className="md:col-span-2">
               <div className="mb-1 flex items-center justify-between">
                 <label className="block text-sm font-medium">
@@ -170,9 +191,10 @@ export default function EmployerCompany() {
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#4D31EC] hover:underline"
-                  onClick={() => {/* hook up AI later */}}
+                  onClick={() => {
+                    // wire this to AI later
+                  }}
                 >
-                  {/* tiny diamond-ish icon */}
                   <span className="inline-block h-1.5 w-1.5 rotate-45 rounded-[2px] bg-[#4D31EC]" />
                   Enhance with AI
                 </button>
@@ -190,14 +212,16 @@ export default function EmployerCompany() {
             </div>
           </div>
 
-          {/* Actions — Next on the right, like the mock */}
+          {/* next button sits on the right like in the figma */}
           <div className="mx-auto mt-10 flex max-w-3xl items-center justify-end">
             <button
               onClick={next}
               disabled={!canNext}
               className={[
                 "inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-white",
-                canNext ? "bg-[#4D31EC] hover:bg-[#3b25b5]" : "cursor-not-allowed bg-gray-300",
+                canNext
+                  ? "bg-[#4D31EC] hover:bg-[#3b25b5]"
+                  : "cursor-not-allowed bg-gray-300",
               ].join(" ")}
             >
               <span className="inline-grid h-6 w-6 place-items-center rounded-full bg-white/15 ring-1 ring-white/25">

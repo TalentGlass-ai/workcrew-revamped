@@ -12,15 +12,13 @@ import GlassPill from "../primitives/tags/GlassPill";
 export default function HeroSection(): React.ReactElement {
   const router = useRouter();
 
-  /* quick handlers so we don’t inline router.push all over the place */
   const handleFindWorkClick = () => router.push("/login?role=candidate");
   const handleStartHiringClick = () => router.push("/login?role=recruiter");
 
   return (
-    /* root — no outer padding/margins; page <main> decides vertical gaps */
     <section className="relative !my-0 !py-0">
       <div className="hero-top relative min-h-[740px] overflow-hidden">
-        {/* soft gradient bg + subtle grid — purely decorative */}
+        {/* soft gradient bg + subtle grid */}
         <div
           aria-hidden
           className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(246,247,252,0.95)_0%,rgba(236,239,248,0.92)_100%)]"
@@ -33,14 +31,12 @@ export default function HeroSection(): React.ReactElement {
         {/* main content grid */}
         <div className="relative z-10 mx-auto max-w-[1440px] pl-[51px] pr-[51px] pb-24 md:pb-28">
           <div className="grid items-start gap-10 md:grid-cols-2 md:gap-8">
-            {/* left column — headline, subcopy, ctas, stats */}
+            {/* left column */}
             <div className="mt-[100px]">
-              {/* tiny brand pill on top */}
               <div className="mb-6">
                 <GlassPill text="The future of hiring is here" iconColor="#4D31EC" />
               </div>
 
-              {/* hero headline — split across two lines for better rhythm */}
               <h1>
                 <T as="div" variant="hero48" weight={540} className="text-left text-[#4D31EC]" autoLeading>
                   Hiring or job hunting?
@@ -50,7 +46,6 @@ export default function HeroSection(): React.ReactElement {
                 </T>
               </h1>
 
-              {/* subcopy — use Variant that already encodes font + tracking; pass exact leading */}
               <T
                 as="p"
                 variant="sub20"
@@ -63,7 +58,6 @@ export default function HeroSection(): React.ReactElement {
                 right role and recruiters hire faster, smarter, better.
               </T>
 
-              {/* primary CTAs — text inside is our T component so we don’t hand-roll styles */}
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
                   onClick={handleFindWorkClick}
@@ -86,7 +80,6 @@ export default function HeroSection(): React.ReactElement {
                 </button>
               </div>
 
-              {/* quick stats — keep numbers + labels aligned with our T variants */}
               <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
                 <Stat number="5,000+" label="Candidates" />
                 <Stat number="500+" label="Recruiters" />
@@ -97,7 +90,7 @@ export default function HeroSection(): React.ReactElement {
           </div>
         </div>
 
-        {/* right illustration — sits visually centered relative to the headline on md+ */}
+        {/* right illustration */}
         <div className="relative z-10 mx-auto mt-10 w-[510px] max-w-[92vw] md:absolute md:right-6 md:top-1/2 md:mt-0 md:-translate-y-1/2">
           <div className="relative w-[510px] overflow-hidden rounded-[24px]">
             <div className="min-h-[320px]">
@@ -114,22 +107,19 @@ export default function HeroSection(): React.ReactElement {
         </div>
       </div>
 
-      {/* partner logos — let the marquee manage its own rhythm */}
-      <div className="mt-6 md:mt-8">
+      {/* partner logos */}
+      <div className="mt-[calc(8px+30px)] md:mt-[calc(8px+30px)]">
         <LogoMarquee heightMax={64} heightMin={40} heightVw={8} repeat={32} speed={28} />
       </div>
 
-      {/* statement block — use our T variants instead of overriding font sizes by hand */}
+      {/* statement block */}
       <div className="mx-auto max-w-4xl px-6 py-[80px] md:py-[100px]">
         <div className="mb-14 h-px w-full bg-[#E5E7EB] md:mb-16" />
         <div className="text-center">
-          {/* this was hero48 + text-[40px]; use h1 variant (40px) + exact leading so tokens stay honest */}
           <T as="div" variant="h1" weight={540} lineHeightPx={52} className="text-black">
             “Recruiting &amp; job searching are fundamentally broken” – They say.
           </T>
-
           <div className="mt-5">
-            {/* card36 needs a tighter leading here; pass it explicitly instead of tailwind leading class */}
             <T as="div" variant="card36" weight={540} lineHeightPx={28} className="text-[#4D31EC]">
               But we have solved every problem for you
             </T>
@@ -138,13 +128,12 @@ export default function HeroSection(): React.ReactElement {
         <div className="mt-14 h-px w-full bg-[#E5E7EB] md:mt-16" />
       </div>
 
-      {/* features carousel lives under hero — spacing below is managed by page sections */}
       <FeatureSlides />
     </section>
   );
 }
 
-/* small stat block — numbers big, labels supportive; both reuse T so typography is consistent */
+/* stat block */
 function Stat({ number, label }: { number: string; label: string }) {
   return (
     <div className="text-center md:text-left">
@@ -158,7 +147,7 @@ function Stat({ number, label }: { number: string; label: string }) {
   );
 }
 
-/* lil arrow icon for CTAs — keeps weight light but readable */
+/* arrow icon */
 function ArrowNortheast() {
   return (
     <svg

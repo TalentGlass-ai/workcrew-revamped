@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 
-/* Shared type for a step node */
+// step label shape we reuse
 type Step = { key: string; label: string };
 
-/* Connector between circles — animates width 0 → 100% and stays vertically centered */
+// tiny connector between the step circles
 function Connector({
   filled,
   animate = false,
@@ -38,7 +38,7 @@ function Connector({
   );
 }
 
-/* Stepper matching the personal-details page */
+// same stepper as personal / education / summary
 function OnboardStepper({
   steps,
   active,
@@ -63,8 +63,12 @@ function OnboardStepper({
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
                     isDone ? "bg-[#4D31EC] text-white" : "",
-                    isCurrent ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]" : "",
-                    isUpcoming ? "bg-white ring-1 ring-gray-300 text-gray-400" : "",
+                    isCurrent
+                      ? "bg-white ring-2 ring-[#4D31EC] text-[#4D31EC]"
+                      : "",
+                    isUpcoming
+                      ? "bg-white ring-1 ring-gray-300 text-gray-400"
+                      : "",
                   ].join(" ")}
                 >
                   {isDone ? "✓" : i + 1}
@@ -75,7 +79,10 @@ function OnboardStepper({
               </div>
 
               {i < steps.length - 1 && (
-                <Connector filled={i < active} animate={advancing && i === active} />
+                <Connector
+                  filled={i < active}
+                  animate={advancing && i === active}
+                />
               )}
             </React.Fragment>
           );
@@ -85,7 +92,7 @@ function OnboardStepper({
   );
 }
 
-/* Persist draft across steps */
+// helpers to persist the draft across steps
 function loadDraft<T = any>(): T {
   if (typeof window === "undefined") return {} as T;
   try {
@@ -100,7 +107,7 @@ function saveDraft(patch: Record<string, any>) {
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
 }
 
-/* Keep order consistent with personal-details page */
+// keep this in sync with other onboarding pages
 const STEPS: Step[] = [
   { key: "personal", label: "Personal details" },
   { key: "work", label: "Work experience" },
@@ -112,7 +119,7 @@ export default function WorkExperiencePage() {
   const router = useRouter();
   const draft = loadDraft();
 
-  // Form state seeded from draft
+  // form state seeded from whatever we already have
   const [exp, setExp] = React.useState({
     company: draft.exp?.company || "",
     title: draft.exp?.title || "",
@@ -122,16 +129,17 @@ export default function WorkExperiencePage() {
     bullets: draft.exp?.bullets || "",
   });
 
-  // Animate connector before routing
+  // flag to let the connector animate before we go next
   const [advancing, setAdvancing] = React.useState(false);
 
-  // 1 = this step
+  // 1 = work step in the flow
   const activeStep = 1;
 
-  // Gate Next on required fields (end date optional if "current")
+  // end date can be empty only if "current" is checked
   const requiredFilled =
-    [exp.company, exp.title, exp.start, exp.bullets].every((v) => v.trim().length > 0) &&
-    (exp.current || exp.end.trim().length > 0);
+    [exp.company, exp.title, exp.start, exp.bullets].every(
+      (v) => v.trim().length > 0
+    ) && (exp.current || exp.end.trim().length > 0);
 
   function next() {
     if (!requiredFilled || advancing) return;
@@ -148,67 +156,74 @@ export default function WorkExperiencePage() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left: logo, illustration, helper text */}
-      <section className="relative flex flex-col justify-center bg-[#F6F5FF] px-10 py-16 md:px-20">
-        <Image
-          src="/logo.png"
-          alt="WorkCrew.ai"
-          width={116}
-          height={21}
-          className="absolute left-[50px] top-[50px]"
-          priority
-        />
-
-        <div className="mt-10 flex flex-col items-center justify-center space-y-6 md:items-start">
+    <main className="min-h-screen flex bg-white">
+      {/* left side stays fixed on desktop and frames the step */}
+      <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
+        <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <Image
-            src="/work-experience.png"
-            alt="Work experience illustration"
-            width={180}
-            height={180}
-            className="object-contain"
+            src="/logo.png"
+            alt="WorkCrew.ai"
+            width={116}
+            height={21}
+            className="absolute left-[50px] top-[50px]"
             priority
           />
 
-          <div className="text-center md:text-left">
-            <h1 className="text-xl font-semibold text-black md:text-2xl">
-              Add your work experience
-            </h1>
-            <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
-              Add your latest role first. Clear bullet points with metrics help match you to better jobs.
-            </p>
-          </div>
-        </div>
+          <div className="mt-10 flex h-full flex-col items-center justify-center space-y-6 md:items-start">
+            <Image
+              src="/work-experience.png"
+              alt="Work experience illustration"
+              width={180}
+              height={180}
+              className="object-contain"
+              priority
+            />
 
-        <button
-          onClick={() => router.push("/onboarding/education")}
-          className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
-        >
-          Skip for now
-        </button>
+            <div className="text-center md:text-left">
+              <h1 className="text-xl font-semibold text-black md:text-2xl">
+                Add your work experience
+              </h1>
+              <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
+                Add your latest role first. Clear bullet points with real
+                impact make it easier to match you to better jobs.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/onboarding/education")}
+            className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
+          >
+            Skip for now
+          </button>
+        </div>
       </section>
 
-      {/* Right: stepper + form */}
-      <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
+      {/* right side scrolls with the form */}
+      <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          {/* Stepper */}
+          {/* stepper at the top */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
-            <OnboardStepper steps={STEPS} active={activeStep} advancing={advancing} />
+            <OnboardStepper
+              steps={STEPS}
+              active={activeStep}
+              advancing={advancing}
+            />
           </div>
 
-          {/* Title */}
           <h2 className="mb-4 text-center text-2xl font-semibold text-[#4D31EC]">
             Work experience
           </h2>
 
-          {/* Tip box */}
+          {/* small tip bar */}
           <div className="mx-auto mb-8 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
-              Use bullet points. Include impact with metrics (e.g., “Increased sales by 25%”).
+              Use bullet points and focus on impact. Numbers like “Increased
+              retention by 20%” help a lot.
             </p>
           </div>
 
-          {/* Form */}
+          {/* main form area */}
           <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">
@@ -216,7 +231,9 @@ export default function WorkExperiencePage() {
               </label>
               <input
                 value={exp.company}
-                onChange={(e) => setExp({ ...exp, company: e.target.value })}
+                onChange={(e) =>
+                  setExp({ ...exp, company: e.target.value })
+                }
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="eg: WorkCrew.ai"
               />
@@ -234,7 +251,7 @@ export default function WorkExperiencePage() {
               />
             </div>
 
-            {/* Start date */}
+            {/* start date */}
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Start date <span className="text-red-500">*</span>
@@ -258,17 +275,22 @@ export default function WorkExperiencePage() {
                 </span>
                 <input
                   value={exp.start}
-                  onChange={(e) => setExp({ ...exp, start: e.target.value })}
+                  onChange={(e) =>
+                    setExp({ ...exp, start: e.target.value })
+                  }
                   className="w-full rounded-lg border px-4 py-3 pl-10 outline-none focus:border-[#4D31EC]"
                   placeholder="DD-MM-YY"
                 />
               </div>
             </div>
 
-            {/* End date */}
+            {/* end date and current toggle */}
             <div>
               <label className="mb-1 block text-sm font-medium">
-                End date {exp.current ? "" : <span className="text-red-500">*</span>}
+                End date{" "}
+                {exp.current ? "" : (
+                  <span className="text-red-500">*</span>
+                )}
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
@@ -300,17 +322,20 @@ export default function WorkExperiencePage() {
                   type="checkbox"
                   className="accent-[#4D31EC]"
                   checked={exp.current}
-                  onChange={(e) => setExp({ ...exp, current: e.target.checked })}
+                  onChange={(e) =>
+                    setExp({ ...exp, current: e.target.checked })
+                  }
                 />
                 I currently work here
               </label>
             </div>
 
-            {/* Bullets */}
+            {/* bullets textarea */}
             <div className="md:col-span-2">
               <div className="mb-1 flex items-center justify-between">
                 <label className="block text-sm font-medium">
-                  Responsibilities &amp; achievements <span className="text-red-500">*</span>
+                  Responsibilities &amp; achievements{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <button
                   type="button"
@@ -335,7 +360,9 @@ export default function WorkExperiencePage() {
               <textarea
                 rows={6}
                 value={exp.bullets}
-                onChange={(e) => setExp({ ...exp, bullets: e.target.value })}
+                onChange={(e) =>
+                  setExp({ ...exp, bullets: e.target.value })
+                }
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder={`• Describe your key responsibilities and achievements
 • Use bullet points for better readability
@@ -346,7 +373,7 @@ export default function WorkExperiencePage() {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* navigation buttons */}
           <div className="mt-8 flex justify-between">
             <button
               onClick={prev}

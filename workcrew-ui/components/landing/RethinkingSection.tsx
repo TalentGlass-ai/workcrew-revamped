@@ -1,13 +1,13 @@
-// PATH: workcrew-ui/components/landing/RethinkingSection.tsx
 "use client";
 
 import * as React from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import GlassPill from "../primitives/tags/GlassPill";
 import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill";
 import T from "../primitives/Typography";
+import { CandidateAuth } from "../../lib/endpoints";
 
-/* tiny feature shape used for both recruiter + candidate sides */
 type Feature = {
   id: string;
   title: string;
@@ -79,6 +79,7 @@ export default function RethinkingSection({
 }) {
   const groupId = useId();
   const sectionRef = useRef<HTMLElement | null>(null);
+  const router = useRouter();
 
   const [mode, setMode] = useState<"recruiter" | "candidate">("recruiter");
   const isRecruiter = mode === "recruiter";
@@ -89,6 +90,27 @@ export default function RethinkingSection({
 
   const [activeRecruiter, setActiveRecruiter] = useState(0);
   const [activeCandidate, setActiveCandidate] = useState(0);
+
+  // auth state: only need to know if candidate is logged in
+  const [isCandidateLoggedIn, setIsCandidateLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCandidateAuth() {
+      try {
+        await CandidateAuth.me();
+        if (!cancelled) setIsCandidateLoggedIn(true);
+      } catch {
+        if (!cancelled) setIsCandidateLoggedIn(false);
+      }
+    }
+
+    checkCandidateAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // in candidate mode only the "profile" card borrows the first recruiter video
   const candidateFeaturesWithVideo = useMemo(() => {
@@ -179,6 +201,27 @@ export default function RethinkingSection({
   const handleMouseLeave = () => {
     setAutoPlayEnabled(true);
     manageInterval();
+  };
+
+  // Primary CTA behavior (Hire now / Find work)
+  const handlePrimaryCtaClick = () => {
+    // keep external callback if someone passed one
+    if (onHireNow) {
+      onHireNow();
+    }
+
+    if (isRecruiter) {
+      // recruiter view: always go to recruiter/employer login
+      router.push("/login?role=recruiter");
+      return;
+    }
+
+    // candidate view
+    if (isCandidateLoggedIn) {
+      router.push("/find-jobs");
+    } else {
+      router.push("/login?role=candidate");
+    }
   };
 
   return (
@@ -276,9 +319,9 @@ export default function RethinkingSection({
                 {/* footer with CTA and mode switch */}
                 <div className="mt-3 border-t border-white/50 pt-3">
                   <LayeredPill
-                    label="Hire now"
+                    label={isRecruiter ? "Hire now" : "Find work"}
                     icon={<ArrowNortheastIcon />}
-                    onClick={onHireNow}
+                    onClick={handlePrimaryCtaClick}
                     size="md"
                   />
                   <div className="mt-3">

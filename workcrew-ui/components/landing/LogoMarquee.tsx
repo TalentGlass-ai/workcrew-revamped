@@ -6,16 +6,16 @@ import Image from "next/image";
 type LogoItem = { src: string; alt: string };
 
 type Props = {
-  speed?: number;       // seconds per loop
+  speed?: number;       
   caption?: string;
   logos?: LogoItem[];
-  heightMax?: number;   // px
-  heightMin?: number;   // px
-  heightVw?: number;    // vw
-  gap?: number;         // px between logo cells
-  itemPx?: number;      // px horizontal padding inside each cell
-  repeat?: number;      // number of logos before looping (doubled internally)
-  className?: string;   // allow callers to add/override classes
+  heightMax?: number;   
+  heightMin?: number;   
+  heightVw?: number;    
+  gap?: number;         
+  itemPx?: number;      
+  repeat?: number;      
+  className?: string;   
 };
 
 const BASE_LOGOS: LogoItem[] = [
@@ -38,7 +38,7 @@ export default function LogoMarquee({
 }: Props) {
   const srcLogos = logos && logos.length > 0 ? logos : BASE_LOGOS;
 
-  // ensure enough logos to avoid empty gaps
+
   const safeRepeat = React.useMemo(() => {
     if (srcLogos.length < 2) return Math.max(repeat, 64);
     if (srcLogos.length < 4) return Math.max(repeat, 40);
@@ -52,7 +52,7 @@ export default function LogoMarquee({
   const doubled = React.useMemo(() => [...longList, ...longList], [longList]);
 
   return (
-    // Important: no outer spacing; parent controls rhythm (Option A)
+  
     <section className={`w-full !my-0 !py-0 ${className ?? ""}`}>
       {caption && (
         <div className="mb-6 flex items-center justify-center">
@@ -68,13 +68,13 @@ export default function LogoMarquee({
           className={[
             "flex min-w-max items-center will-change-transform translate-z-0",
             "animate-marquee",
-            // responsive height + spacing using CSS variables
+
             "min-h-[clamp(var(--h-min),var(--h-vw),var(--h-max))]",
             "gap-[var(--gap)]",
           ].join(" ")}
           style={
             {
-              // CSS variables (units baked in)
+             
               ["--dur" as any]: `${speed}s`,
               ["--h-min" as any]: `${heightMin}px`,
               ["--h-vw" as any]: `${heightVw}vw`,

@@ -3,9 +3,7 @@
 
 import * as React from "react";
 import T from "../primitives/Typography";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-const CONTACT_ENDPOINT = `${API_BASE}/api/contactUs`;
+import { MiscAPI } from "../../lib/endpoints";
 
 type FormState = {
   company: string;
@@ -16,6 +14,7 @@ type FormState = {
   companySize: string;
   role: string;
   desc: string;
+  linkedin?: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -27,6 +26,7 @@ const INITIAL_FORM: FormState = {
   companySize: "",
   role: "",
   desc: "",
+  linkedin: "",
 };
 
 export default function ContactUs(): React.ReactElement {
@@ -35,45 +35,74 @@ export default function ContactUs(): React.ReactElement {
   const [status, setStatus] = React.useState<"idle" | "success" | "error">(
     "idle"
   );
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // tiny front-end validation to mirror backend
+  function validate() {
+    // email
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+    if (!emailOk) return "Please enter a valid email address.";
+
+    // phone (just basic length check, backend does stricter)
+    const phoneOk = /[0-9]{6,}/.test(form.phone.replace(/\D/g, ""));
+    if (!phoneOk) return "Please enter a valid phone number.";
+
+    if (!form.company.trim()) return "Company name is required.";
+    if (!form.contactPerson.trim()) return "Contact person is required.";
+    if (!form.companySize) return "Please select a company size.";
+    if (!form.role) return "Please select your role.";
+    return null;
+  }
+
+  async function handleSubmit(
+    e?:
+      | React.FormEvent<HTMLFormElement>
+      | React.MouseEvent<HTMLButtonElement>
+  ) {
+    if (e) e.preventDefault();
     if (submitting) return;
 
-    setSubmitting(true);
+    console.log("CONTACT: submit clicked");
     setStatus("idle");
+    setErrorMsg(null);
 
+    const v = validate();
+    console.log("CONTACT: validation result =", v);
+    if (v) {
+      setErrorMsg(v);
+      setStatus("error");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const payload = {
-        // matches controller: { name, email, phone, company, description, linkedln }
         name: form.contactPerson,
-        email: form.email,
+        email: form.email.trim(),
         phone: `${form.phoneCode} ${form.phone}`.trim(),
-        company: form.company,
+        company: form.company.trim(),
         description: form.desc,
-        linkedln: "", // backend expects this key; we don't collect it in this form (yet)
+        linkedln: (form.linkedin ?? "").trim(),
       };
 
-      const res = await fetch(CONTACT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      console.log("CONTACT: sending payload", payload);
 
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || data?.success !== "true") {
-        throw new Error(data?.message || "Contact request failed");
-      }
+      const res = await MiscAPI.contactUs(payload); // POST /api/contactUs
+      console.log("ContactUs OK:", res.status, res.data);
 
       setStatus("success");
       setForm(INITIAL_FORM);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Contact form error", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+      setErrorMsg(msg);
       setStatus("error");
     } finally {
       setSubmitting(false);
@@ -93,6 +122,18 @@ export default function ContactUs(): React.ReactElement {
             your company’s talent acquisition and HR operations.
           </T>
         </header>
+
+        {/* global error/success */}
+        {status === "error" && (
+          <div className="mb-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {errorMsg || "Failed to submit. Please try again."}
+          </div>
+        )}
+        {status === "success" && (
+          <div className="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Thanks for reaching out — we’ll get back to you shortly.
+          </div>
+        )}
 
         <form
           className="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2"
@@ -181,6 +222,15 @@ export default function ContactUs(): React.ReactElement {
             />
           </Field>
 
+          <Field label="LinkedIn (optional)" htmlFor="linkedin">
+            <Input
+              id="linkedin"
+              placeholder="https://www.linkedin.com/in/you"
+              value={form.linkedin}
+              onChange={(e) => updateField("linkedin", e.target.value)}
+            />
+          </Field>
+
           <div className="md:col-span-2">
             <Field label="Description" htmlFor="desc">
               <Textarea
@@ -197,6 +247,7 @@ export default function ContactUs(): React.ReactElement {
             <button
               type="submit"
               disabled={submitting}
+              onClick={handleSubmit}
               className="inline-flex items-center gap-2 rounded-full bg-[#5A3BFF] px-6 py-3 text-white shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition hover:bg-[#4F35E6] active:bg-[#442ECC] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <svg
@@ -218,17 +269,6 @@ export default function ContactUs(): React.ReactElement {
                 {submitting ? "Sending..." : "Get in touch"}
               </T>
             </button>
-
-            {status === "success" && (
-              <p className="text-sm text-green-700">
-                Thanks for reaching out — we’ll get back to you shortly.
-              </p>
-            )}
-            {status === "error" && (
-              <p className="text-sm text-red-600">
-                Something went wrong. Please try again or mail us directly.
-              </p>
-            )}
           </div>
         </form>
       </div>
@@ -292,6 +332,7 @@ function Select(
   props: React.SelectHTMLAttributes<HTMLSelectElement> & {
     options: { value: string; label: string }[];
     placeholder?: string;
+    className?: string;
   }
 ) {
   const { options, placeholder, className, ...rest } = props;

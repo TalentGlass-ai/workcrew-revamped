@@ -7,13 +7,68 @@ import LogoMarquee from "./LogoMarquee";
 import FeatureSlides from "./FeatureSlides";
 import T from "../primitives/Typography";
 import GlassPill from "../primitives/tags/GlassPill";
+import { CandidateAuth, RecruiterAuth } from "../../lib/endpoints";
 
 /* top hero of the landing — keep spacing owned by the page wrapper, not here */
 export default function HeroSection(): React.ReactElement {
   const router = useRouter();
 
-  const handleFindWorkClick = () => router.push("/login?role=candidate");
-  const handleStartHiringClick = () => router.push("/login?role=recruiter");
+  const [authRole, setAuthRole] = React.useState<
+    "candidate" | "recruiter" | "none"
+  >("none");
+
+  // Detect whether user is logged in as candidate or recruiter
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function checkAuth() {
+      try {
+        // Try candidate first
+        await CandidateAuth.me();
+        if (!cancelled) setAuthRole("candidate");
+        return;
+      } catch {
+        // ignore
+      }
+
+      try {
+        // Then try recruiter
+        await RecruiterAuth.me();
+        if (!cancelled) setAuthRole("recruiter");
+        return;
+      } catch {
+        // ignore
+      }
+
+      if (!cancelled) setAuthRole("none");
+    }
+
+    checkAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleFindWorkClick = () => {
+    if (authRole === "candidate") {
+      // already logged in as candidate → go straight to jobs
+      router.push("/find-jobs");
+    } else {
+      // not logged in / recruiter logged in → candidate login
+      router.push("/login?role=candidate");
+    }
+  };
+
+  const handleStartHiringClick = () => {
+    if (authRole === "recruiter") {
+      // already logged in as recruiter → go to recruiter/employer area
+      // TODO: update this path if your final recruiter dashboard route is different
+      router.push("/employer/dashboard");
+    } else {
+      // not logged in / candidate logged in → recruiter login
+      router.push("/login?role=recruiter");
+    }
+  };
 
   return (
     <section className="relative !my-0 !py-0">
@@ -34,14 +89,29 @@ export default function HeroSection(): React.ReactElement {
             {/* left column */}
             <div className="mt-[100px]">
               <div className="mb-6">
-                <GlassPill text="The future of hiring is here" iconColor="#4D31EC" />
+                <GlassPill
+                  text="The future of hiring is here"
+                  iconColor="#4D31EC"
+                />
               </div>
 
               <h1>
-                <T as="div" variant="hero48" weight={540} className="text-left text-[#4D31EC]" autoLeading>
+                <T
+                  as="div"
+                  variant="hero48"
+                  weight={540}
+                  className="text-left text-[#4D31EC]"
+                  autoLeading
+                >
                   Hiring or job hunting?
                 </T>
-                <T as="div" variant="hero48" weight={540} className="mt-5 text-left text-black" autoLeading>
+                <T
+                  as="div"
+                  variant="hero48"
+                  weight={540}
+                  className="mt-5 text-left text-black"
+                  autoLeading
+                >
                   You’re in the right place.
                 </T>
               </h1>
@@ -109,18 +179,37 @@ export default function HeroSection(): React.ReactElement {
 
       {/* partner logos */}
       <div className="mt-[calc(8px+30px)] md:mt-[calc(8px+30px)]">
-        <LogoMarquee heightMax={64} heightMin={40} heightVw={8} repeat={32} speed={28} />
+        <LogoMarquee
+          heightMax={64}
+          heightMin={40}
+          heightVw={8}
+          repeat={32}
+          speed={28}
+        />
       </div>
 
       {/* statement block */}
       <div className="mx-auto max-w-4xl px-6 py-[80px] md:py-[100px]">
         <div className="mb-14 h-px w-full bg-[#E5E7EB] md:mb-16" />
         <div className="text-center">
-          <T as="div" variant="h1" weight={540} lineHeightPx={52} className="text-black">
-            “Recruiting &amp; job searching are fundamentally broken” – They say.
+          <T
+            as="div"
+            variant="h1"
+            weight={540}
+            lineHeightPx={52}
+            className="text-black"
+          >
+            “Recruiting &amp; job searching are fundamentally broken” – They
+            say.
           </T>
           <div className="mt-5">
-            <T as="div" variant="card36" weight={540} lineHeightPx={28} className="text-[#4D31EC]">
+            <T
+              as="div"
+              variant="card36"
+              weight={540}
+              lineHeightPx={28}
+              className="text-[#4D31EC]"
+            >
               But we have solved every problem for you
             </T>
           </div>
@@ -157,7 +246,11 @@ function ArrowNortheast() {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <path d="M7 17L17 7M7 7h10v10" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M7 17L17 7M7 7h10v10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

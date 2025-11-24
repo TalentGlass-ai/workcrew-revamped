@@ -2,9 +2,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill";
+import LayeredPill, {
+  ArrowNortheastIcon,
+} from "../primitives/buttons/LayeredPill";
 import T from "../primitives/Typography";
+import { CandidateAuth, JobsAPI } from "../../lib/endpoints";
 
 /* ---------- API type + helpers ---------- */
 type Job = {
@@ -16,7 +20,10 @@ type Job = {
   location?: string;
   salaryRange?: string;
   salary?: string;
-  company?: { companyName?: string; name?: string; size?: string | number } | string | null;
+  company?:
+    | { companyName?: string; name?: string; size?: string | number }
+    | string
+    | null;
   tags?: string[];
   skills?: string[];
   mustHaveSkills?: string[];
@@ -42,11 +49,16 @@ function normalizeSkills(j: Job): string[] {
 /** Category detection by title+skills (robust vs DB variance) */
 const CATEGORY_PATTERNS: Record<string, RegExp> = {
   tech: /\b(js|javascript|typescript|node|react|angular|vue|java|python|go|golang|c\+\+|c#|\.net|spring|django|flask|aws|gcp|azure|devops|kubernetes|docker|sql|nosql|microservices|backend|frontend|full[-\s]?stack|engineer|developer)\b/i,
-  design: /\b(ui|ux|user\s?research|wireframe|figma|sketch|illustrator|photoshop|product\s*design|visual\s*design|interaction|designer)\b/i,
-  product: /\b(product\s*(manager|management)|pm|roadmap|backlog|user\s*stories|jira|confluence)\b/i,
-  marketing: /\b(marketing|seo|sem|content|copywriting|social|growth|performance\s*marketing|ppc|campaign|brand)\b/i,
-  "customer-service": /\b(customer\s*(service|support|success)|helpdesk|ticket|crm)\b/i,
-  sales: /\b(sales|bd|business\s*development|account\s*(exec|manager)|inside\s*sales|pre[-\s]?sales|pipeline)\b/i,
+  design:
+    /\b(ui|ux|user\s?research|wireframe|figma|sketch|illustrator|photoshop|product\s*design|visual\s*design|interaction|designer)\b/i,
+  product:
+    /\b(product\s*(manager|management)|pm|roadmap|backlog|user\s*stories|jira|confluence)\b/i,
+  marketing:
+    /\b(marketing|seo|sem|content|copywriting|social|growth|performance\s*marketing|ppc|campaign|brand)\b/i,
+  "customer-service":
+    /\b(customer\s*(service|support|success)|helpdesk|ticket|crm)\b/i,
+  sales:
+    /\b(sales|bd|business\s*development|account\s*(exec|manager)|inside\s*sales|pre[-\s]?sales|pipeline)\b/i,
 };
 
 function matchesCategory(job: Job, cat: keyof typeof CATEGORY_PATTERNS) {
@@ -58,10 +70,34 @@ function matchesCategory(job: Job, cat: keyof typeof CATEGORY_PATTERNS) {
 
 /* ---------- Component ---------- */
 export default function JobRoles() {
+  const router = useRouter();
+
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [filtered, setFiltered] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // auth: just need to know if candidate is logged in
+  const [isCandidateLoggedIn, setIsCandidateLoggedIn] = useState(false);
+  const [isApplying, setIsApplying] = useState<string | null>(null); // jobId currently applying
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCandidateAuth() {
+      try {
+        await CandidateAuth.me();
+        if (!cancelled) setIsCandidateLoggedIn(true);
+      } catch {
+        if (!cancelled) setIsCandidateLoggedIn(false);
+      }
+    }
+
+    checkCandidateAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Sidebar categories (now functional)
   const CATEGORIES = [
@@ -73,7 +109,8 @@ export default function JobRoles() {
     { label: "Sales", value: "sales" },
   ] as const;
 
-  const [activeCategory, setActiveCategory] = useState<(typeof CATEGORIES)[number]["value"]>("tech");
+  const [activeCategory, setActiveCategory] =
+    useState<(typeof CATEGORIES)[number]["value"]>("tech");
 
   // scroller + expand UI
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -81,8 +118,12 @@ export default function JobRoles() {
   const [canExpand, setCanExpand] = useState<Record<string, boolean>>({});
   const descRefs = useRef<Record<string, HTMLParagraphElement | null>>({});
 
-  const [titleExpanded, setTitleExpanded] = useState<Record<string, boolean>>({});
-  const [titleOverflows, setTitleOverflows] = useState<Record<string, boolean>>({});
+  const [titleExpanded, setTitleExpanded] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [titleOverflows, setTitleOverflows] = useState<
+    Record<string, boolean>
+  >({});
   const titleRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const getId = (j: Job) => String(j._id ?? j.id ?? j.title ?? Math.random());
@@ -112,7 +153,9 @@ export default function JobRoles() {
         setLoading(true);
         setErr(null);
 
-        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=24`, { cache: "no-store" });
+        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=24`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
@@ -164,8 +207,10 @@ export default function JobRoles() {
 
   /* Carousel helpers */
   const SCROLL = 519 + 24;
-  const scrollBy = (px: number) => trackRef.current?.scrollBy({ left: px, behavior: "smooth" });
-  const toggleExpand = (id: string) => setExpanded((s) => ({ ...s, [id]: !s[id] }));
+  const scrollBy = (px: number) =>
+    trackRef.current?.scrollBy({ left: px, behavior: "smooth" });
+  const toggleExpand = (id: string) =>
+    setExpanded((s) => ({ ...s, [id]: !s[id] }));
 
   const setTitleRef =
     (id: string) =>
@@ -181,6 +226,46 @@ export default function JobRoles() {
   const toggleTitle = (id: string) =>
     setTitleExpanded((s) => ({ ...s, [id]: !s[id] }));
 
+  /* CTA handlers */
+
+  const handleMoreJobsClick = () => {
+    if (isCandidateLoggedIn) {
+      router.push("/find-jobs");
+    } else {
+      router.push("/login?role=candidate");
+    }
+  };
+
+  const handleApplyClick = async (job: Job) => {
+    const jobId = job._id || job.id;
+
+    if (!jobId) {
+      console.error("No job ID found on job object", job);
+      alert("Unable to apply: missing job ID.");
+      return;
+    }
+
+    if (!isCandidateLoggedIn) {
+      router.push("/login?role=candidate");
+      return;
+    }
+
+    try {
+      setIsApplying(String(jobId));
+      const res = await JobsAPI.apply({ jobId });
+      console.log("Apply response:", res.data);
+      alert("Application submitted!");
+    } catch (err: any) {
+      console.error("Apply failed", err);
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to apply for this job. Please try again.";
+      alert(msg);
+    } finally {
+      setIsApplying(null);
+    }
+  };
+
   /* ---------- UI ---------- */
   return (
     <section className="relative w-full overflow-x-hidden !my-0 !py-0">
@@ -189,8 +274,13 @@ export default function JobRoles() {
         <header className="px-6 text-center">
           <GlassPill text="For candidates" iconColor="#2288FE" />
           <div className="mx-auto mt-4 w-[663px] max-w-full md:whitespace-nowrap">
-            <T as="h2" variant="hero48" className="text-center text-black leading-[59px] font-540">
-              <span className="text-[#4D31EC]">Discover</span> roles made for you!
+            <T
+              as="h2"
+              variant="hero48"
+              className="text-center text-black leading-[59px] font-540"
+            >
+              <span className="text-[#4D31EC]">Discover</span> roles made for
+              you!
             </T>
           </div>
           <T
@@ -199,7 +289,8 @@ export default function JobRoles() {
             className="mx-auto mt-3 max-w-none text-center text-black md:whitespace-nowrap leading-[27px]"
             trackingPct={3}
           >
-            From startups to big companies, discover roles that match your skills and career aspirations
+            From startups to big companies, discover roles that match your
+            skills and career aspirations
           </T>
         </header>
 
@@ -211,12 +302,17 @@ export default function JobRoles() {
               {CATEGORIES.map(({ label, value }, idx) => {
                 const active = activeCategory === value;
                 return (
-                  <li key={value} className="relative flex items-center gap-2 md:whitespace-nowrap">
+                  <li
+                    key={value}
+                    className="relative flex items-center gap-2 md:whitespace-nowrap"
+                  >
                     {idx === 0 && (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
-                        className={`h-[20px] w-[20px] ${active ? "text-[#4D31EC]" : "text-[#A2A2A2]"}`}
+                        className={`h-[20px] w-[20px] ${
+                          active ? "text-[#4D31EC]" : "text-[#A2A2A2]"
+                        }`}
                         fill="currentColor"
                         aria-hidden="true"
                       >
@@ -247,7 +343,12 @@ export default function JobRoles() {
             </ul>
 
             <div className="mt-10">
-              <LayeredPill href="/find-jobs" label="More jobs" icon={<ArrowNortheastIcon />} size="md" />
+              <LayeredPill
+                label="More jobs"
+                icon={<ArrowNortheastIcon />}
+                size="md"
+                onClick={handleMoreJobsClick}
+              />
             </div>
           </aside>
 
@@ -317,7 +418,11 @@ export default function JobRoles() {
                       const skills = normalizeSkills(job);
                       const title = job.title || "Untitled role";
                       const showFullTitle = !!titleExpanded[id];
-                      const clickEnabled = !!titleOverflows[id] || showFullTitle;
+                      const clickEnabled =
+                        !!titleOverflows[id] || showFullTitle;
+
+                      const jobIdStr = String(job._id || job.id || id);
+                      const applyingThis = isApplying === jobIdStr;
 
                       return (
                         <article
@@ -351,7 +456,9 @@ export default function JobRoles() {
                                       onClick={() => toggleTitle(id)}
                                       className="text-[#4D31EC] hover:underline inline"
                                     >
-                                      <T as="span" variant="sub14">Show less</T>
+                                      <T as="span" variant="sub14">
+                                        Show less
+                                      </T>
                                     </button>
                                   </div>
                                 )}
@@ -368,7 +475,12 @@ export default function JobRoles() {
 
                             {job.type && (
                               <span className="inline-flex h-[32px] items-center rounded-full bg-[#EEF0FF] px-3">
-                                <T as="span" variant="sub14" className="text-[#4D31EC]" weight={600}>
+                                <T
+                                  as="span"
+                                  variant="sub14"
+                                  className="text-[#4D31EC]"
+                                  weight={600}
+                                >
                                   {job.type}
                                 </T>
                               </span>
@@ -404,7 +516,12 @@ export default function JobRoles() {
                             {canExpand[id] && (
                               <button
                                 type="button"
-                                onClick={() => setExpanded((s) => ({ ...s, [id]: !s[id] }))}
+                                onClick={() =>
+                                  setExpanded((s) => ({
+                                    ...s,
+                                    [id]: !s[id],
+                                  }))
+                                }
                                 className="mt-1 text-[#4D31EC] hover:underline"
                               >
                                 <T as="span" variant="sub14">
@@ -417,10 +534,17 @@ export default function JobRoles() {
                           <div className="mt-4 flex items-center gap-6 text-slate-600">
                             {job.location && (
                               <span className="flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 text-slate-600" fill="currentColor">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  className="h-4 w-4 text-slate-600"
+                                  fill="currentColor"
+                                >
                                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                 </svg>
-                                <T as="span" variant="body16">{job.location}</T>
+                                <T as="span" variant="body16">
+                                  {job.location}
+                                </T>
                               </span>
                             )}
                             {(job.salaryRange || job.salary) && (
@@ -430,14 +554,20 @@ export default function JobRoles() {
                             )}
                           </div>
 
-                          <a
-                            href="/login?role=candidate"
-                            className="mt-[20px] block w-full rounded-xl bg-[#4D31EC] py-3 text-center hover:brightness-110"
+                          <button
+                            type="button"
+                            onClick={() => handleApplyClick(job)}
+                            className="mt-[20px] w-full rounded-xl bg-[#4D31EC] py-3 text-center hover:brightness-110 disabled:opacity-60"
+                            disabled={applyingThis}
                           >
-                            <T as="span" variant="body16" className="text-white">
-                              Apply Now
+                            <T
+                              as="span"
+                              variant="body16"
+                              className="text-white"
+                            >
+                              {applyingThis ? "Applying..." : "Apply Now"}
                             </T>
-                          </a>
+                          </button>
                         </article>
                       );
                     })}
@@ -446,7 +576,8 @@ export default function JobRoles() {
             </div>
           </div>
         </div>
-      </div>{/* /internal padding */}
+      </div>
+      {/* /internal padding */}
     </section>
   );
 }

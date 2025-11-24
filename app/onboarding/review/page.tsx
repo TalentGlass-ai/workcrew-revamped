@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
+import { CandidateAPI } from "workcrew-ui/lib/endpoints";
 
 // quick helpers for the onboarding draft
 function loadDraft<T = any>(): T {
@@ -13,6 +14,7 @@ function loadDraft<T = any>(): T {
     return {} as T;
   }
 }
+
 function clearDraft() {
   if (typeof window !== "undefined") localStorage.removeItem("wc_onboard");
 }
@@ -22,13 +24,63 @@ export default function ReviewPage() {
 
   // we pull the data from localStorage once the page mounts
   const [data, setData] = React.useState<any>({});
+  const [submitting, setSubmitting] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     setData(loadDraft());
   }, []);
 
-  function complete() {
-    clearDraft();
-    router.push("/find-jobs");
+  // Calls backend /candidate/complete/:id to persist resume/profile data
+  async function complete() {
+    try {
+      setErrorMsg(null);
+      setSubmitting(true);
+
+      const draft = loadDraft<any>();
+
+      // 1) Get logged-in candidate info to know their ID
+      const profileRes = await CandidateAPI.profile();
+      const candidate =
+        profileRes.data?.result ?? profileRes.data ?? null;
+      const candidateId = candidate?._id;
+
+      if (!candidateId) {
+        throw new Error("Could not determine candidate id from profile.");
+      }
+
+      // 2) Build payload in the shape backend expects:
+      //    patchCandidateByResume reads: const { data } = req.body;
+      //    and then: const { about, contact, skills, links, education, workExperience, projects } = data.result;
+      //
+      // We already stored the raw parser output as rawParserOutput in wc_onboard
+      // when parsing the resume on the upload step.
+      const rawForBackend = draft.rawParserOutput || {};
+
+      const payload = {
+        data: {
+          result: rawForBackend,
+        },
+      };
+
+      // Optional: log to verify once
+      console.log("Completing resume with payload:", payload);
+
+      // 3) Call backend to complete candidate profile from resume data
+      await CandidateAPI.completeFromResume(candidateId, payload);
+
+      // 4) Clear local draft & redirect to find jobs
+      clearDraft();
+      router.push("/find-jobs");
+    } catch (err: any) {
+      console.error("Error completing resume:", err);
+      setErrorMsg(
+        err?.response?.data?.message ||
+          "Something went wrong while saving your resume. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -213,19 +265,28 @@ export default function ReviewPage() {
               <p className="text-sm">{data.summary || "—"}</p>
             </div>
 
+            {/* error message, if any */}
+            {errorMsg && (
+              <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+                {errorMsg}
+              </div>
+            )}
+
             {/* final actions */}
             <div className="flex items-center justify-between">
               <button
                 onClick={() => router.back()}
                 className="rounded-full border px-6 py-3 hover:border-[#4D31EC]"
+                disabled={submitting}
               >
                 ← Previous
               </button>
               <button
                 onClick={complete}
-                className="rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5]"
+                className="rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50"
+                disabled={submitting}
               >
-                Complete resume ✓
+                {submitting ? "Saving..." : "Complete resume ✓"}
               </button>
             </div>
           </div>

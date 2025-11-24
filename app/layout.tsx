@@ -1,22 +1,26 @@
-// app/layout.tsx
+// PATH: app/layout.tsx
 import "./globals.css";
+import type { Metadata } from "next";
 import { Schibsted_Grotesk, Archivo } from "next/font/google";
-import Image from "next/image";
 import * as React from "react";
 
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-schibsted",
-  weight: "variable",
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
 });
 
 const archivo = Archivo({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-archivo",
-  weight: "variable",
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
 });
+
+export const metadata: Metadata = {
+  title: "WorkCrew.ai",
+  description:
+    "WorkCrew.ai – AI-powered recruitment platform to help you hire better, faster.",
+};
 
 export default function RootLayout({
   children,
@@ -24,29 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${archivo.variable}`}>
-      <body>
-        {/* Page content */}
-        {children}
-
-        {/* ✅ Floating Chatbot visible on all pages */}
-        <button
-          aria-label="Chatbot"
-          className="fixed z-50 right-6 bottom-6 md:right-8 md:bottom-8 
-                     rounded-full ring-[3px] ring-[#4D31EC] 
-                     shadow-[0_10px_30px_rgba(77,49,236,0.25)] 
-                     overflow-hidden hover:scale-[1.03] active:scale-[0.98] transition"
-        >
-          <Image
-            src="/Rah.png"
-            alt="Assistant"
-            width={64}
-            height={64}
-            className="w-[64px] h-[64px] object-cover"
-            priority
-          />
-        </button>
-      </body>
+    <html
+      lang="en"
+      className={`${schibsted.variable} ${archivo.variable}`}
+      suppressHydrationWarning
+    >
+      <body>{children}</body>
     </html>
   );
 }

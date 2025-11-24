@@ -4,7 +4,6 @@ import * as React from "react";
 import T from "../primitives/Typography";
 import GlassPill from "../primitives/tags/GlassPill";
 
-/* section heading + subheading — routed through <T /> so typography stays consistent */
 const SectionTitle: React.FC = () => (
   <T as="h2" variant="hero48" className="text-center text-black leading-[68px] font-medium">
     Why <span className="text-[#4D31EC]">professionals and teams</span> love us
@@ -23,7 +22,6 @@ const SubTitle: React.FC = () => (
   </T>
 );
 
-/* micro stat chip — fixed sizes via a small size variant (no inline style, no purge issues) */
 const MiniStatPill: React.FC<{
   value: string;
   top: string;
@@ -49,7 +47,7 @@ const MiniStatPill: React.FC<{
   );
 };
 
-/* card text primitives — use T so every card stays on-brand */
+
 const CardTitleSpec: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
   children,
   className = "",
@@ -68,7 +66,7 @@ const CardBodySpec: React.FC<React.PropsWithChildren<{ className?: string }>> = 
   </T>
 );
 
-/* time chip — tiny stat block with two text rows */
+
 const TimePill: React.FC = () => (
   <div className="flex h-[107px] w-[158px] flex-col items-center justify-center rounded-[12px] bg-[rgba(169,195,247,0.10)]">
     <T as="div" variant="sub20" className="text-[#3171EC] leading-[27px] font-medium">
@@ -96,7 +94,7 @@ const StarIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
   </svg>
 );
 
-/* rating chip — five stars + label */
+
 const RatingPill: React.FC = () => (
   <div className="flex h-[79px] w-[160px] items-center justify-center rounded-[12px] bg-[#FFF5E5]">
     <div className="flex h-[59px] w-[140px] flex-col items-center justify-center">
@@ -112,7 +110,7 @@ const RatingPill: React.FC = () => (
   </div>
 );
 
-/* simple check icon that inherits currentColor */
+
 const CheckIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -132,7 +130,7 @@ const CheckIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
 
 export default function WhyLoveUs(): React.ReactElement {
   return (
-    /* no external spacing — page decides the gaps between sections */
+    
     <section className="relative w-full !my-0 !py-0">
       {/* inner vertical breathing */}
       <div className="py-12 md:py-16">
@@ -162,7 +160,7 @@ export default function WhyLoveUs(): React.ReactElement {
               </div>
             </div>
 
-            {/* Row with two fixed-size cards (responsive) */}
+          
             <div className="flex flex-col items-stretch gap-[30px] md:flex-row md:justify-between">
               {/* Box 2: Fast & efficient */}
               <div className="h-auto w-full rounded-xl border border-[#C7C4FF] bg-white p-6 md:h-[180px] md:w-[532px]">
@@ -197,7 +195,7 @@ export default function WhyLoveUs(): React.ReactElement {
               </div>
             </div>
 
-            {/* Box 4: Fair, open process */}
+        
             <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Left: green checklist */}
@@ -217,7 +215,7 @@ export default function WhyLoveUs(): React.ReactElement {
                 <div className="flex flex-col justify-center">
                   <CardTitleSpec>Fair, open process</CardTitleSpec>
                   <CardBodySpec className="mt-2">
-                    Access clear timelines, salary ranges, and feedback – so everyone
+                    Access clear timelines, salary ranges, and feedback - so everyone
                     stays informed and aligned.
                   </CardBodySpec>
                 </div>
@@ -225,7 +223,7 @@ export default function WhyLoveUs(): React.ReactElement {
             </div>
           </div>
         </div>
-      </div>{/* /internal padding */}
+      </div>
     </section>
   );
 }

@@ -1,4 +1,3 @@
-// PATH: app/find-jobs/page.tsx
 "use client";
 
 import * as React from "react";
@@ -9,8 +8,9 @@ import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
 import T from "../../workcrew-ui/components/primitives/Typography";
 import bg from "../../public/bg.png";
+import { JobsAPI } from "../../workcrew-ui/lib/endpoints";
 
-/* ========= Types ========= */
+/*Types */
 type Job = {
   _id?: string;
   id?: string | number;
@@ -50,7 +50,7 @@ type Option = { label: string; value: string };
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-/* ========= Helpers ========= */
+/* Helpers */
 const companyName = (c: Job["company"]) =>
   (typeof c === "string" ? c : c?.companyName || c?.name) || "—";
 
@@ -110,7 +110,7 @@ function salaryBucket(s?: string) {
   return null;
 }
 
-/* ========= “Category chip” patterns (used for top chips and fallback) ========= */
+/* “Category chip” patterns (used for top chips and fallback)*/
 const CATEGORY_PATTERNS: Record<string, RegExp> = {
   Design:
     /\b(ui|ux|user\s?research|wireframe|figma|illustrator|photoshop|product\s*design|visual\s*design|interaction)\b/i,
@@ -144,7 +144,7 @@ const CHIP_MAP: Record<(typeof CHIP_LABELS)[number], string> = {
   Operations: "operations",
 };
 
-/* ========= UI pieces ========= */
+/* UI pieces */
 const Chip: React.FC<
   React.PropsWithChildren<{ active?: boolean; onClick?: () => void }>
 > = ({ active, onClick, children }) => (
@@ -295,8 +295,11 @@ const FilterBlock: React.FC<{
   );
 };
 
-/* ========= Job card ========= */
-const JobCard: React.FC<{ job: Job }> = ({ job }) => {
+/* Job card */
+const JobCard: React.FC<{ job: Job; onApply: (job: Job) => void }> = ({
+  job,
+  onApply,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const skills = normalizeSkills(job);
   const desc = job.description || "No description provided.";
@@ -377,7 +380,10 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
         </div>
 
         <div className="shrink-0">
-          <button className="bg-[#4D31EC] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#3b25b5] whitespace-nowrap">
+          <button
+            className="bg-[#4D31EC] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#3b25b5] whitespace-nowrap"
+            onClick={() => onApply(job)}
+          >
             Apply Now
           </button>
         </div>
@@ -386,7 +392,7 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
   );
 };
 
-/* ========= Build server query from filters ========= */
+/* Build server query from filters  */
 function buildServerQuery(args: {
   fType: Set<string>;
   fCategory: Set<string>;
@@ -439,6 +445,41 @@ export default function FindJobsPage() {
 
   const PAGE_SIZE = 6;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  async function applyToJob(job: Job) {
+  try {
+    const jobId = job._id || job.id;
+    if (!jobId) {
+      console.error("No job ID found on job object", job);
+      alert("Unable to apply: missing job ID.");
+      return;
+    }
+
+    const res = await JobsAPI.apply({ jobId });
+    console.log("Apply response:", res.data);
+
+    const msg =
+      res?.data?.message ||
+      res?.data?.Message ||
+      "Application submitted!";
+    alert(msg);
+  } catch (err: any) {
+    console.error("Apply failed", err);
+    const status = err?.response?.status;
+    const msgFromServer = err?.response?.data?.message;
+
+    if (status === 401) {
+      alert("Please log in as a candidate to apply for jobs.");
+      return;
+    }
+
+    alert(
+      msgFromServer ||
+        "Failed to apply for this job. Please try again."
+    );
+  }
+}
+
 
   /* ==== Fetch with server-side filters ==== */
   useEffect(() => {
@@ -504,7 +545,7 @@ export default function FindJobsPage() {
     // NOTE: locationText is intentionally NOT a dependency (it's client-side partial)
   }, [API, search, fType, fCategory, selectedChips, fCities, fSkills]);
 
-  /* ==== Dynamic options (keep original casing) ==== */
+  /*  Dynamic options (keep original casing) */
   const dynamicTypeOpts: Option[] = useMemo(() => {
     const s = new Set<string>();
     allJobs.forEach((j) => j.type && s.add(j.type));
@@ -737,7 +778,7 @@ export default function FindJobsPage() {
           </div>
         </div>
 
-        {/* ======= JOBS SECTION ======= */}
+        {/*JOBS SECTION*/}
         <section className="pt-8 pb-16 flex justify-center bg-white relative z-0">
           <div className="w-full max-w-6xl px-6">
             <div className="grid items-start gap-8 md:[grid-template-columns:auto_minmax(0,1fr)]">
@@ -848,6 +889,7 @@ export default function FindJobsPage() {
                         `${job.title}-${companyName(job.company)}`
                       }
                       job={job}
+                      onApply={applyToJob}
                     />
                   ))}
 

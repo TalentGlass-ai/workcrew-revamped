@@ -1,4 +1,4 @@
-"use client";
+"use client";// currently not used as no api for blogs right now 
 
 import * as React from "react";
 import { useEffect, useState } from "react";

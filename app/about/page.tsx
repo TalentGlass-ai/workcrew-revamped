@@ -1,3 +1,4 @@
+// PATH: app/about/page.tsx
 "use client";
 
 import * as React from "react";
@@ -13,6 +14,10 @@ import T from "../../workcrew-ui/components/primitives/Typography";
 /* helper */
 const cx = (...xs: (string | false | undefined)[]) =>
   xs.filter(Boolean).join(" ");
+
+/* same calendar + redirect behavior as pricing */
+const SALES_CALENDAR_URL = "https://calendar.app.google/aLFgZjQ3dFf8oBSXA";
+const DEMO_PLACEHOLDER_URL = "/demo-placeholder";
 
 /* fallback icons if /icons/* not found */
 const IconResearch = ({ className = "" }: { className?: string }) => (
@@ -75,7 +80,6 @@ const Bolt = ({
     <path d="M6.3 0L0 9.1h3.9L2.7 18 11 7.8H7.1L8.3 0H6.3z" fill={fill} />
   </svg>
 );
-
 
 const CORE_TABS = [
   {
@@ -262,15 +266,6 @@ const STATS = [
 export default function AboutPage() {
   const [activeTab, setActiveTab] = React.useState(CORE_TABS[0].id);
 
-  // demo modal
-  const [showDemo, setShowDemo] = React.useState(false);
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) =>
-      e.key === "Escape" && setShowDemo(false);
-    if (showDemo) document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [showDemo]);
-
   // journey index autoplay
   const [jIndex, setJIndex] = React.useState(0);
   React.useEffect(() => {
@@ -364,6 +359,14 @@ export default function AboutPage() {
     return `${pct}%`;
   };
 
+  // shared calendar behaviour (same as pricing)
+  const goToCalendarThenDemo = () => {
+    window.open(SALES_CALENDAR_URL, "_blank", "noopener,noreferrer");
+    setTimeout(() => {
+      window.location.href = DEMO_PLACEHOLDER_URL;
+    }, 800);
+  };
+
   return (
     <main className="relative min-h-screen bg-white">
       <NewNavbar />
@@ -408,7 +411,12 @@ export default function AboutPage() {
             </div>
 
             <div className="mt-8">
-              <Link href="/contact" className="inline-block" aria-label="Book demo">
+              <button
+                type="button"
+                onClick={goToCalendarThenDemo}
+                className="inline-block"
+                aria-label="Book demo"
+              >
                 <span
                   className={cx(
                     "inline-flex h-[56px] items-center gap-3 rounded-full px-8",
@@ -430,7 +438,7 @@ export default function AboutPage() {
                   </svg>
                   <span>Book demo</span>
                 </span>
-              </Link>
+              </button>
             </div>
           </div>
         </Container>
@@ -666,11 +674,9 @@ export default function AboutPage() {
       <section className="relative bg-[#4D31EC]">
         <Container className="relative text-white pt-[96px] pb-[96px]">
           <div className="grid min-h-[540px] grid-cols-1 gap-12 lg:grid-cols-12">
-            {/* LEFT HALF:
-               Vertically center the pill + heading within this purple block */}
+            {/* LEFT HALF */}
             <div className="lg:col-span-4 flex items-center">
               <div className="flex flex-col">
-                {/* pill: fixed 157x38 */}
                 <div
                   className={cx(
                     "flex items-center justify-center rounded-full",
@@ -682,7 +688,6 @@ export default function AboutPage() {
                   How we started
                 </div>
 
-                {/* Our journey heading (Schibsted Grotesk) */}
                 <div className="mt-6 text-white">
                   <h2
                     className={cx(
@@ -696,15 +701,9 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* RIGHT HALF:
-               We'll create a flex column = rail (top) / mid content / bottom bars.
-               The rail itself is absolutely positioned inside a fixed-height top box
-               so we can measure spacing symmetrically.
-            */}
+            {/* RIGHT HALF */}
             <div className="lg:col-span-8 flex flex-col justify-between relative">
-              {/* TOP BOX containing rail */}
               <div className="relative h-[120px]">
-                {/* timeline rail sits 50px from top of purple like before */}
                 <div className="absolute left-0 right-0 top-[50px]">
                   <div className="relative h-[2px] w-full bg-white">
                     {JOURNEY_STEPS.map((step, i) => {
@@ -758,14 +757,7 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              {/* MIDDLE CONTENT BOX:
-                 This sits in the natural middle because parent flex-col uses justify-between.
-                 Typography spec:
-                 - heading: Schibsted Grotesk, weight 540 (~custom), 36px, tracking 1%, leading auto
-                 - body: Archivo regular 16px / 27px lh / 3% tracking
-              */}
               <div className="pr-4">
-                {/* rocket / icon pill */}
                 <div className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
                   {JOURNEY_STEPS[jIndex].altBodyIcon ? (
                     JOURNEY_STEPS[jIndex].altBodyIcon
@@ -795,7 +787,6 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              {/* BOTTOM BARS box (height ~50px space below like you wanted) */}
               <div className="pt-10">
                 <div className="flex flex-wrap items-center gap-4">
                   {JOURNEY_STEPS.map((_, i) => (
@@ -921,27 +912,20 @@ export default function AboutPage() {
                 </T>
 
                 <div className="mt-6">
-                  <Link
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowDemo(true);
-                    }}
-                    aria-label="Book a demo"
-                    className="inline-block"
-                  >
-                    <LayeredPill
-                      label="Book a demo"
-                      size="md"
-                      className={cx(
-                        "text-[#4D31EC]",
-                        "[--pill-middle-bg:#FFFFFF]",
-                        "[--pill-shadow:0_1px_0_rgba(17,24,39,0.06)]",
-                        "[&_svg]:h-5 [&_svg]:w-5 [&_svg]:stroke-[#4D31EC] [&_svg]:text-[#4D31EC]"
-                      )}
-                    />
-                  </Link>
-                </div>
+  <LayeredPill
+    label="Book a demo"
+    size="md"
+    onClick={goToCalendarThenDemo}
+    aria-label="Book a demo"
+    className={cx(
+      "text-[#4D31EC]",
+      "[--pill-middle-bg:#FFFFFF]",
+      "[--pill-shadow:0_1px_0_rgba(17,24,39,0.06)]",
+      "[&_svg]:h-5 [&_svg]:w-5 [&_svg]:stroke-[#4D31EC] [&_svg]:text-[#4D31EC]"
+    )}
+  />
+</div>
+
               </div>
 
               <div className="relative lg:col-span-4">
@@ -960,55 +944,6 @@ export default function AboutPage() {
           </div>
         </Container>
       </Section>
-
-      {/* Demo Video Modal */}
-      {showDemo && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowDemo(false)}
-        >
-          <div
-            className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2">
-              <h3 className="text-lg font-semibold text-[#111827]">
-                WorkCrew.ai — Demo
-              </h3>
-              <button
-                onClick={() => setShowDemo(false)}
-                className="rounded-md p-2 text-[#6B7280] transition hover:bg-gray-100 hover:text-[#111827]"
-                aria-label="Close demo modal"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path d="M6 6l12 12M18 6l-12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[#0B0F19]">
-              <div className="absolute inset-0 grid place-items-center">
-                <div className="flex flex-col items-center">
-                  <svg viewBox="0 0 24 24" className="mb-3 h-12 w-12" fill="white">
-                    <path d="M7 17L17 7M9 7h8v8" />
-                  </svg>
-                  <p className="text-sm text-white/80">
-                    Demo video placeholder
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <NewFooter />
     </main>

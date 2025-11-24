@@ -1,27 +1,10 @@
-// PATH: workcrew-ui/components/landing/NewFooter.tsx
 "use client";
-
-/**
- * NewFooter
- * ----------
- * - Zero outer spacing — the parent section controls inter-section gaps
- * - Uses our Typography primitive (T) for all textual elements
- * - Archivo presets enforced (per spec):
- *    • Top caption: Medium 16 / auto / 2%
- *    • Blurb + list + contact: Medium 14 / 23 / 3%
- *    • Bottom copyright (single line, bottom-left): Semibold 14 / 23 / 0%
- * - Accessible links (keyboard focus rings), no inline styles
- */
 
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import T from "../primitives/Typography";
-
-/* --------------------------------------------
-   Link & contact config — pure data (no UI)
---------------------------------------------- */
 type FooterItem =
   | { label: string; href: string; smart?: undefined }
   | { label: string; smart: "browseJobs" | "resumeBuilder"; href?: undefined };
@@ -57,9 +40,6 @@ const footerLinks = {
   },
 };
 
-/* -----------------------
-   Auth helpers (client)
------------------------- */
 function getIsAuthed(): boolean {
   try {
     const lsToken =
@@ -76,17 +56,12 @@ function getIsAuthed(): boolean {
   }
 }
 
-/* -----------------------
-   Footer root component
------------------------- */
 export default function NewFooter(): React.ReactElement {
   return (
     <footer className="relative !my-0 !py-0">
       <div className="w-full border-t border-white/10 bg-[#444953] md:h-[529px]">
         <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-6 py-10 text-white md:grid-cols-5 md:gap-8 md:px-10 md:py-12">
-          {/* =============================
-              Brand block
-          ============================== */}
+         
           <div className="flex flex-col">
             {/* Archivo Medium 16 / auto / 2% */}
             <T
@@ -114,7 +89,6 @@ export default function NewFooter(): React.ReactElement {
               </Link>
             </div>
 
-            {/* Blurb — Archivo Medium 14 / 23 / 3% (single line) */}
             <T
               as="p"
               variant="body16"
@@ -124,18 +98,13 @@ export default function NewFooter(): React.ReactElement {
             </T>
           </div>
 
-          {/* =============================
-              Navigation columns
-          ============================== */}
           <nav aria-label="Footer" className="contents">
             <FooterCol title="For job seekers" items={footerLinks.seekers} />
             <FooterCol title="For recruiters" items={footerLinks.recruiters} />
             <FooterCol title="WorkCrew.ai" items={footerLinks.company} />
           </nav>
 
-          {/* =============================
-              Contact + Socials
-          ============================== */}
+        
           <div className="flex flex-col">
             {/* Section label can remain as-is; spec targeted top caption + blurb + copyright */}
             <SectionLabel>Contact</SectionLabel>
@@ -219,7 +188,6 @@ export default function NewFooter(): React.ReactElement {
           </div>
         </div>
 
-        {/* Bottom-left single-line copyright — Archivo Semibold 14 / 23 / 0% */}
         <div className="mx-auto max-w-[1280px] px-6 pb-6 md:px-10">
           <T
             as="p"
@@ -234,9 +202,7 @@ export default function NewFooter(): React.ReactElement {
   );
 }
 
-/* --------------------------------------------
-   Column (title + link list)
---------------------------------------------- */
+
 function FooterCol({
   title,
   items,
@@ -258,9 +224,7 @@ function FooterCol({
   );
 }
 
-/* --------------------------------------------
-   Footer item renderer — normal vs smart link
---------------------------------------------- */
+
 function FooterItemLink({ item }: { item: FooterItem }) {
   const router = useRouter();
   const linkCls =
@@ -300,7 +264,6 @@ function FooterItemLink({ item }: { item: FooterItem }) {
     }
   };
 
-  // ✅ FIX: single interactive element (button) — no nested <button>
   return (
     <button
       type="button"

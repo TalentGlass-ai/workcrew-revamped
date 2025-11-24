@@ -14,19 +14,23 @@ import {
 
 import JobRoles from "../workcrew-ui/components/landing/JobRoles";
 import { Section } from "../workcrew-ui/components/primitives";
+import FadeWrapper from "../workcrew-ui/components/FadeWrapper";
 
 /* Wrapper with no default vertical padding */
 function GapSection({ children }: { children: React.ReactNode }) {
   return (
-    <Section size="lg" background="default" withContainer={false} className="!py-0">
+    <Section
+      size="lg"
+      background="default"
+      withContainer={false}
+      className="!py-0"
+    >
       {children}
     </Section>
   );
 }
 
-/* ============================================
-   MAIN PAGE
-   ============================================ */
+/*  MAIN PAGE*/
 export default function HomePage(): React.ReactElement {
   return (
     <>
@@ -43,59 +47,73 @@ export default function HomePage(): React.ReactElement {
       `}</style>
 
       <main className="flex flex-col space-y-[60px] [&>*]:my-0">
-        {/* Hero Section */}
+        {/* Hero Section (no fade so it shows immediately) */}
         <HeroSection />
 
         {/* Why They Love Us */}
         <GapSection>
-          <WhyTheyLoveUs />
+          <FadeWrapper>
+            <WhyTheyLoveUs />
+          </FadeWrapper>
         </GapSection>
 
         {/* Meet RAHI — reduced top/bottom gap */}
         <div className="!mt-[8px] !mb-[16px]">
           <GapSection>
-            <MeetRahiBanner className="!my-0 !py-0" />
+            <FadeWrapper>
+              <MeetRahiBanner className="!my-0 !py-0" />
+            </FadeWrapper>
           </GapSection>
         </div>
 
         {/* Why Love Us */}
         <GapSection>
-          <WhyLoveUs />
+          <FadeWrapper>
+            <WhyLoveUs />
+          </FadeWrapper>
         </GapSection>
 
         {/* Statement Strip */}
         <GapSection>
-          <div className="mx-auto max-w-[1106px] text-center">
-            <div className="mx-auto flex flex-col items-center gap-[76px]">
-              <div className="h-px w-[320px] bg-[#D0D5DD]" />
-              <div className="mx-auto max-w-[625px]">
-                <h2 className="font-display text-[40px] font-medium leading-[1] tracking-[0.01em] text-black">
-                  “WorkCrew.ai fixed the broken system.” – We say
-                </h2>
-                <p className="mt-6 font-display text-[32px] font-medium leading-[1] tracking-[0.01em] text-[#4D31EC]">
-                  Here’s what that means for you – New opportunities!
-                </p>
+          <FadeWrapper>
+            <div className="mx-auto max-w-[1106px] text-center">
+              <div className="mx-auto flex flex-col items-center gap-[76px]">
+                <div className="h-px w-[320px] bg-[#D0D5DD]" />
+                <div className="mx-auto max-w-[625px]">
+                  <h2 className="font-display text-[40px] font-medium leading-[1] tracking-[0.01em] text-black">
+                    “WorkCrew.ai fixed the broken system.” – We say
+                  </h2>
+                  <p className="mt-6 font-display text-[32px] font-medium leading-[1] tracking-[0.01em] text-[#4D31EC]">
+                    Here’s what that means for you – New opportunities!
+                  </p>
+                </div>
+                <div className="h-px w-[320px] bg-[#D0D5DD]" />
               </div>
-              <div className="h-px w-[320px] bg-[#D0D5DD]" />
             </div>
-          </div>
+          </FadeWrapper>
         </GapSection>
 
         {/* Job Roles */}
         <GapSection>
-          <JobRoles />
+          <FadeWrapper>
+            <JobRoles />
+          </FadeWrapper>
         </GapSection>
 
         {/* Reviews */}
         <GapSection>
-          <ReviewsSection />
+          <FadeWrapper>
+            <ReviewsSection />
+          </FadeWrapper>
         </GapSection>
 
         {/* Contact Section with bottom breathing space */}
         <GapSection>
-          <div className="mb-[30px]">
-            <ContactSection />
-          </div>
+          <FadeWrapper>
+            <div className="mb-[30px]">
+              <ContactSection />
+            </div>
+          </FadeWrapper>
         </GapSection>
       </main>
 
@@ -105,9 +123,7 @@ export default function HomePage(): React.ReactElement {
   );
 }
 
-/* ============================================
-   CONTACT SECTION
-   ============================================ */
+/*CONTACT SECTION */
 function ContactSection(): React.ReactElement {
   return (
     <section id="contact">
@@ -118,8 +134,8 @@ function ContactSection(): React.ReactElement {
         </h2>
 
         <p className="mb-10 font-alt text-[20px] font-normal leading-[27px] tracking-[0.03em] text-black md:whitespace-nowrap">
-          Connect with our team to discover how WorkCrew.ai can streamline your company’s
-          talent acquisition and HR operations.
+          Connect with our team to discover how WorkCrew.ai can streamline your
+          company’s talent acquisition and HR operations.
         </p>
       </div>
 
@@ -130,15 +146,29 @@ function ContactSection(): React.ReactElement {
             onSubmit={(e) => e.preventDefault()}
           >
             <ContactField label="Company name" required htmlFor="company">
-              <ContactInput id="company" placeholder="Enter your company name" />
+              <ContactInput
+                id="company"
+                placeholder="Enter your company name"
+              />
             </ContactField>
 
-            <ContactField label="Contact person" required htmlFor="contactPerson">
-              <ContactInput id="contactPerson" placeholder="Your full name" />
+            <ContactField
+              label="Contact person"
+              required
+              htmlFor="contactPerson"
+            >
+              <ContactInput
+                id="contactPerson"
+                placeholder="Your full name"
+              />
             </ContactField>
 
             <ContactField label="Business email" required htmlFor="email">
-              <ContactInput id="email" type="email" placeholder="you@company.com" />
+              <ContactInput
+                id="email"
+                type="email"
+                placeholder="you@company.com"
+              />
             </ContactField>
 
             <ContactField label="Phone number" required htmlFor="phone">
@@ -154,7 +184,11 @@ function ContactSection(): React.ReactElement {
                     { value: "+61", label: "+61" },
                   ]}
                 />
-                <ContactInput id="phone" placeholder="123456790" inputMode="numeric" />
+                <ContactInput
+                  id="phone"
+                  placeholder="123456790"
+                  inputMode="numeric"
+                />
               </div>
             </ContactField>
 
@@ -200,7 +234,13 @@ function ContactSection(): React.ReactElement {
                 type="submit"
                 className="inline-flex items-center gap-2 rounded-full bg-[#5A3BFF] px-6 py-3 text-white shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition hover:bg-[#4F35E6] active:bg-[#442ECC]"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <path
                     d="M5 12h14M13 5l7 7-7 7"
                     stroke="currentColor"
@@ -219,10 +259,18 @@ function ContactSection(): React.ReactElement {
   );
 }
 
-/* ============================================
-   FORM PRIMITIVES
-   ============================================ */
-function ContactField({ label, htmlFor, required, children }: any) {
+/* FORM PRIMITIVES*/
+function ContactField({
+  label,
+  htmlFor,
+  required,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label
@@ -263,7 +311,16 @@ function ContactTextarea(
   );
 }
 
-function ContactSelect({ options, placeholder, className, ...rest }: any) {
+function ContactSelect({
+  options,
+  placeholder,
+  className,
+  ...rest
+}: {
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  className?: string;
+} & React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className={`relative ${className ?? ""}`}>
       <select
@@ -276,7 +333,7 @@ function ContactSelect({ options, placeholder, className, ...rest }: any) {
             {placeholder}
           </option>
         )}
-        {options.map((o: any) => (
+        {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

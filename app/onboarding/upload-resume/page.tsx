@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
-// shared axios instance, adjust import if your path is different
-import api from "workcrew-ui/lib/api";
+import { CandidateAPI } from "workcrew-ui/lib/endpoints";
 
 // helpers to keep a draft in localStorage across steps
 function loadDraft<T = any>(): T {
@@ -31,139 +30,123 @@ function toArray<T = any>(v: any): T[] {
   return [v];
 }
 
+/**
+ * NORMALIZER – tailored to your actual backend JSON:
+ * {
+ *   message: "Resume Uploaded",
+ *   result: {
+ *     about: string,
+ *     contact: { address, email, phone_number, experience },
+ *     education: [{ courseName, collegeName, timeframe, GPA }],
+ *     links: { github, linkedin, ... },
+ *     skills: string[],
+ *     workExperience: [...],
+ *     projects: [...]
+ *   }
+ * }
+ */
 function normalizeParserOutput(raw: RawParserOut) {
+  // Unwrap { message, result } or { data }
   const base = raw?.result ?? raw?.data ?? raw ?? {};
 
-  const name =
-    base.name?.full ||
-    [base.firstName, base.lastName].filter(Boolean).join(" ") ||
-    base.fullName ||
-    base.name ||
-    "";
+  const contact = base.contact || {};
 
-  const email =
+  // ---------- SUMMARY / ABOUT ----------
+  const summary: string = base.about || "";
+
+  // ---------- EMAIL / PHONE / LOCATION ----------
+  const email: string =
+    contact.email ||
     base.email ||
-    base.emails?.[0] ||
-    base.contacts?.email ||
-    base.contact?.email ||
     "";
 
-  const phone =
-    base.phone ||
-    base.phones?.[0] ||
-    base.contacts?.phone ||
-    base.contact?.phone ||
+  const phone: string =
+    contact.phone_number ||
+    contact.phone ||
     "";
 
-  const headline =
-    base.headline ||
-    base.title ||
-    base.currentTitle ||
-    "";
-
-  const summary =
-    base.summary ||
-    base.professionalSummary ||
-    base.about ||
-    "";
-
-  const location =
-    base.location?.formatted ||
-    [base.location?.city, base.location?.state, base.location?.country]
-      .filter(Boolean)
-      .join(", ") ||
+  const location: string =
+    contact.address ||
     base.address ||
     "";
 
-  const skillsRaw =
-    base.skills ||
-    base.skillList ||
-    base.skillSet ||
-    [];
-  const skills = toArray(skillsRaw)
-    .map((s: any) =>
-      typeof s === "string" ? s : (s?.name || s?.skill || "").toString()
-    )
-    .filter(Boolean);
-
-  const educationRaw =
-    base.education ||
-    base.educations ||
-    base.educationHistory ||
-    [];
-  const education = toArray(educationRaw).map((e: any) => ({
-    institute: e?.institution || e?.school || e?.college || "",
-    degree: e?.degree || e?.qualification || "",
-    field: e?.field || e?.area || "",
-    startDate: e?.startDate || e?.from || "",
-    endDate: e?.endDate || e?.to || "",
-    grade: e?.grade || e?.cgpa || "",
-  }));
-
-  const expRaw =
-    base.experience ||
-    base.experiences ||
-    base.work ||
-    base.workHistory ||
-    [];
-  const experience = toArray(expRaw).map((w: any) => ({
-    company: w?.company || w?.employer || "",
-    title: w?.title || w?.position || "",
-    startDate: w?.startDate || w?.from || "",
-    endDate: w?.endDate || w?.to || "",
-    location: w?.location || "",
-    summary:
-      toArray(w?.highlights || w?.summary || [])
-        .join(" ")
-        .trim() || "",
-  }));
-
-  const links = {
-    linkedin:
-      base.links?.linkedin ||
-      base.linkedin ||
-      base.profiles?.linkedin ||
-      "",
-    github:
-      base.links?.github ||
-      base.github ||
-      base.profiles?.github ||
-      "",
-    portfolio:
-      base.links?.portfolio ||
-      base.website ||
-      base.url ||
-      "",
-    twitter:
-      base.links?.twitter ||
-      base.twitter ||
-      "",
-  };
+  // ---------- NAME (parser doesn’t give name, so infer from "about" if possible) ----------
+  let name = "";
+  if (typeof summary === "string" && summary.length) {
+    // e.g. "Kommu Shiva Gnana Yeseswini is an AI-focused Computer Science undergraduate..."
+    const match = summary.match(/^([^\.]+?) is\b/i);
+    if (match && match[1]) {
+      name = match[1].trim();
+    }
+  }
 
   let firstName = "";
   let lastName = "";
   if (name) {
-    const parts = name.trim().split(/\s+/);
+    const parts = name.split(/\s+/);
     firstName = parts[0] || "";
     lastName = parts.slice(1).join(" ") || "";
   }
 
-  return {
+  // ---------- SKILLS ----------
+  const skills: string[] = Array.isArray(base.skills)
+    ? base.skills.filter(Boolean)
+    : [];
+
+  // ---------- EDUCATION ----------
+  const education = Array.isArray(base.education)
+    ? base.education.map((edu: any) => ({
+        institute: edu.collegeName || "",
+        degree: edu.courseName || "",
+        field: "",
+        startDate: Array.isArray(edu.timeframe) ? edu.timeframe[0] : "",
+        endDate: Array.isArray(edu.timeframe) ? edu.timeframe[1] : "",
+        grade: Array.isArray(edu.GPA) ? edu.GPA[0] : edu.GPA || "",
+      }))
+    : [];
+
+  // ---------- EXPERIENCE ----------
+  const experience = Array.isArray(base.workExperience)
+    ? base.workExperience.map((work: any) => ({
+        company: work.companyName || "",
+        title: work.job_title || "",
+        startDate: Array.isArray(work.timeframe) ? work.timeframe[0] : "",
+        endDate: Array.isArray(work.timeframe) ? work.timeframe[1] : "",
+        location: work.location || "",
+        summary: work.description || "",
+      }))
+    : [];
+
+  // ---------- LINKS ----------
+  const links = {
+    linkedin: base.links?.linkedin || "",
+    github: base.links?.github || "",
+    portfolio: base.links?.portfolio || "",
+    twitter: base.links?.twitter || "",
+  };
+
+  // ---------- PROJECTS (optional, but we keep them) ----------
+  const projects = toArray(base.projects);
+
+  const normalized = {
     name,
     firstName,
     lastName,
     email,
     phone,
     location,
-    headline,
+    headline: "",
     summary,
     skills,
     education,
     experience,
     links,
+    projects,
     autoFilledFromResume: true,
     rawParserOutput: base,
   };
+
+  return normalized;
 }
 
 export default function UploadResumePage() {
@@ -172,9 +155,6 @@ export default function UploadResumePage() {
   const [fileName, setFileName] = React.useState<string | null>(null);
   const [uploading, setUploading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-
-  // point this to the backend route that actually parses the resume
-  const PARSE_ROUTE = "/candidate/parse-resume";
 
   // sends the file to the backend and then seeds the onboarding draft
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -188,15 +168,23 @@ export default function UploadResumePage() {
 
     try {
       const fd = new FormData();
-      // make sure "resume" matches what your backend expects
       fd.append("resume", f);
 
-      const res = await api.post(PARSE_ROUTE, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // If onboarding happens after login, this is fine:
+      const res = await CandidateAPI.uploadResume(fd);
+
+      // If onboarding is before login, swap to:
+      // const res = await CandidateAPI.uploadResumePublic(fd);
 
       const payload = res?.data ?? {};
+
+      // DEBUG: see exactly what backend sent
+      console.log("RAW RESUME PAYLOAD:", JSON.stringify(payload, null, 2));
+
       const normalized = normalizeParserOutput(payload);
+
+      // DEBUG: see what we are saving
+      console.log("NORMALIZED RESUME DATA:", normalized);
 
       saveDraft(normalized);
       router.push("/onboarding/personal-details");

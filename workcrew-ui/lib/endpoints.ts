@@ -1,67 +1,121 @@
-
+// PATH: workcrew-ui/lib/endpoints.ts
 import { api } from "./api";
 
-/* ---------- AUTH ---------- */
-export const AuthAPI = {
+/* ========== CANDIDATE AUTH ========== */
+export const CandidateAuth = {
   login: (data: { email: string; password: string }) =>
-    api.post("/auth/login", data),
-  signup: (data: any) => api.post("/auth/signup", data),
-  logout: () => api.post("/auth/logout"),
-  me: () => api.get("/auth/me"),
+    api.post("/candidate/login", data),
+
+  signup: (data: {
+    name: string;
+    email: string;
+    password: string;
+    userType?: "candidate";
+  }) => api.post("/candidate", data),
+
+  logout: () => api.get("/candidate/logout"),
+  me: () => api.get("/candidate"),
+
+  googleLogin: (payload: any) => api.post("/candidateGoogleLogin", payload),
+  googleAuth: (payload: any) => api.post("/google-auth", payload),
 };
 
-/* ---------- JOBS / APPLY ---------- */
+/* ========== RECRUITER AUTH ========== */
+export const RecruiterAuth = {
+  login: (data: { email: string; password: string }) =>
+    api.post("/recruiter/login", data),
+
+  signup: (data: {
+    name: string;
+    phone: string;
+    email: string;
+    password: string;
+    companyName: string;
+    userType?: "recruiter";
+  }) => api.post("/recruiter", data),
+
+  me: () => api.get("/recruiter"),
+
+  logout: (recruiterId: string) =>
+    api.get(`/recuiterLogout/${recruiterId}`).catch(() => ({ data: {} })),
+
+  googleLogin: (payload: any) => api.post("/recruiterGoogleLogin", payload),
+  update: (recruiterId: string, data: any) =>
+    api.patch(`/recruiter/${recruiterId}`, data),
+  changePassword: (recruiterId: string, data: { password: string }) =>
+    api.put(`/recruiter/${recruiterId}/password`, data),
+  getById: (recruiterId: string) => api.get(`/recruiter/${recruiterId}`),
+};
+
+/* ========== JOBS / APPLY ========== */
 export const JobsAPI = {
-  list: (params?: { q?: string; page?: number }) =>
-    api.get("/jobpost", { params }),                   // adjust if route differs
+  list: (params?: { q?: string; page?: number; [k: string]: any }) =>
+    api.get("/v2/jobs", { params }),
+
   detail: (id: string) => api.get(`/jobpost/${id}`),
-  apply: (data: any) => api.post("/jobapply", data),
+
+  apply: (data: { jobId: string | number }) =>
+    api.post("/candidate/jobapply", { jobId: String(data.jobId) }),
 };
 
-/* ---------- CANDIDATE ---------- */
+/* ========== CANDIDATE PROFILE / RESUME ========== */
 export const CandidateAPI = {
-  profile: () => api.get("/candidate/profile"),
-  update: (data: any) => api.patch("/candidate/profile", data),
+  profile: () => api.get("/candidate"),
+  update: (id: string, data: any) => api.patch(`/candidate/${id}`, data),
+  completeFromResume: (id: string, data: any) =>
+    api.patch(`/candidate/complete/${id}`, data),
+
+  // Auth-protected upload (requires logged-in candidate)
+  uploadResume: (formData: FormData) =>
+    api.post("/uploadResume", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+
+  // Public upload (no auth) – uses /internal/uploadResume backend route
+  uploadResumePublic: (formData: FormData) =>
+    api.post("/internal/uploadResume", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+
+  uploadAvatar: (candidateId: string, formData: FormData) =>
+    api.post(`/candidate/upload/${candidateId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
 
-/* ---------- RECRUITER / COMPANY ---------- */
-export const RecruiterAPI = {
-  dashboard: () => api.get("/recruiter/dashboard"),
-};
+/* ========== COMPANY (recruiter-protected) ========== */
 export const CompanyAPI = {
-  mine: () => api.get("/company"),
-  update: (data: any) => api.patch("/company", data),
+  getById: (companyId: string) => api.get(`/company/${companyId}`),
+  update: (companyId: string, data: any) =>
+    api.patch(`/company/${companyId}`, data),
+  uploadImage: (companyId: string, formData: FormData) =>
+    api.patch(`/company/${companyId}/image`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
 
-/* ---------- EXTERNAL INTEGRATIONS ---------- */
-export const ExternalAPI = {
-  github: (username: string) => api.get(`/github/${username}`),
-  leetcode: (handle: string) => api.get(`/leetcode/${handle}`),
-  hackerrank: (handle: string) => api.get(`/hackerrank/${handle}`),
-  stackoverflow: (userId: string) => api.get(`/stackoverflow/${userId}`),
-  twitter: (handle: string) => api.get(`/twitter/${handle}`),
-  quora: (profile: string) => api.get(`/quora/${profile}`),
-};
+/* ========== ADMIN / MISC / EXTERNAL ========== */
+export const AdminAPI = { stats: () => api.get("/admin/stats") };
 
-/* ---------- ADMIN ---------- */
-export const AdminAPI = {
-  stats: () => api.get("/admin/stats"),
-};
-
-/* ---------- PASSWORD / CONTACT / NOTIFY ---------- */
 export const MiscAPI = {
-  forgotPassword: (email: string) =>
-    api.post("/password/forgot", { email }),
-  resetPassword: (token: string, password: string) =>
-    api.post(`/password/reset/${token}`, { password }),
-  contactUs: (payload: any) => api.post("/contactus", payload),
+  contactUs: (payload: {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    description: string;
+    linkedln?: string;
+  }) => api.post("/contactUs", payload),
   notifications: () => api.get("/notification"),
 };
 
-/* ---------- FLASK BRIDGE / TEST ---------- */
-export const FlaskAPI = {
-  post: (payload: any) => api.post("/flask", payload),
+export const ExternalAPI = {
+  github: (u: string) => api.get(`/github/${u}`),
+  leetcode: (h: string) => api.get(`/leetcode/${h}`),
+  hackerrank: (h: string) => api.get(`/hackerrank/${h}`),
+  stackoverflow: (id: string) => api.get(`/stackoverflow/${id}`),
+  twitter: (h: string) => api.get(`/twitter/${h}`),
+  quora: (p: string) => api.get(`/quora/${p}`),
 };
-export const TestAPI = {
-  ping: () => api.get("/testRoute"),
-};
+
+export const TestAPI = { ping: () => api.get("/testRoute") };

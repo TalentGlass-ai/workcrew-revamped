@@ -5,8 +5,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import LeftRail from "../_lib/LeftRail";
 import { loadDraft, saveDraft } from "../_lib/draft";
+import { RecruiterAuth } from "../../../workcrew-ui/lib/endpoints";
 
-/* Arrow icon for the Next button */
 const ArrowRight = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden {...props}>
     <path d="M10.293 15.707a1 1 0 0 1 0-1.414L12.586 12H4a1 1 0 1 1 0-2h8.586l-2.293-2.293A1 1 0 0 1 11.707 6.293l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0Z" />
@@ -23,34 +23,88 @@ function SignupPage() {
     email: draft.email || "",
     password: draft.password || "",
     confirm: "",
+    companyName: draft.companyName || "",
+    phone: draft.phone || "",
     agree: !!draft.agreeTos,
     marketing: !!draft.marketing,
   });
 
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
   const canNext =
     f.firstName.trim() &&
     f.lastName.trim() &&
+    f.companyName.trim() &&
+    /^\+?\d[\d\s-]{6,}$/.test(f.phone.trim()) &&
     /\S+@\S+\.\S+/.test(f.email) &&
     f.password.length >= 6 &&
     f.password === f.confirm &&
     f.agree;
 
-  function next() {
-    if (!canNext) return;
-    saveDraft({
-      firstName: f.firstName,
-      lastName: f.lastName,
-      email: f.email,
-      password: f.password,
-      agreeTos: f.agree,
-      marketing: f.marketing,
-    });
-    router.push("/onboarding-employer/company");
+  async function submit() {
+    if (!canNext || submitting) return;
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const name = `${f.firstName.trim()} ${f.lastName.trim()}`.trim();
+      await RecruiterAuth.signup({
+        name,
+        phone: f.phone.trim(),
+        email: f.email.trim(),
+        password: f.password,
+        companyName: f.companyName.trim(),
+        userType: "recruiter",
+      });
+
+      const loginRes = await RecruiterAuth.login({
+        email: f.email.trim(),
+        password: f.password,
+      });
+      const data = loginRes.data;
+      const token =
+        data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+
+      if (!token) {
+        setError("Signed up, but login did not return a token.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wc_token", token);
+        if (data?.recruiter) {
+          localStorage.setItem("wc_recruiter", JSON.stringify(data.recruiter));
+          localStorage.removeItem("wc_candidate");
+        }
+      }
+
+      saveDraft({
+        firstName: f.firstName,
+        lastName: f.lastName,
+        email: f.email,
+        password: f.password,
+        companyName: f.companyName,
+        phone: f.phone,
+        agreeTos: f.agree,
+        marketing: f.marketing,
+      });
+
+      router.push("/onboarding-employer/company");
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Sign up failed. Please check details and try again.";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* LEFT rail */}
       <LeftRail
         title="Get started and find exceptional talent!"
         blurb="From sourcing to onboarding, WorkCrew.ai helps you find and manage exceptional talent effortlessly."
@@ -65,7 +119,6 @@ function SignupPage() {
         }
       />
 
-      {/* RIGHT form */}
       <section
         className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16"
         style={{
@@ -78,8 +131,14 @@ function SignupPage() {
             Create your account!
           </h2>
           <p className="mt-1 text-center text-xs text-gray-500">
-            Enter your credentials to login
+            Enter your details to get started
           </p>
+
+          {error && (
+            <div className="mt-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
 
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
@@ -108,6 +167,30 @@ function SignupPage() {
 
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium">
+                Company name <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
+                value={f.companyName}
+                onChange={(e) => setF({ ...f, companyName: e.target.value })}
+                placeholder="Eg: Acme Inc."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-medium">
+                Phone <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 outline-none focus:border-[#4D31EC]"
+                value={f.phone}
+                onChange={(e) => setF({ ...f, phone: e.target.value })}
+                placeholder="+91 98765 43210"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-medium">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -116,6 +199,7 @@ function SignupPage() {
                 value={f.email}
                 onChange={(e) => setF({ ...f, email: e.target.value })}
                 placeholder="john@example.com"
+                autoComplete="email"
               />
             </div>
 
@@ -129,6 +213,7 @@ function SignupPage() {
                 value={f.password}
                 onChange={(e) => setF({ ...f, password: e.target.value })}
                 placeholder="Create your password"
+                autoComplete="new-password"
               />
             </div>
 
@@ -142,6 +227,7 @@ function SignupPage() {
                 value={f.confirm}
                 onChange={(e) => setF({ ...f, confirm: e.target.value })}
                 placeholder="Confirm your password"
+                autoComplete="new-password"
               />
             </div>
           </div>
@@ -178,11 +264,11 @@ function SignupPage() {
 
           <div className="mx-auto mt-8 flex max-w-3xl items-center justify-center">
             <button
-              onClick={next}
-              disabled={!canNext}
+              onClick={submit}
+              disabled={!canNext || submitting}
               className={[
                 "inline-flex items-center gap-3 rounded-full px-7 py-3 text-sm font-semibold text-white transition-all",
-                canNext
+                canNext && !submitting
                   ? "bg-[#4D31EC] hover:bg-[#3b25b5]"
                   : "cursor-not-allowed bg-gray-300",
               ].join(" ")}
@@ -190,7 +276,7 @@ function SignupPage() {
               <span className="inline-grid h-6 w-6 place-items-center rounded-full bg-white/15 ring-1 ring-white/25">
                 <ArrowRight className="h-4 w-4" />
               </span>
-              Next
+              {submitting ? "Creating..." : "Next"}
             </button>
           </div>
 

@@ -36,19 +36,19 @@ const ROW3: Review[] = [
 export default function ReviewsSection() {
   const ref = React.useRef<HTMLDivElement>(null);
 
-  // Scroll progress for parallax
+  
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start 85%", "end 15%"],
   });
 
-  // Bind transforms directly to rows (no CSS var roundtrip)
+  
   const x1 = useTransform(scrollYProgress, [0, 1], ["-10%", "-25%"]);
   const x2 = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
   const x3 = useTransform(scrollYProgress, [0, 1], ["-10%", "-30%"]);
 
   return (
-    // No external margins/padding — parent <main> controls the gap
+  
     <section
       ref={ref}
       className="reviews-section relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden bg-[linear-gradient(180deg,#4D31EC_0%,#4a2fe9_50%,#462ae1_100%)] !my-0 !py-0 text-white"
@@ -64,7 +64,7 @@ export default function ReviewsSection() {
           </div>
         </div>
 
-        {/* Rows of reviews with parallax */}
+  
         <div className="relative z-10 mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
           <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
             {repeatToFill(ROW1, 10).map((r, i) => (
@@ -89,7 +89,7 @@ export default function ReviewsSection() {
   );
 }
 
-/* Single review card with crisp stroke + glow */
+
 function ReviewCard({ r }: { r: Review }) {
   return (
     <article className="relative h-[215px] w-[410px] shrink-0 rounded-[24px] border-2 border-[#6951F2] bg-transparent p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25),0_0_12px_rgba(105,81,242,0.25)]">
@@ -122,7 +122,6 @@ function ReviewCard({ r }: { r: Review }) {
   );
 }
 
-/* Repeat helpers */
 function repeatToFill<T>(arr: T[], min: number): T[] {
   const out: T[] = [];
   while (out.length < min) out.push(...arr);

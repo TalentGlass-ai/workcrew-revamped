@@ -1,11 +1,9 @@
-// PATH: workcrew-ui/components/landing/MeetRahiBanner.tsx
 "use client";
 
 import * as React from "react";
 import Image from "next/image";
 import T from "../primitives/Typography";
 
-/* compact banner introducing RAHI — parent handles external spacing */
 const MeetRahiBanner: React.FC<{
   title?: string;
   subtitle?: string;
@@ -27,12 +25,10 @@ const MeetRahiBanner: React.FC<{
       <div className="relative flex h-[162px] w-full items-center justify-between px-[51px] py-[20px]">
         {/* left side: text content */}
         <div className="flex flex-col text-white pr-4">
-          {/* title — Schibsted 32px via h2 variant */}
           <T as="h3" variant="h2" className="leading-normal font-medium text-white">
             {title}
           </T>
 
-          {/* subtitle — Archivo 16px; single line, no truncation */}
           <T
             as="p"
             variant="body16"
@@ -42,9 +38,7 @@ const MeetRahiBanner: React.FC<{
           </T>
         </div>
 
-        {/* right side: avatar with soft halo */}
         <div className="relative flex-shrink-0">
-          {/* glow ring behind the avatar */}
           <div
             className="absolute left-1/2 top-1/2 -z-10 h-[106px] w-[106px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgba(180,165,255,0.45)]"
             aria-hidden

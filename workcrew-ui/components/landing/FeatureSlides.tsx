@@ -3,8 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import T from "../primitives/Typography";
-
-/* slide data shape for the carousel */
 export type FeatureSlide = {
   id?: "resume" | "matching" | "assessments" | "interviews" | string;
   title: string;
@@ -18,7 +16,6 @@ type Props = {
   className?: string;
 };
 
-/* default slides — good enough for empty state + local dev */
 const SLIDES_DEFAULT: FeatureSlide[] = [
   {
     id: "resume",
@@ -161,7 +158,6 @@ export default function FeatureSlides({
   );
 }
 
-/* left/right arrow buttons for the carousel — minimal chrome, keyboard-friendly */
 function NavButton({
   onClick,
   direction,
@@ -188,7 +184,6 @@ function NavButton({
   );
 }
 
-/* cta — same layered ellipse as hero but tighter for card context */
 function CtaElliptical({ href, label }: { href: string; label: string }) {
   const router = useRouter();
 
@@ -244,7 +239,6 @@ function FeatureIcon({ index }: { index: number }) {
   );
 }
 
-/* media area — plays a video if we have one, otherwise shows a friendly card stub */
 function Illustration({ slide }: { slide: FeatureSlide }) {
   const sourcesMap: Record<string, string[]> = {
     resume: ["/videos/resume_parse.mp4"],
@@ -261,7 +255,6 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
   const [failed, setFailed] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
 
-  /* when slide changes, reset + attempt to play (best-effort autoplay) */
   React.useEffect(() => {
     setFailed(false);
     const v = videoRef.current;

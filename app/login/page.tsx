@@ -1,33 +1,178 @@
-// PATH: app/login/page.tsx
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import T from "../../workcrew-ui/components/primitives/Typography";
+import { CandidateAuth, RecruiterAuth } from "../../workcrew-ui/lib/endpoints";
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
+const GOOGLE_ID = process.env.NEXT_PUBLIC_GOOGLE_ID || "";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Default toggle to employer (for recruiter version)
-  const [role, setRole] = React.useState<"candidate" | "employer">("employer");
+  const initialRole =
+    (searchParams.get("role") === "candidate" ? "candidate" : "employer") as
+      | "candidate"
+      | "employer";
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const [role, setRole] = React.useState<"candidate" | "employer">(initialRole);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [gsiReady, setGsiReady] = React.useState(false);
+
+  // Load Google Identity Services once
+  React.useEffect(() => {
+    if (window.google) {
+      setGsiReady(true);
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.defer = true;
+    s.onload = () => setGsiReady(true);
+    s.onerror = () => setGsiReady(false);
+    document.head.appendChild(s);
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-    // ✅ Corrected route logic
-    const next =
-      role === "employer"
-        ? "/onboarding-employer/company" // <-- fixed destination
-        : "/onboarding/upload-resume";
+    const form = new FormData(e.currentTarget);
+    const username = String(form.get("username") ?? "").trim();
+    const password = String(form.get("password") ?? "").trim();
 
-    router.push(next);
+    try {
+      if (role === "candidate") {
+        const res = await CandidateAuth.login({ email: username, password });
+        const data = res.data;
+        const token =
+          data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+        if (!token) {
+          setError("Login succeeded but token was not returned by the server.");
+          return;
+        }
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wc_token", token);
+          if (data?.candidate) {
+            localStorage.setItem("wc_candidate", JSON.stringify(data.candidate));
+            localStorage.removeItem("wc_recruiter");
+          }
+        }
+        router.push("/onboarding/upload-resume");
+      } else {
+        const res = await RecruiterAuth.login({ email: username, password });
+        const data = res.data;
+        const token =
+          data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+        if (!token) {
+          setError("Login succeeded but token was not returned by the server.");
+          return;
+        }
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wc_token", token);
+          if (data?.recruiter) {
+            localStorage.setItem("wc_recruiter", JSON.stringify(data.recruiter));
+            localStorage.removeItem("wc_candidate");
+          }
+        }
+        router.push("/onboarding-employer/company");
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please check your credentials and try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Google Sign-In (candidate only, matches controller/googleAuth.js)
+  async function handleGoogleClick() {
+    setError(null);
+
+    if (role !== "candidate") {
+      setError("Google Sign-In is available for candidates only.");
+      return;
+    }
+    if (!gsiReady || !GOOGLE_ID || !window.google?.accounts?.id) {
+      setError("Google Sign-In is not ready. Please try again.");
+      return;
+    }
+
+    try {
+      await new Promise<void>((resolve) => {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_ID,
+          callback: async (resp: { credential: string }) => {
+            try {
+              const idToken = resp?.credential;
+              if (!idToken) {
+                setError("Google did not return a credential.");
+                resolve();
+                return;
+              }
+              const r = await CandidateAuth.googleAuth({
+                token: idToken,
+                userType: "candidate",
+              });
+
+              const data = r.data;
+              const token =
+                data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+              if (!token) {
+                setError("Login succeeded but token was not returned by the server.");
+                resolve();
+                return;
+              }
+
+              if (typeof window !== "undefined") {
+                localStorage.setItem("wc_token", token);
+                if (data?.data) {
+                  localStorage.setItem("wc_candidate", JSON.stringify(data.data));
+                  localStorage.removeItem("wc_recruiter");
+                }
+              }
+
+              router.push("/onboarding/upload-resume");
+            } catch (e: any) {
+              setError(
+                e?.response?.data?.message ||
+                  e?.message ||
+                  "Google login failed. Please try again."
+              );
+            } finally {
+              resolve();
+            }
+          },
+          ux_mode: "popup",
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        // Trigger Google popup
+        window.google.accounts.id.prompt(() => resolve());
+      });
+    } catch (e: any) {
+      setError(e?.message || "Could not start Google Sign-In.");
+    }
   }
 
   return (
     <main className="flex min-h-screen">
-      {/* LEFT (Blue half) */}
       <section className="relative hidden w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
         <Image
           src="/workcrew-icon.png"
@@ -78,7 +223,6 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* RIGHT (Form) */}
       <section className="flex w-full items-center justify-center px-8 py-16 md:w-1/2 md:px-24">
         <div className="w-full max-w-lg">
           <T
@@ -101,7 +245,6 @@ export default function LoginPage() {
             Enter your credentials to login
           </T>
 
-          {/* Role toggle */}
           <div className="mt-6 flex justify-center gap-6">
             <button
               type="button"
@@ -131,6 +274,12 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {error && (
+            <div className="mt-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div>
               <label htmlFor="username" className="mb-1 block">
@@ -141,7 +290,7 @@ export default function LoginPage() {
               <input
                 id="username"
                 name="username"
-                pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$"
+                pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$"
                 title="Use an email or 3–30 characters (letters, numbers, dot or underscore)."
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder={
@@ -188,10 +337,11 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5]"
+              disabled={loading}
+              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <T as="span" variant="button">
-                Login →
+                {loading ? "Logging in..." : "Login →"}
               </T>
             </button>
 
@@ -206,7 +356,9 @@ export default function LoginPage() {
             <div className="flex justify-center gap-4">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
+                onClick={handleGoogleClick}
+                disabled={!gsiReady || role !== "candidate"}
+                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2 disabled:opacity-60"
                 aria-label="Continue with Google"
               >
                 <Image
@@ -240,11 +392,7 @@ export default function LoginPage() {
             <T as="p" variant="sub14" className="text-center">
               Don’t have an account?{" "}
               <Link
-                href={
-                  role === "employer"
-                    ? "/onboarding-employer/signup"
-                    : "/signup"
-                }
+                href={role === "employer" ? "/onboarding-employer/signup" : "/signup"}
                 className="font-semibold text-[#4D31EC]"
               >
                 <T as="span" variant="sub14" weight={600}>

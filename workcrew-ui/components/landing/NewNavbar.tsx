@@ -1,4 +1,3 @@
-// PATH: /workcrew-ui/components/landing/NewNavbar.tsx
 "use client";
 
 import * as React from "react";
@@ -6,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import LayeredPill from "../primitives/buttons/LayeredPill";
+import { CandidateAuth, RecruiterAuth } from "../../lib/endpoints";
 
 const links = [
   { href: "/", label: "Home" },
@@ -25,6 +25,8 @@ const NewNavbar: React.FC = () => {
 
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const [profileImg, setProfileImg] = React.useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const profileRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -46,18 +48,26 @@ const NewNavbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isProfileOpen]);
 
+  // detect login state (token/candidate/recruiter present)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => {
+      const t = localStorage.getItem("wc_token");
+      const c = localStorage.getItem("wc_candidate");
+      const r = localStorage.getItem("wc_recruiter");
+      setIsLoggedIn(!!(t || c || r));
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
   const isActive = (href: string) => {
     if (href.startsWith("/#")) return pathname === "/";
     return pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
   };
 
   const goLogin = () => router.push("/login");
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    setIsProfileOpen(false);
-    router.push("/");
-  };
 
   const handleProfileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -79,12 +89,43 @@ const NewNavbar: React.FC = () => {
     }
   };
 
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const candJson =
+        typeof window !== "undefined" ? localStorage.getItem("wc_candidate") : null;
+      const recJson =
+        typeof window !== "undefined" ? localStorage.getItem("wc_recruiter") : null;
+
+      if (candJson) {
+        await CandidateAuth.logout().catch(() => {});
+      } else if (recJson) {
+        const rec = JSON.parse(recJson);
+        const recId =
+          rec?._id ?? rec?.id ?? rec?.result?._id ?? rec?.recruiter?._id ?? null;
+        if (recId) {
+          await RecruiterAuth.logout(recId).catch(() => {});
+        }
+      }
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("wc_token");
+        localStorage.removeItem("wc_candidate");
+        localStorage.removeItem("wc_recruiter");
+      }
+      setIsProfileOpen(false);
+      setLoggingOut(false);
+      setIsLoggedIn(false);
+      router.push("/");
+    }
+  }
+
   return (
     <>
       <header className="wc-header" role="banner">
         <nav className="wc-nav" aria-label="Global">
           <div className="row">
-            {/* brand */}
             <Link className="brand" href="/" aria-label="WorkCrew.ai">
               <Image
                 src="/logo.png"
@@ -96,7 +137,6 @@ const NewNavbar: React.FC = () => {
               />
             </Link>
 
-            {/* main nav */}
             <ul className="menu">
               {links.map((l) => (
                 <li key={l.href}>
@@ -131,17 +171,20 @@ const NewNavbar: React.FC = () => {
               ))}
             </ul>
 
-            {/* login + profile */}
             <div className="login">
-              {/* Login button */}
-              <LayeredPill label="Login" size="sm" onClick={goLogin} />
+              {/* Hide login button when logged in */}
+              {!isLoggedIn && (
+                <LayeredPill label="Login" size="sm" onClick={goLogin} />
+              )}
 
-              {/* Profile icon + dropdown */}
+              {/* Avatar always visible */}
               <div className="profileWrapper" ref={profileRef}>
                 <button
                   type="button"
                   className="profileButton"
-                  onClick={() => setIsProfileOpen((v) => !v)}
+                  onClick={() => isLoggedIn && setIsProfileOpen((v) => !v)}
+                  aria-label="Profile"
+                  title={isLoggedIn ? "Open profile menu" : "You’re logged out"}
                 >
                   <span className="avatarCircle">
                     {profileImg ? (
@@ -161,7 +204,8 @@ const NewNavbar: React.FC = () => {
                   </span>
                 </button>
 
-                {isProfileOpen && (
+                {/* Dropdown only when logged in */}
+                {isLoggedIn && isProfileOpen && (
                   <div className="profileMenu" role="menu">
                     <label className="profileMenuItem">
                       Edit profile
@@ -187,8 +231,9 @@ const NewNavbar: React.FC = () => {
                       type="button"
                       className="profileMenuItem logout"
                       onClick={handleLogout}
+                      disabled={loggingOut}
                     >
-                      Logout
+                      {loggingOut ? "Logging out..." : "Logout"}
                     </button>
                   </div>
                 )}
@@ -201,7 +246,6 @@ const NewNavbar: React.FC = () => {
           :global(body) {
             padding-top: ${NAV_HEIGHT}px;
           }
-
           .wc-header {
             position: fixed;
             top: 0;
@@ -210,7 +254,6 @@ const NewNavbar: React.FC = () => {
             z-index: 60;
             height: ${NAV_HEIGHT}px;
           }
-
           .wc-nav {
             position: relative;
             height: 100%;
@@ -218,7 +261,6 @@ const NewNavbar: React.FC = () => {
             border: 1.5px solid rgba(163, 157, 255, 0.11);
             background: rgba(255, 255, 255, 0.9);
           }
-
           .row {
             height: ${NAV_HEIGHT}px;
             display: grid;
@@ -226,54 +268,44 @@ const NewNavbar: React.FC = () => {
             align-items: center;
             padding: 0 20px;
           }
-
           .menu {
             justify-self: center;
             display: none;
             list-style: none;
             gap: 36px;
           }
-
           @media (min-width: 768px) {
             .menu {
               display: inline-flex;
             }
           }
-
           .link {
             text-decoration: none;
             color: #1c2140;
             font-weight: 550;
             transition: color 0.25s;
           }
-
-          /* login group – shifted 40px right, 25px gap */
           .login {
             display: flex;
             align-items: center;
             gap: 25px;
-            transform: translateX(30px); /* moves both login + profile 40px right */
+            transform: translateX(30px);
           }
-
-          /* make login pill at least 160px long and move it 40px more (total 80px) */
           .login :global(button:first-of-type) {
             min-width: 160px;
             padding-inline: 10px !important;
             justify-content: center;
-            transform: translateX(30px); /* extra 40px → 80px total from original */
+            transform: translateX(30px);
           }
-
           .profileWrapper {
             position: relative;
           }
-
           .profileButton {
             border: none;
             background: transparent;
             padding: 0;
             cursor: pointer;
           }
-
           .avatarCircle {
             width: 38px;
             height: 38px;
@@ -282,16 +314,14 @@ const NewNavbar: React.FC = () => {
             align-items: center;
             justify-content: center;
             background: #ffffff;
-            border: 2.5px solid #4f46e5; /* blue circle stroke */
+            border: 2.5px solid #4f46e5;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
             overflow: hidden;
           }
-
           .avatarImage {
             object-fit: cover;
             border-radius: 9999px;
           }
-
           .avatarIcon {
             width: 20px;
             height: 20px;
@@ -299,7 +329,6 @@ const NewNavbar: React.FC = () => {
             stroke: #1f2937;
             stroke-width: 1.6;
           }
-
           .profileMenu {
             position: absolute;
             right: 0;
@@ -312,7 +341,6 @@ const NewNavbar: React.FC = () => {
             min-width: 170px;
             z-index: 100;
           }
-
           .profileMenuItem {
             display: block;
             width: 100%;
@@ -325,15 +353,12 @@ const NewNavbar: React.FC = () => {
             color: #111827;
             transition: background 0.15s;
           }
-
           .profileMenuItem:hover {
             background: rgba(226, 232, 255, 0.6);
           }
-
           .logout {
             color: #dc2626;
           }
-
           .logout:hover {
             background: rgba(254, 226, 226, 0.9);
           }

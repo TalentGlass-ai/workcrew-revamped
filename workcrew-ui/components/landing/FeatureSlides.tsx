@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-
-/** Slide shape */
+import { useRouter } from "next/navigation";
+import T from "../primitives/Typography";
 export type FeatureSlide = {
   id?: "resume" | "matching" | "assessments" | "interviews" | string;
   title: string;
@@ -22,7 +22,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "Smart resume parsing",
     copy:
       "AI smartly extracts and organizes your skills, experience, and achievements from any resume format.",
-    ctaHref: "#resume-parser",
+    ctaHref: "/login?type=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -30,7 +30,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "AI job matching",
     copy:
       "Get matched with jobs that truly fit your skills, experience and career goals. Quality over quantity, always.",
-    ctaHref: "#job-matching",
+    ctaHref: "/login?type=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -38,7 +38,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "Structured assessments",
     copy:
       "AI assessments accurately measure your strengths using data-driven, personalized evaluations.",
-    ctaHref: "#assessments",
+    ctaHref: "/login?type=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -46,11 +46,12 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "AI interviews",
     copy:
       "AI interviews simulate real-world questions to evaluate your communication, problem-solving, and role-specific skills.",
-    ctaHref: "#ai-interviews",
+    ctaHref: "/login?type=candidate",
     ctaLabel: "Try it out",
   },
 ];
 
+/* the whole “how we do it” block — full-bleed background, centered content */
 export default function FeatureSlides({
   slides = SLIDES_DEFAULT,
   className = "",
@@ -60,102 +61,92 @@ export default function FeatureSlides({
   const s = slides[i];
 
   return (
-    <section className={`relative ${className}`}>
-      {/* Full-bleed background */}
+    <section className={`relative !my-0 !py-0 ${className}`}>
+      {/* full-bleed bg (soft gradient + subtle grid) */}
       <div className="relative -mx-[calc(50vw-50%)] w-screen overflow-hidden">
-        {/* BG: soft gradient */}
         <div
           aria-hidden
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(246,247,252,0.95) 0%, rgba(236,239,248,0.92) 100%)",
-          }}
+          className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(246,247,252,0.95)_0%,rgba(236,239,248,0.92)_100%)]"
         />
-        {/* BG: grid overlay */}
         <div
           aria-hidden
-          className="absolute inset-0 z-0 opacity-30"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(163,157,255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(163,157,255,0.25) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
+          className="absolute inset-0 z-0 opacity-30 bg-[linear-gradient(rgba(163,157,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(163,157,255,0.25)_1px,transparent_1px)] [background-size:40px_40px]"
         />
 
-        {/* Content container */}
+        {/* inner container — vertical padding lives here, not outside */}
         <div className="relative z-10 mx-auto w-full max-w-[1003px] px-4 py-12 md:py-16">
-          {/* Heading */}
-          <div className="mx-auto max-w-[918px]">
-            <h3 className="how-title">
-              Here’s <span style={{ color: "#4D31EC" }}>how</span> we do it!
-            </h3>
+          {/* section intro copy */}
+          <div className="mx-auto max-w-[918px] text-center">
+            <T as="h2" variant="h2" weight={540} className="how-title">
+              Here’s <span className="text-[#4D31EC]">how</span> we do it!
+            </T>
 
-            {/* increased to 35px (20px + extra 15px) */}
-            <div style={{ height: "35px" }} />
-
-            <p className="how-subtitle">
+            <T
+              as="p"
+              variant="body16"
+              trackingPct={3}
+              className="how-subtitle mx-auto mt-4 max-w-[800px] text-slate-700"
+              lineHeightPx={24} /* ~leading-6 */
+            >
               We provide clarity, efficiency, and intelligence at every stage of the hiring process.
               Whether you are changing careers or expanding your team, we make each step simpler.
-            </p>
+            </T>
           </div>
 
-          {/* extra 15px gap between subtitle and slides */}
-          <div style={{ height: "15px" }} />
-
-          {/* === Arrows + Card === */}
+          {/* arrows + main feature card */}
           <div className="relative mt-8">
             <div className="grid grid-cols-[auto_1fr_auto] items-center">
-              {/* Left Arrow (20px away) */}
               <NavButton
                 ariaLabel="Previous"
                 onClick={() => go(-1)}
                 direction="left"
-                className="justify-self-end mr-[20px]"
+                className="mr-[20px] justify-self-end"
               />
 
-              {/* Card */}
-              <div
-                className="rounded-[10px] p-[1px]"
-                style={{
-                  background:
-                    "linear-gradient(159.15deg, #FFFFFF 20.18%, rgba(195,191,255,0.11) 247.36%)",
-                }}
-              >
+              {/* feature card body — left = copy, right = media + cta */}
+              <div className="rounded-[10px] p-[1px] bg-[linear-gradient(159.15deg,#FFFFFF_20.18%,rgba(195,191,255,0.11)_247.36%)]">
                 <div className="grid min-h-[581px] w-full grid-cols-1 rounded-[9px] bg-[#4D31EC] p-6 md:grid-cols-2 md:p-10">
-                  {/* LEFT: text */}
+                  {/* LEFT: text area */}
                   <div className="flex flex-col justify-center text-white">
                     <FeatureIcon index={i} />
-                    <h4 className="mb-3 text-[28px] font-semibold leading-tight">{s.title}</h4>
-                    <p className="max-w-[480px] text-[14px] leading-6 text-white/90">{s.copy}</p>
+
+                    {/* slide title — now uses our 28px token so designers don't fight classes */}
+                    <T as="h3" variant="title28" className="mb-3 text-white" weight={600} lineHeightPx={34}>
+                      {s.title}
+                    </T>
+
+                    {/* blurb — sub14 + exact leading instead of hand-rolled sizes */}
+                    <T as="p" variant="sub14" className="max-w-[480px] text-white/90" lineHeightPx={24}>
+                      {s.copy}
+                    </T>
                   </div>
 
-                  {/* RIGHT: visual + CTA */}
+                  {/* RIGHT: media + cta */}
                   <div className="mt-8 flex flex-col items-center justify-center gap-6 md:mt-0">
                     <Illustration key={s.id} slide={s} />
-                    <CtaElliptical href={s.ctaHref ?? "#"} label={s.ctaLabel ?? "Try it out"} />
+                    <CtaElliptical
+                      href={s.ctaHref ?? "/login?type=candidate"}
+                      label={s.ctaLabel ?? "Try it out"}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Right Arrow (20px away) */}
               <NavButton
                 ariaLabel="Next"
                 onClick={() => go(1)}
                 direction="right"
-                className="justify-self-start ml-[20px]"
+                className="ml-[20px] justify-self-start"
               />
             </div>
 
-            {/* dots */}
+            {/* pagination dots — simple and accessible */}
             <div className="mt-4 flex justify-center gap-2">
               {slides.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setI(idx)}
-                  className={`h-1.5 rounded-full transition ${
-                    idx === i ? "w-8 bg-[#4D31EC]" : "w-3 bg-slate-300"
-                  }`}
+                  className={`h-1.5 rounded-full transition ${idx === i ? "w-8 bg-[#4D31EC]" : "w-3 bg-slate-300"}`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
@@ -167,7 +158,6 @@ export default function FeatureSlides({
   );
 }
 
-/* Arrow button (simple blue, no bg) */
 function NavButton({
   onClick,
   direction,
@@ -182,29 +172,11 @@ function NavButton({
   return (
     <button aria-label={ariaLabel} onClick={onClick} className={`p-1 ${className}`}>
       {direction === "left" ? (
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#4D31EC"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 18l-6-6 6-6" />
         </svg>
       ) : (
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#4D31EC"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 6l6 6-6 6" />
         </svg>
       )}
@@ -212,76 +184,53 @@ function NavButton({
   );
 }
 
-/*  CTA */
 function CtaElliptical({ href, label }: { href: string; label: string }) {
+  const router = useRouter();
+
   return (
-    <div
-      className="rounded-full grid place-items-center"
-      style={{
-        width: 169,
-        height: 67,
-        background: "rgba(196, 211, 239, 0.43)",
-      }}
-    >
-      <div
-        className="rounded-full grid place-items-center"
-        style={{
-          width: 159,
-          height: 59,
-          background: "#E7E3FF",
-        }}
-      >
-        <a
-          className="rounded-full inline-flex items-center justify-center gap-2 font-semibold"
-          style={{
-            width: 149,
-            height: 50,
-            background: "#FFFFFF",
-            color: "#4D31EC",
-            fontSize: 16,
-            letterSpacing: "0.02em",
-            textDecoration: "none",
-            lineHeight: 1,
-          }}
-          href={href}
-          aria-label={label}
+    <div className="grid h-[67px] w-[169px] place-items-center rounded-full bg-[rgba(196,211,239,0.43)]">
+      <div className="grid h-[59px] w-[159px] place-items-center rounded-full bg-[#E7E3FF]">
+        <button
+          onClick={() => router.push(href || "/login?type=candidate")}
+          className="inline-flex h-[50px] w-[149px] items-center justify-center gap-2 rounded-full bg-white text-[#4D31EC] shadow-[0_10px_24px_rgba(91,75,255,0.20)] transition hover:brightness-105 active:translate-y-[1px]"
         >
           <ArrowNortheast />
-          {label}
-        </a>
+          <T as="span" variant="sub14" weight={600} trackingPct={2}>
+            {label}
+          </T>
+        </button>
       </div>
     </div>
   );
 }
 
-/*  tiny pieces  */
+/* tiny icon chip that changes by slide index — keeps the visual cue consistent */
 function FeatureIcon({ index }: { index: number }) {
-  const common = "opacity-90";
   const stroke = "currentColor";
   const size = 24;
 
   return (
     <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
       {index === 0 && (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6" />
           <path d="M16 13H8M16 17H8M10 9H8" />
         </svg>
       )}
       {index === 1 && (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}>
           <path d="M3 7h18M6 7l1 12h10l1-12M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
         </svg>
       )}
       {index === 2 && (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}>
           <rect x="3" y="4" width="18" height="16" rx="2" />
           <path d="M8 10h8M8 14h6" />
         </svg>
       )}
       {index === 3 && (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} className={common}>
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}>
           <circle cx="12" cy="7" r="3" />
           <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
         </svg>
@@ -290,7 +239,6 @@ function FeatureIcon({ index }: { index: number }) {
   );
 }
 
-/** Video with graceful fallback */
 function Illustration({ slide }: { slide: FeatureSlide }) {
   const sourcesMap: Record<string, string[]> = {
     resume: ["/videos/resume_parse.mp4"],
@@ -325,7 +273,6 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
   if (hasVideo) {
     return (
       <div className="-mt-5 w-[458px] max-w-full overflow-hidden rounded-[9px] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
-        {/* moved up by 20px using -mt-5 */}
         <video
           key={slide.id}
           ref={videoRef}
@@ -345,29 +292,38 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
     );
   }
 
-  // Fallback card (no video) — unchanged position
+  /* fallback card — still looks product-y so design doesn’t collapse in demos */
   return (
     <div className="w-[458px] max-w-full rounded-[9px] bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
       <div className="space-y-3 rounded-[8px] border border-slate-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold text-slate-700">TechCorp</div>
-            <div className="text-xs text-slate-500">Senior software engineer | Remote</div>
+            <T as="div" variant="sub14" weight={600} className="text-slate-700">TechCorp</T>
+            <T as="div" variant="sub14" className="text-slate-500" lineHeightPx={20}>
+              Senior software engineer | Remote
+            </T>
           </div>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Now</span>
         </div>
-        <button className="w-full rounded bg-[#4D31EC] py-2 text-sm font-semibold text-white">
-          Join interview
+
+        <button className="w-full rounded bg-[#4D31EC] py-2">
+          <T as="span" variant="sub14" weight={600} className="text-white">
+            Join interview
+          </T>
         </button>
+
         <div className="pt-2">
-          <div className="text-sm font-semibold text-slate-700">TechViz</div>
-          <div className="text-xs text-slate-500">Backend engineer | Bangalore, India</div>
+          <T as="div" variant="sub14" weight={600} className="text-slate-700">TechViz</T>
+          <T as="div" variant="sub14" className="text-slate-500" lineHeightPx={20}>
+            Backend engineer | Bangalore, India
+          </T>
         </div>
       </div>
     </div>
   );
 }
 
+/* tiny arrow for buttons — keeping props lightweight */
 function ArrowNortheast() {
   return (
     <svg

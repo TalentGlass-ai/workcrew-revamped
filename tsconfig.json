@@ -50,21 +50,26 @@
     ],
     "incremental": true,
     "esModuleInterop": true,
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ],
     "plugins": [
       {
         "name": "next"
       }
     ]
   },
-  
   "include": [
     "**/*.js",
     "**/*.jsx",
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
+    "postcss.config.mjs",
+    "types",
     ".next/types/**/*.ts"
-, "postcss.config.mjs"  ],
+  ],
   "exclude": [
     "node_modules"
   ]

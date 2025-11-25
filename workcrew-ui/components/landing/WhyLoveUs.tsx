@@ -1,149 +1,86 @@
 "use client";
 
 import * as React from "react";
-import GlassPill from "../primitives/tags/GlassPill"; // ✅ reuse the shared pill
+import T from "../primitives/Typography";
+import GlassPill from "../primitives/tags/GlassPill";
 
-/* ————— Small helpers ————— */
 const SectionTitle: React.FC = () => (
-  <h2
-    className="text-center text-black"
-    style={{
-      fontFamily: "var(--font-display)", // Schibsted Grotesk
-      fontWeight: 500, // Medium
-      fontSize: "48px",
-      lineHeight: "68px", // 48 + ~20 spacing
-      letterSpacing: "0.01em", // 1%
-    }}
-  >
-    Why <span style={{ color: "#4D31EC" }}>professionals and teams</span> love us
-  </h2>
+  <T as="h2" variant="hero48" className="text-center text-black leading-[68px] font-medium">
+    Why <span className="text-[#4D31EC]">professionals and teams</span> love us
+  </T>
 );
 
 const SubTitle: React.FC = () => (
-  <p
-    className="mt-4 text-center text-[#475467]"
-    style={{
-      fontFamily: "var(--font-sans)", // Archivo
-      fontWeight: 400,
-      fontSize: "20px",
-      lineHeight: "27px",
-      letterSpacing: "0.03em",
-    }}
+  <T
+    as="p"
+    variant="sub20"
+    className="mt-4 text-center text-[#475467] leading-[27px] font-normal"
+    trackingPct={3}
   >
     Whether you are hiring or job searching, we help you move forward with
     clarity, speed, and confidence.
-  </p>
+  </T>
 );
 
-/* ————— First row stat pills ————— */
 const MiniStatPill: React.FC<{
   value: string;
   top: string;
   bottom?: string;
-  width: number;
-  height: number;
-}> = ({ value, top, bottom, width, height }) => (
-  <div
-    className="rounded-[12px] px-4 py-3 text-center"
-    style={{
-      width,
-      height,
-      background: "rgba(195,191,255,0.11)", // C3BFFF @ 11%
-    }}
-  >
-    <div
-      className="mb-2 text-[20px] font-semibold leading-[27px] text-[#4D31EC]"
-      style={{ fontFamily: "var(--font-sans)", letterSpacing: "0.03em" }}
-    >
-      {value}
+  size?: "lg" | "sm";
+}> = ({ value, top, bottom, size = "lg" }) => {
+  const box = size === "lg" ? "h-[102px] w-[136px]" : "h-[102px] w-[92px]";
+  return (
+    <div className={`rounded-[12px] px-4 py-3 text-center bg-[rgba(195,191,255,0.11)] ${box}`}>
+      <T as="div" variant="sub20" className="mb-2 text-[#4D31EC] font-semibold leading-[27px]">
+        {value}
+      </T>
+      <T as="div" variant="body16" className="mx-auto text-[#101828] leading-[27px]" trackingPct={3}>
+        {top}
+        {bottom ? (
+          <>
+            <br />
+            {bottom}
+          </>
+        ) : null}
+      </T>
     </div>
-    <div
-      className="mx-auto text-[16px] leading-[27px] text-[#101828]"
-      style={{ fontFamily: "var(--font-sans)", letterSpacing: "0.03em" }}
-    >
-      {top}
-      {bottom ? (
-        <>
-          <br />
-          {bottom}
-        </>
-      ) : null}
-    </div>
-  </div>
-);
+  );
+};
 
-/* ————— Titles & bodies inside stroked cards ————— */
-const CardTitleSpec: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <h4
-    style={{
-      fontFamily: "var(--font-sans)", // Archivo
-      fontWeight: 500, // Medium
-      fontSize: "20px",
-      lineHeight: "27px",
-      letterSpacing: "0.03em",
-      color: "#101828",
-    }}
-  >
+
+const CardTitleSpec: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
+  children,
+  className = "",
+}) => (
+  <T as="h4" variant="sub20" className={`text-[#101828] leading-[27px] font-medium ${className}`}>
     {children}
-  </h4>
+  </T>
 );
 
-const CardBodySpec: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <p
-    style={{
-      fontFamily: "var(--font-sans)", // Archivo
-      fontWeight: 400,
-      fontSize: "16px",
-      lineHeight: "22px",
-      letterSpacing: "0.03em",
-      color: "#101828",
-    }}
-  >
+const CardBodySpec: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
+  children,
+  className = "",
+}) => (
+  <T as="p" variant="body16" className={`text-[#101828] leading-[22px] ${className}`}>
     {children}
-  </p>
+  </T>
 );
 
-/* ————— Time pill ————— */
+
 const TimePill: React.FC = () => (
-  <div
-    className="flex flex-col items-center justify-center rounded-[12px]"
-    style={{
-      width: 158,
-      height: 107,
-      background: "rgba(169,195,247,0.10)",
-    }}
-  >
-    <div
-      style={{
-        fontFamily: "var(--font-sans)",
-        fontWeight: 500,
-        fontSize: "20px",
-        lineHeight: "27px",
-        letterSpacing: "0.03em",
-        color: "#3171EC",
-      }}
-    >
+  <div className="flex h-[107px] w-[158px] flex-col items-center justify-center rounded-[12px] bg-[rgba(169,195,247,0.10)]">
+    <T as="div" variant="sub20" className="text-[#3171EC] leading-[27px] font-medium">
       2 Weeks
-    </div>
-    <div
-      className="mt-2 text-center"
-      style={{
-        fontFamily: "var(--font-sans)",
-        fontWeight: 400,
-        fontSize: "16px",
-        lineHeight: "22px",
-        letterSpacing: "0.03em",
-        color: "#A2A2A2",
-      }}
-    >
+    </T>
+    <T as="div" variant="body16" className="mt-2 text-center text-[#A2A2A2] leading-[22px]">
       Average hiring
       <br />
       time
-    </div>
+    </T>
   </div>
 );
 
-/* ————— Rating pill ————— */
+/* star icon for rating pill — uses fill, not text color */
 const StarIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
   <svg
     width={size}
@@ -157,39 +94,23 @@ const StarIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
   </svg>
 );
 
+
 const RatingPill: React.FC = () => (
-  <div
-    className="flex items-center justify-center rounded-[12px]"
-    style={{ width: 160, height: 79, background: "#FFF5E5" }} // widened to 160
-  >
-    <div
-      className="flex flex-col items-center justify-center"
-      style={{ width: 140, height: 59 }} // widened inner
-    >
+  <div className="flex h-[79px] w-[160px] items-center justify-center rounded-[12px] bg-[#FFF5E5]">
+    <div className="flex h-[59px] w-[140px] flex-col items-center justify-center">
       <div className="flex items-center gap-1">
         {[0, 1, 2, 3, 4].map((i) => (
           <StarIcon key={i} />
         ))}
       </div>
-      <div
-        className="mt-1"
-        style={{
-          fontFamily: "var(--font-sans)",
-          fontWeight: 400,
-          fontSize: "16px",
-          lineHeight: "22px",
-          letterSpacing: "0.03em",
-          color: "#000000",
-          whiteSpace: "nowrap", // prevent wrapping
-        }}
-      >
+      <T as="div" variant="body16" className="mt-1 whitespace-nowrap text-black leading-[22px]">
         5/5 Satisfaction
-      </div>
+      </T>
     </div>
   </div>
 );
 
-/* ————— Green checklist icon ————— */
+
 const CheckIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -197,10 +118,11 @@ const CheckIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#006C1F"
+    stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
   >
     <polyline points="20 6 9 17 4 12" />
   </svg>
@@ -208,164 +130,95 @@ const CheckIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
 
 export default function WhyLoveUs(): React.ReactElement {
   return (
-    <section className="relative w-full py-16">
-      <div className="mx-auto w-full max-w-[1094px] px-4 md:px-0">
-        {/* Badge pill — now using the shared GlassPill */}
-        <div className="mb-5 flex justify-center">
-          <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
-        </div>
-
-        {/* Title + subtitle */}
-        <SectionTitle />
-        <SubTitle />
-
-        {/*  Content */}
-        <div className="relative mt-10 flex flex-col gap-6">
-          {/* Box 1: Only real jobs… */}
-          <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">
-            <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[auto_1fr]">
-              <div className="flex items-stretch justify-center gap-4 md:justify-start">
-                <MiniStatPill
-                  value="500+"
-                  top="Partner"
-                  bottom="companies"
-                  width={136}
-                  height={102}
-                />
-                <MiniStatPill
-                  value="100+"
-                  top="Verified jobs"
-                  width={92}
-                  height={102}
-                />
-              </div>
-
-              {/* moved 40px right */}
-              <div className="pl-[40px]">
-                <h4
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontWeight: 500,
-                    fontSize: "20px",
-                    lineHeight: "27px",
-                    letterSpacing: "0.03em",
-                    color: "#101828",
-                  }}
-                >
-                  Only real jobs from real teams
-                </h4>
-                <p
-                  className="mt-2"
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    lineHeight: "22px",
-                    letterSpacing: "0.03em",
-                    color: "#475467",
-                  }}
-                >
-                  Verified companies only. No fake jobs or time-wasting interviews.
-                </p>
-              </div>
-            </div>
+    
+    <section className="relative w-full !my-0 !py-0">
+      {/* inner vertical breathing */}
+      <div className="py-12 md:py-16">
+        <div className="mx-auto w-full max-w-[1094px] px-4 md:px-0">
+          <div className="mb-5 flex justify-center">
+            <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
           </div>
 
-          {/* Row with two fixed-size cards */}
-          <div className="flex flex-col items-center gap-[30px] md:flex-row md:justify-between">
-            {/* Box 2: Fast & efficient */}
-            <div className="rounded-xl border border-[#C7C4FF] bg-white p-6 w-[532px] h-[180px]">
-              <div className="flex h-full items-center justify-between">
-                <div className="pr-4">
-                  <CardTitleSpec>Fast &amp; efficient</CardTitleSpec>
-                  <CardBodySpec>
-                    Our streamlined process
-                    <br />
-                    eliminates unnecessary delays.
+          <SectionTitle />
+          <SubTitle />
+
+          <div className="relative mt-10 flex flex-col gap-6">
+            {/* Box 1: Only real jobs… */}
+            <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">
+              <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[auto_1fr]">
+                <div className="flex items-stretch justify-center gap-4 md:justify-start">
+                  <MiniStatPill value="500+" top="Partner" bottom="companies" size="lg" />
+                  <MiniStatPill value="100+" top="Verified jobs" size="sm" />
+                </div>
+
+                <div className="md:pl-[40px]">
+                  <CardTitleSpec>Only real jobs from real teams</CardTitleSpec>
+                  <CardBodySpec className="mt-2 text-[#475467]">
+                    Verified companies only. No fake jobs or time-wasting interviews.
                   </CardBodySpec>
                 </div>
-                <TimePill />
               </div>
             </div>
 
-            {/* Box 3: Better matches, faster */}
-            <div className="rounded-xl border border-[#C7C4FF] bg-white p-6 w-[532px] h-[180px]">
-              <div className="flex h-full items-center justify-between">
-                <div className="pr-4">
-                  <CardTitleSpec>Better matches, faster</CardTitleSpec>
-                  <CardBodySpec>
-                    We prioritize long-term fit by
-                    <br />
-                    aligning roles with goals,
-                    <br />
-                    and people with purpose.
-                  </CardBodySpec>
+          
+            <div className="flex flex-col items-stretch gap-[30px] md:flex-row md:justify-between">
+              {/* Box 2: Fast & efficient */}
+              <div className="h-auto w-full rounded-xl border border-[#C7C4FF] bg-white p-6 md:h-[180px] md:w-[532px]">
+                <div className="flex h-full items-center justify-between">
+                  <div className="pr-4">
+                    <CardTitleSpec>Fast &amp; efficient</CardTitleSpec>
+                    <CardBodySpec>
+                      Our streamlined process
+                      <br />
+                      eliminates unnecessary delays.
+                    </CardBodySpec>
+                  </div>
+                  <TimePill />
                 </div>
-                <RatingPill />
+              </div>
+
+              {/* Box 3: Better matches, faster */}
+              <div className="h-auto w-full rounded-xl border border-[#C7C4FF] bg-white p-6 md:h-[180px] md:w-[532px]">
+                <div className="flex h-full items-center justify-between">
+                  <div className="pr-4">
+                    <CardTitleSpec>Better matches, faster</CardTitleSpec>
+                    <CardBodySpec>
+                      We prioritize long-term fit by
+                      <br />
+                      aligning roles with goals,
+                      <br />
+                      and people with purpose.
+                    </CardBodySpec>
+                  </div>
+                  <RatingPill />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Box 4: Fair, open process */}
-          <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Left: green checklist */}
-              <div
-                className="flex flex-col justify-center rounded-[12px] p-4"
-                style={{ width: 275, height: 119, background: "#DFF5E6" }}
-              >
-                <ul className="space-y-3">
-                  {[
-                    "Salary transparency",
-                    "Real time updates",
-                    "Constructive feedback",
-                  ].map((t) => (
-                    <li
-                      key={t}
-                      className="flex items-center gap-2"
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontWeight: 400,
-                        fontSize: "16px",
-                        lineHeight: "22px",
-                        letterSpacing: "0.03em",
-                        color: "#006C1F",
-                      }}
-                    >
-                      <CheckIcon /> {t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        
+            <div className="rounded-xl border border-[#C7C4FF] bg-white p-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Left: green checklist */}
+                <div className="flex h-[119px] w-full max-w-[275px] flex-col justify-center rounded-[12px] bg-[#DFF5E6] p-4">
+                  <ul className="space-y-3 text-[#006C1F]">
+                    {["Salary transparency", "Real time updates", "Constructive feedback"].map((t) => (
+                      <li key={t} className="flex items-center gap-2">
+                        <CheckIcon />
+                        <T as="span" variant="body16" className="leading-[22px]">
+                          {t}
+                        </T>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-              {/* Right: text */}
-              <div className="flex flex-col justify-center">
-                <h4
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontWeight: 500,
-                    fontSize: "20px",
-                    lineHeight: "27px",
-                    letterSpacing: "0.03em",
-                    color: "#101828",
-                  }}
-                >
-                  Fair, open process
-                </h4>
-                <p
-                  className="mt-2"
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    lineHeight: "22px",
-                    letterSpacing: "0.03em",
-                    color: "#101828",
-                  }}
-                >
-                  Access clear timelines, salary ranges, and feedback - so everyone
-                  stays informed and aligned.
-                </p>
+                <div className="flex flex-col justify-center">
+                  <CardTitleSpec>Fair, open process</CardTitleSpec>
+                  <CardBodySpec className="mt-2">
+                    Access clear timelines, salary ranges, and feedback - so everyone
+                    stays informed and aligned.
+                  </CardBodySpec>
+                </div>
               </div>
             </div>
           </div>

@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ layered pill
+import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill";
+import T from "../primitives/Typography";
+import { CandidateAuth } from "../../lib/endpoints";
 
-/* ---------------------------- Types ---------------------------- */
 type Feature = {
   id: string;
   title: string;
@@ -14,7 +16,7 @@ type Feature = {
   posterSrc?: string;
 };
 
-/* ---------------- Default Recruiter Features ---------------- */
+/* recruiter defaults — videos live here */
 const DEFAULT_RECRUITER_FEATURES: Feature[] = [
   {
     id: "jds",
@@ -42,7 +44,7 @@ const DEFAULT_RECRUITER_FEATURES: Feature[] = [
   },
 ];
 
-/* ---------------- Candidate Features ---------------- */
+/* candidate defaults */
 const CANDIDATE_FEATURES: Feature[] = [
   {
     id: "profile",
@@ -66,7 +68,6 @@ const CANDIDATE_FEATURES: Feature[] = [
   },
 ];
 
-/* ---------------- Rethinking Section ---------------- */
 export default function RethinkingSection({
   features = DEFAULT_RECRUITER_FEATURES,
   onHireNow,
@@ -78,6 +79,7 @@ export default function RethinkingSection({
 }) {
   const groupId = useId();
   const sectionRef = useRef<HTMLElement | null>(null);
+  const router = useRouter();
 
   const [mode, setMode] = useState<"recruiter" | "candidate">("recruiter");
   const isRecruiter = mode === "recruiter";
@@ -89,14 +91,46 @@ export default function RethinkingSection({
   const [activeRecruiter, setActiveRecruiter] = useState(0);
   const [activeCandidate, setActiveCandidate] = useState(0);
 
-  const featuresToShow = isRecruiter ? features : CANDIDATE_FEATURES;
+  // auth state: only need to know if candidate is logged in
+  const [isCandidateLoggedIn, setIsCandidateLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkCandidateAuth() {
+      try {
+        await CandidateAuth.me();
+        if (!cancelled) setIsCandidateLoggedIn(true);
+      } catch {
+        if (!cancelled) setIsCandidateLoggedIn(false);
+      }
+    }
+
+    checkCandidateAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // in candidate mode only the "profile" card borrows the first recruiter video
+  const candidateFeaturesWithVideo = useMemo(() => {
+    const recruiterProfile =
+      features.find((f) => f.id === "jds") ?? DEFAULT_RECRUITER_FEATURES[0];
+
+    return CANDIDATE_FEATURES.map((cf) => ({
+      ...cf,
+      videoSrc: cf.id === "profile" ? recruiterProfile?.videoSrc : undefined,
+      posterSrc: cf.id === "profile" ? recruiterProfile?.posterSrc : undefined,
+    }));
+  }, [features]);
+
+  const featuresToShow = isRecruiter ? features : candidateFeaturesWithVideo;
   const activeIndex = isRecruiter ? activeRecruiter : activeCandidate;
   const activeFeature = useMemo(
     () => featuresToShow[activeIndex],
     [featuresToShow, activeIndex]
   );
 
-  /* ---------------- Autoplay Logic ---------------- */
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const intervalRef = useRef<number | null>(null);
   const inViewRef = useRef(false);
@@ -105,7 +139,7 @@ export default function RethinkingSection({
     if (!sectionRef.current) return;
     const obs = new IntersectionObserver(
       (entries) => {
-        inViewRef.current = entries[0].isIntersecting;
+        inViewRef.current = entries[0]?.isIntersecting ?? false;
         manageInterval();
       },
       { threshold: 0.35 }
@@ -113,189 +147,232 @@ export default function RethinkingSection({
     obs.observe(sectionRef.current);
     return () => {
       obs.disconnect();
-      clearAutoPlay();
+      clearOnlyTimer();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     manageInterval();
-  }, [autoPlayEnabled, features.length]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlayEnabled, mode, features.length]);
 
-  const manageInterval = () => {
-    clearAutoPlay();
-    if (!inViewRef.current || !autoPlayEnabled) return;
-    intervalRef.current = window.setInterval(() => {
-      if (modeRef.current === "recruiter") {
-        setActiveRecruiter((p) => (p + 1) % features.length);
-      } else {
-        setActiveCandidate((p) => (p + 1) % CANDIDATE_FEATURES.length);
-      }
-    }, 2000);
-  };
-
-  const clearAutoPlay = () => {
+  const clearOnlyTimer = () => {
     if (intervalRef.current) {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+  };
+
+  const clearAutoPlay = () => {
+    clearOnlyTimer();
     setAutoPlayEnabled(false);
   };
 
+  const manageInterval = () => {
+    clearOnlyTimer();
+    if (!inViewRef.current || !autoPlayEnabled) return;
+    const len =
+      modeRef.current === "recruiter"
+        ? features.length
+        : CANDIDATE_FEATURES.length;
+    intervalRef.current = window.setInterval(() => {
+      if (modeRef.current === "recruiter") {
+        setActiveRecruiter((p) => (p + 1) % len);
+      } else {
+        setActiveCandidate((p) => (p + 1) % len);
+      }
+    }, 2000);
+  };
+
   const setActive = (i: number) => {
-    clearAutoPlay(); // stop autoplay on interaction
+    clearAutoPlay();
     if (isRecruiter) setActiveRecruiter(i);
     else setActiveCandidate(i);
   };
 
   const switchMode = (m: "recruiter" | "candidate") => {
-    clearAutoPlay();
+    clearOnlyTimer();
     setMode(m);
+    setAutoPlayEnabled(true);
   };
 
-  /* ---------------- JSX ---------------- */
+  const handleMouseEnter = () => clearAutoPlay();
+  const handleMouseLeave = () => {
+    setAutoPlayEnabled(true);
+    manageInterval();
+  };
+
+  // Primary CTA behavior (Hire now / Find work)
+  const handlePrimaryCtaClick = () => {
+    // keep external callback if someone passed one
+    if (onHireNow) {
+      onHireNow();
+    }
+
+    if (isRecruiter) {
+      // recruiter view: always go to recruiter/employer login
+      router.push("/login?role=recruiter");
+      return;
+    }
+
+    // candidate view
+    if (isCandidateLoggedIn) {
+      router.push("/find-jobs");
+    } else {
+      router.push("/login?role=candidate");
+    }
+  };
+
   return (
     <section
       ref={sectionRef as any}
       id="rethinking"
-      className={`py-12 md:py-16 ${className}`}
+      className={`relative !my-0 !py-0 ${className}`}
     >
-      <div className="mx-auto max-w-[1400px] px-0">
-        {/* Header */}
-        <div
-          className="flex flex-col justify-start"
-          style={{ width: "1094px", height: "162px", marginLeft: "93px" }}
-        >
-          <div className="flex items-center whitespace-nowrap">
-            <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
+      <div className="py-8 md:py-10">
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8">
+          <div className="md:ml-[60px] max-w-[1094px]">
+            <div className="flex items-center">
+              <GlassPill text="We’re here for a reason" iconColor="#2288FE" />
+            </div>
+            <T
+              as="h2"
+              id={`${groupId}-label`}
+              variant="hero48"
+              weight={500}
+              className="text-left text-black md:text-[48px] text-[40px]"
+              autoLeading
+            >
+              <span className="text-[#4D31EC]">Rethinking</span> how you hire
+              and get hired
+            </T>
+            <T
+              as="p"
+              variant="body18"
+              weight={400}
+              trackingPct={3}
+              className="mt-2 text-left text-[#111827] md:text-[20px]"
+              lineHeightPx={27}
+            >
+              Build your dream team or find your next move with WorkCrew.ai, all
+              in one place, without clutter or chaos.
+            </T>
           </div>
 
-          <h2
-            className="mt-4 text-left"
-            style={{
-              fontFamily: "Schibsted Grotesk, var(--font-display)",
-              fontWeight: 500,
-              fontSize: "48px",
-              letterSpacing: "0.01em",
-              lineHeight: "normal",
-            }}
+          <div
+            className="mx-auto mt-5 w-full max-w-[1000px] rounded-[16px] bg-gradient-to-b from-[#F6F7FF] to-white p-4"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
-            <span className="text-[#4D31EC]">Rethinking</span>{" "}
-            <span className="text-black">how you hire and get hired</span>
-          </h2>
+            <div className="grid min-h-[420px] md:minh-[460px] grid-cols-1 gap-6 md:grid-cols-2 items-center">
+              {/* LEFT SIDE: feature list */}
+              <div
+                role="tablist"
+                aria-labelledby={`${groupId}-label`}
+                className="relative z-10 flex h-full min-w-0 flex-col rounded-2xl bg-white/40 p-3 backdrop-blur"
+              >
+                <ul className="flex-1 overflow-auto pr-2 space-y-3">
+                  {featuresToShow.map((f, i) => {
+                    const selected = i === activeIndex;
+                    return (
+                      <li key={f.id}>
+                        <button
+                          role="tab"
+                          aria-selected={selected}
+                          aria-controls={`${groupId}-panel`}
+                          id={`${groupId}-tab-${i}`}
+                          onClick={() => setActive(i)}
+                          className={[
+                            "w-full rounded-2xl border px-5 py-4 text-left transition",
+                            selected
+                              ? "border-[#4D31EC] bg-white"
+                              : "border-[#D9D7FD] bg-[#F3F2FF]/50 hover:bg-white/80",
+                            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4D31EC]/60",
+                          ].join(" ")}
+                        >
+                          <T
+                            as="div"
+                            variant="body16"
+                            className="text-gray-900 md:text-[17px]"
+                            weight={600}
+                          >
+                            {f.title}
+                          </T>
+                          {selected && (
+                            <T
+                              as="div"
+                              variant="sub14"
+                              className="mt-2 text-gray-700"
+                              lineHeightPx={24}
+                            >
+                              {f.blurb}
+                            </T>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                  <li className="h-2 md:h-3" aria-hidden />
+                </ul>
 
-          <p
-            className="mt-2 text-left"
-            style={{
-              fontFamily: "Archivo, var(--font-sans)",
-              fontWeight: 400,
-              fontSize: "20px",
-              lineHeight: "27px",
-              letterSpacing: "0.03em",
-              color: "#111827",
-            }}
-          >
-            Build your dream team or find your next move with WorkCrew.ai, all in
-            one place, without clutter or chaos.
-          </p>
-        </div>
-
-        {/* Outer Panel */}
-        <div className="mx-auto mt-6 w-[1100px] h-[632px] rounded-[16px] bg-gradient-to-b from-[#F6F7FF] to-white p-4">
-          <div className="grid h-full grid-cols-2 gap-6">
-            {/* LEFT: Tabs */}
-            <div
-              role="tablist"
-              aria-labelledby={`${groupId}-label`}
-              className="relative z-10 min-w-0 rounded-2xl bg-white/40 p-3 backdrop-blur"
-            >
-              <ul className="space-y-3">
-                {featuresToShow.map((f, i) => {
-                  const selected = i === activeIndex;
-                  return (
-                    <li key={f.id}>
-                      <button
-                        role="tab"
-                        aria-selected={selected}
-                        aria-controls={`${groupId}-panel`}
-                        id={`${groupId}-tab-${i}`}
-                        onClick={() => setActive(i)}
-                        className={[
-                          "w-full rounded-2xl border text-left transition px-5 py-5",
-                          selected
-                            ? "border-[#4D31EC] bg-white"
-                            : "border-[#D9D7FD] bg-[#F3F2FF]/50 hover:bg-white/80",
-                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4D31EC]/60",
-                        ].join(" ")}
+                {/* footer with CTA and mode switch */}
+                <div className="mt-3 border-t border-white/50 pt-3">
+                  <LayeredPill
+                    label={isRecruiter ? "Hire now" : "Find work"}
+                    icon={<ArrowNortheastIcon />}
+                    onClick={handlePrimaryCtaClick}
+                    size="md"
+                  />
+                  <div className="mt-3">
+                    <T as="span" variant="sub14" className="text-black">
+                      I’m a{" "}
+                    </T>
+                    <button
+                      className="no-underline decoration-transparent hover:no-underline focus:no-underline active:no-underline"
+                      onClick={() =>
+                        switchMode(isRecruiter ? "candidate" : "recruiter")
+                      }
+                    >
+                      <T
+                        as="span"
+                        variant="body16"
+                        weight={500}
+                        className="text-[#4D31EC]"
+                        autoLeading
                       >
-                        <div className="text-[17px] font-semibold text-gray-900">
-                          {f.title}
-                        </div>
-                        {selected && (
-                          <div className="mt-2 text-[15px] leading-6 text-gray-700">
-                            {f.blurb}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {/* CTA + toggle */}
-              <div className="mt-6">
-                {/* ✅ Use the shared LayeredPill for 'Hire now' */}
-                <LayeredPill
-                  label="Hire now"
-                  icon={<ArrowNortheastIcon />}
-                  onClick={onHireNow}
-                  size="md"
-                />
-
-                <div className="mt-3 text-sm text-gray-600">
-                  I’m a{" "}
-                  <button
-                    className="text-[#5E6AD9] underline"
-                    onClick={() =>
-                      switchMode(isRecruiter ? "candidate" : "recruiter")
-                    }
-                  >
-                    {isRecruiter ? "candidate!" : "recruiter"}
-                  </button>
+                        {isRecruiter ? "candidate!" : "recruiter"}
+                      </T>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* RIGHT: Clean video (no shadow, no white bg) */}
-            <div
-              role="tabpanel"
-              id={`${groupId}-panel`}
-              aria-labelledby={`${groupId}-tab-${activeIndex}`}
-              className="flex items-start justify-center"
-            >
+              {/* RIGHT SIDE: video or candidate placeholder */}
               <div
-                className="relative overflow-hidden rounded-[12px] ring-1 ring-[#E9ECF6]"
-                style={{
-                  width: 368,
-                  height: 371,
-                  background: "#D9D9D9",
-                }}
+                role="tabpanel"
+                id={`${groupId}-panel`}
+                aria-labelledby={`${groupId}-tab-${activeIndex}`}
+                aria-live="polite"
+                className="flex items-center justify-center justify-self-center"
               >
-                {isRecruiter && activeFeature.videoSrc ? (
-                  <video
-                    key={activeFeature.videoSrc}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    src={encodeURI(activeFeature.videoSrc)}
-                    poster={activeFeature.posterSrc}
-                    muted
-                    playsInline
-                    loop
-                    autoPlay
-                    controls={false}
-                  />
-                ) : (
-                  <CandidatePreview id={activeFeature.id} />
-                )}
+                <div className="relative h-[300px] w-[300px] md:h-[320px] md:w-[340px] overflow-hidden rounded-[12px] bg-white -translate-y-[50px]">
+                  {activeFeature?.videoSrc ? (
+                    <video
+                      key={activeFeature.videoSrc}
+                      className="absolute inset-0 h-full w-full rounded-[12px] object-cover"
+                      src={encodeURI(activeFeature.videoSrc)}
+                      poster={activeFeature.posterSrc}
+                      muted
+                      playsInline
+                      loop
+                      autoPlay
+                      controls={false}
+                    />
+                  ) : (
+                    <CandidatePreview id={activeFeature?.id} />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -305,11 +382,13 @@ export default function RethinkingSection({
   );
 }
 
-/* Candidate placeholder */
-function CandidatePreview({ id }: { id: string }) {
+/* Candidate placeholder when we don't have a video */
+function CandidatePreview({ id }: { id?: string }) {
   return (
-    <div className="flex h-full items-center justify-center text-sm text-gray-500">
-      Candidate view: {id}
+    <div className="flex h-full items-center justify-center">
+      <T as="span" variant="sub14" className="text-gray-500">
+        Candidate view: {id}
+      </T>
     </div>
   );
 }

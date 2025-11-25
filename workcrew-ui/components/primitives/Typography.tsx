@@ -3,10 +3,10 @@
 import * as React from "react";
 import type { JSX as ReactJSX, ElementType, CSSProperties } from "react";
 
-/** Allow any intrinsic HTML tag */
+/* we let this accept any normal html tag (h1, p, span, etc) */
 export type TagName = keyof ReactJSX.IntrinsicElements;
 
-/** Visual presets you can use everywhere */
+/* all our reusable typography presets — so ppl can just call <T variant="h2" /> instead of retyping classes */
 export type Variant =
   | "heroTitle"
   | "h1"
@@ -21,50 +21,56 @@ export type Variant =
   | "cap"
   | "statNumber"
   | "statLabel"
-  /* ---- Added spec-friendly variants (non-breaking) ---- */
-  | "hero48"      // Schibsted Grotesk, 48, ls 1%
-  | "sub20"       // Archivo, 20,  ls 3%  (27px line-height typical)
-  | "body16"      // Archivo, 16,  ls 3%  (22px line-height typical)
-  | "sub14"       // Archivo, 14,  ls 3%  (pills)
-  | "card36";     // Schibsted Grotesk, 36, ls 1%
+  /* spec-friendly variants */
+  | "hero48"      // Schibsted Grotesk, 48px, ls 1%
+  | "sub20"       // Archivo, 20px,  ls 3%
+  | "body18"      // Archivo, 18px,  ls 3%
+  | "body16"      // Archivo, 16px,  ls 3%
+  | "body14"      // Archivo, 14px,  ls 3% (NEW → for labels, placeholders)
+  | "sub14"       // Archivo, 14px,  ls 3%
+  | "card36"      // Schibsted Grotesk, 36px, ls 1%
+  | "title28"     // Schibsted Grotesk, 28px, ls 1%
+  | "title24";    // Archivo, 24px,   ls 3%  (for review names)
 
+/* props accepted by <T> */
 type TProps = React.HTMLAttributes<HTMLElement> & {
   as?: TagName;
   children: React.ReactNode;
   className?: string;
 
-  /** Family: restrict to your two fonts */
+  /* restrict to only our 2 font families */
   font?: "schibsted" | "archivo";
 
   /**
-   * Optional weight override.
-   * If you pass 540 we apply your .font-540 utility (keep it in globals.css).
-   * Any other numeric value applies inline style fontWeight.
+   * weight override if u ever need custom weight.
+   * if u pass 540 -> we apply our own .font-540 util (defined in globals.css)
+   * any other number -> goes inline as fontWeight
    */
   weight?: number;
 
-  /** Convenience for % letter-spacing tokens (supports -1%, 1%, 2%, 3%) */
+  /* quick way to apply our % letter-spacing tokens (-1%, 1%, 2%, 3%) */
   trackingPct?: -1 | 1 | 2 | 3;
 
-  /** Which preset to use */
+  /* which variant to use (defaults to bodyLg) */
   variant?: Variant;
 
-  /** Override the default 20px line gap if needed (ignored if lineHeightPx is set) */
+  /* tweak line-gap if needed (we add this to base font size unless u pass lineHeightPx) */
   lineGapPx?: number;
 
-  /** Set an exact line-height (e.g., 27 for 27px). This overrides gap logic. */
+  /* directly set line-height in px if u know exact value */
   lineHeightPx?: number;
 
-  /** If true, do not set line-height at all (let CSS natural/utility classes take over). */
+  /* if true, we skip line-height completely and let CSS utilities take over */
   autoLeading?: boolean;
 };
 
-/* TOKENS */
-
+/* ------------------ */
+/* design tokens here */
+/* ------------------ */
 const TOKENS = {
   font: {
-    schibsted: "font-sans",  // map Tailwind "font-sans" to Schibsted
-    archivo: "font-alt",     // map Tailwind "font-alt" to Archivo
+    schibsted: "font-sans",  // tailwind alias for Schibsted Grotesk
+    archivo: "font-alt",     // tailwind alias for Archivo
   },
   track: {
     [-1]: "tracking-[-0.01em]",
@@ -74,80 +80,93 @@ const TOKENS = {
   } as const,
 } as const;
 
-/* Each variant's base font-size in px (match the text-[...] you use) */
+/* base font sizes (px) */
 const FONT_PX: Record<Variant, number> = {
-  heroTitle: 40, // 2.5rem
-  h1:        40, // 2.5rem
-  h2:        32, // 2rem
-  h3:        48, // 3rem
-  bodyLg:    20, // 1.25rem
-  body:      16, // 1rem
-  button:    16, // 1rem
-  chip:      14, // 0.875rem
-  altButton: 16, // 1rem
-  sub:       20, // 1.25rem
-  cap:       16, // 1rem
-  statNumber:20, // 1.25rem
-  statLabel: 14, // 0.875rem
+  heroTitle: 40,
+  h1:        40,
+  h2:        32,
+  h3:        48,
+  bodyLg:    20,
+  body:      16,
+  button:    16,
+  chip:      14,
+  altButton: 16,
+  sub:       20,
+  cap:       16,
+  statNumber:20,
+  statLabel: 14,
 
-  /* Added */
   hero48:    48,
   sub20:     20,
+  body18:    18,
   body16:    16,
+  body14:    14,   // new addition
   sub14:     14,
   card36:    36,
+  title28:   28,
+  title24:   24,
 };
 
-/* VARIANTS (role-based) */
-/* Note: colors are intentionally neutral; pass text colors via className when needed. */
+/* default line-heights (px) for consistency across variants */
+const DEFAULT_LH_PX: Partial<Record<Variant, number>> = {
+  hero48: 59,
+  sub20: 27,
+  body18: 24,
+  body16: 23,
+  body14: 21,  // default for labels / small body
+  sub14: 23,
+  card36: 44,
+  title28: 34,
+  title24: 23,
+};
 
+/* ------------------ */
+/* base class mapping */
+/* ------------------ */
 const baseByVariant: Record<Variant, string> = {
-  /* Headings — Schibsted */
+  /* headings (Schibsted) */
   heroTitle: "font-sans text-[2.5rem] tracking-[0.01em] font-540",
   h1:        "font-sans text-[2.5rem] tracking-[0.01em] font-540",
   h2:        "font-sans text-[2rem]   tracking-[0.01em] font-540",
   h3:        "font-sans text-[3rem]   tracking-[0.01em] font-540",
 
-  /* Body — Schibsted (kept for backwards compat) */
+  /* body (legacy) */
   bodyLg:    "font-sans text-[1.25rem] tracking-[0.03em]",
   body:      "font-sans text-[1rem]    tracking-[0.01em]",
 
-  /* UI bits — Archivo */
+  /* ui texts (Archivo) */
   button:    "font-alt text-[1rem]     tracking-[0.02em] font-semibold",
   chip:      "font-alt text-[0.875rem] tracking-[0.03em] font-medium",
   altButton: "font-alt text-[1rem]     tracking-[0.02em] font-semibold",
 
-  /* Supporting text — Schibsted */
+  /* supporting/sub (Schibsted) */
   sub:       "font-sans text-[1.25rem] tracking-[0.03em] font-medium",
   cap:       "font-sans text-[1rem]    tracking-[0.03em] font-medium uppercase",
 
-  /* Stats */
+  /* stat */
   statNumber:"font-sans text-[1.25rem] tracking-[0.01em] font-540 text-black",
   statLabel: "font-sans text-[0.875rem] tracking-[0.03em] font-medium",
 
-  /* ---- Added spec-friendly variants ---- */
-
-  // Schibsted Grotesk, 48, ls 1% (default medium; override via weight prop)
+  /* spec variants (Archivo + Schibsted blend) */
   hero48:    "font-sans text-[48px] tracking-[0.01em] font-medium",
-
-  // Archivo, 20, ls 3% (typ. 27px line-height -> pass lineHeightPx={27} where needed)
   sub20:     "font-alt text-[20px] tracking-[0.03em] font-medium",
-
-  // Archivo, 16, ls 3% (typ. 22px line-height -> pass lineHeightPx={22})
+  body18:    "font-alt text-[18px] tracking-[0.03em]",
   body16:    "font-alt text-[16px] tracking-[0.03em]",
-
-  // Archivo, 14, ls 3% (good for pills/chips)
+  body14:    "font-alt text-[14px] tracking-[0.03em]",      // new smaller body variant
   sub14:     "font-alt text-[14px] tracking-[0.03em] font-medium",
-
-  // Schibsted Grotesk, 36, ls 1% (card titles)
   card36:    "font-sans text-[36px] tracking-[0.01em] font-medium",
+  title28:   "font-sans text-[28px] tracking-[0.01em] font-medium",
+  title24:   "font-alt text-[24px] tracking-[0.03em] font-semibold",
 };
 
+/* ------------------ */
+/* helper: class merge */
+/* ------------------ */
 function cx(...vals: Array<string | false | null | undefined>) {
   return vals.filter(Boolean).join(" ");
 }
 
-/** Sensible default tag per variant */
+/* choose sensible default tag for each variant */
 function defaultTagForVariant(v: Variant): TagName {
   switch (v) {
     case "heroTitle":
@@ -158,6 +177,9 @@ function defaultTagForVariant(v: Variant): TagName {
     case "card36":
       return "h2";
     case "h3":
+      return "h3";
+    case "title28":
+    case "title24":
       return "h3";
     case "button":
     case "chip":
@@ -171,6 +193,9 @@ function defaultTagForVariant(v: Variant): TagName {
   }
 }
 
+/* ------------------ */
+/* main Typography component */
+/* ------------------ */
 export function T({
   as,
   children,
@@ -191,20 +216,26 @@ export function T({
     baseByVariant[variant],
     font && TOKENS.font[font],
     weight === 540 && "font-540",
-    (trackingPct !== undefined && trackingPct !== null) ? TOKENS.track[trackingPct] : "",
+    trackingPct !== undefined ? TOKENS.track[trackingPct] : "",
     className
   );
 
-  // Decide line-height strategy:
-  // 1) Explicit px if provided
-  // 2) No line-height if autoLeading
-  // 3) Default "gap" (base font px + lineGapPx)
+  // Resolve line-height:
+  // 1) explicit lineHeightPx wins,
+  // 2) autoLeading skips setting,
+  // 3) variant default (if any),
+  // 4) fallback: font px + lineGapPx
+  const fallbackLH = `${(FONT_PX[variant] ?? 16) + lineGapPx}px`;
+  const defaultVariantLH = DEFAULT_LH_PX[variant]
+    ? `${DEFAULT_LH_PX[variant]}px`
+    : undefined;
+
   const computedLineHeight =
     typeof lineHeightPx === "number"
       ? `${lineHeightPx}px`
       : autoLeading
       ? undefined
-      : `${(FONT_PX[variant] ?? 16) + lineGapPx}px`;
+      : defaultVariantLH ?? fallbackLH;
 
   const mergedStyle: CSSProperties = {
     ...(computedLineHeight ? { lineHeight: computedLineHeight } : {}),
@@ -212,6 +243,7 @@ export function T({
     ...(weight && weight !== 540 ? { fontWeight: weight } : {}),
   };
 
+  /* render dynamically with correct semantic tag */
   return React.createElement(tag, { className: classes, ...rest, style: mergedStyle }, children);
 }
 

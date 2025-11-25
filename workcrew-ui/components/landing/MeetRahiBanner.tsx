@@ -2,16 +2,14 @@
 
 import * as React from "react";
 import Image from "next/image";
+import T from "../primitives/Typography";
 
-type Props = {
+const MeetRahiBanner: React.FC<{
   title?: string;
   subtitle?: string;
-  /** Path under /public (default: /Rah.png) */
   avatarSrc?: string;
   className?: string;
-};
-
-const MeetRahiBanner: React.FC<Props> = ({
+}> = ({
   title = "Meet RAHI!",
   subtitle =
     "RAHI - Recruitment, Automation, Hiring Intelligence. From resume tips to talent insights, she supports smarter decisions for all.",
@@ -19,54 +17,39 @@ const MeetRahiBanner: React.FC<Props> = ({
   className,
 }) => {
   return (
-    <section className={`relative w-full bg-[#4D31EC] ${className ?? ""}`}>
-      <div className="relative h-[162px] w-full">
-        {/* TEXT: pinned 51px from left edge */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 text-white"
-          style={{ left: 51, right: 400 }}
-        >
-          <h3
-            className="font-medium tracking-[0] leading-normal"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 32,
-            }}
-          >
+    /* section has no outer margins — we rely on <main> spacing */
+    <section
+      className={`relative w-full overflow-hidden !my-0 !py-0 bg-[#4D31EC] ${className ?? ""}`}
+    >
+      {/* inner wrapper manages height and side padding */}
+      <div className="relative flex h-[162px] w-full items-center justify-between px-[51px] py-[20px]">
+        {/* left side: text content */}
+        <div className="flex flex-col text-white pr-4">
+          <T as="h3" variant="h2" className="leading-normal font-medium text-white">
             {title}
-          </h3>
+          </T>
 
-          <p
-            className="mt-2 font-medium tracking-[0] leading-normal text-white/95 whitespace-nowrap"
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 16,
-            }}
-            title={subtitle}
+          <T
+            as="p"
+            variant="body16"
+            className="mt-2 leading-normal font-medium text-white/95 whitespace-nowrap"
           >
             {subtitle}
-          </p>
+          </T>
         </div>
 
-        {/* AVATAR: moved 150px right + Rah.png sized 150×150 */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2"
-          style={{ left: 1173 }} // 1023 + 150
-        >
-          {/* Backdrop circle (106×106) */}
+        <div className="relative flex-shrink-0">
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-[106px] w-[106px] rounded-full"
-            style={{ backgroundColor: "rgba(180,165,255,0.45)" }}
+            className="absolute left-1/2 top-1/2 -z-10 h-[106px] w-[106px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgba(180,165,255,0.45)]"
             aria-hidden
           />
-          {/* Rah.png (150×150, straight cut bottom) */}
           <div className="h-[150px] w-[150px] overflow-hidden">
             <Image
               src={avatarSrc}
               alt="RAHI"
               width={150}
               height={150}
-              className="h-full w-full object-cover object-top border-0 ring-0 shadow-none"
+              className="h-full w-full object-cover object-top"
               priority
             />
           </div>

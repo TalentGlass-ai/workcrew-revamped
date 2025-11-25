@@ -1,27 +1,179 @@
-// PATH: app/login/page.tsx
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import T from "../../workcrew-ui/components/primitives/Typography";
+import { CandidateAuth, RecruiterAuth } from "../../workcrew-ui/lib/endpoints";
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
+const GOOGLE_ID = process.env.NEXT_PUBLIC_GOOGLE_ID || "";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = React.useState<"candidate" | "employer">("candidate");
+  const searchParams = useSearchParams();
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const initialRole =
+    (searchParams.get("role") === "candidate" ? "candidate" : "employer") as
+      | "candidate"
+      | "employer";
+
+  const [role, setRole] = React.useState<"candidate" | "employer">(initialRole);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [gsiReady, setGsiReady] = React.useState(false);
+
+  // Load Google Identity Services once
+  React.useEffect(() => {
+    if (window.google) {
+      setGsiReady(true);
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.defer = true;
+    s.onload = () => setGsiReady(true);
+    s.onerror = () => setGsiReady(false);
+    document.head.appendChild(s);
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: send username/password + rememberMe to your auth API here
-    router.push("/onboarding/upload-resume");
+    setError(null);
+    setLoading(true);
+
+    const form = new FormData(e.currentTarget);
+    const username = String(form.get("username") ?? "").trim();
+    const password = String(form.get("password") ?? "").trim();
+
+    try {
+      if (role === "candidate") {
+        const res = await CandidateAuth.login({ email: username, password });
+        const data = res.data;
+        const token =
+          data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+        if (!token) {
+          setError("Login succeeded but token was not returned by the server.");
+          return;
+        }
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wc_token", token);
+          if (data?.candidate) {
+            localStorage.setItem("wc_candidate", JSON.stringify(data.candidate));
+            localStorage.removeItem("wc_recruiter");
+          }
+        }
+        router.push("/onboarding/upload-resume");
+      } else {
+        const res = await RecruiterAuth.login({ email: username, password });
+        const data = res.data;
+        const token =
+          data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+        if (!token) {
+          setError("Login succeeded but token was not returned by the server.");
+          return;
+        }
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wc_token", token);
+          if (data?.recruiter) {
+            localStorage.setItem("wc_recruiter", JSON.stringify(data.recruiter));
+            localStorage.removeItem("wc_candidate");
+          }
+        }
+        router.push("/onboarding-employer/company");
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please check your credentials and try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Google Sign-In (candidate only, matches controller/googleAuth.js)
+  async function handleGoogleClick() {
+    setError(null);
+
+    if (role !== "candidate") {
+      setError("Google Sign-In is available for candidates only.");
+      return;
+    }
+    if (!gsiReady || !GOOGLE_ID || !window.google?.accounts?.id) {
+      setError("Google Sign-In is not ready. Please try again.");
+      return;
+    }
+
+    try {
+      await new Promise<void>((resolve) => {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_ID,
+          callback: async (resp: { credential: string }) => {
+            try {
+              const idToken = resp?.credential;
+              if (!idToken) {
+                setError("Google did not return a credential.");
+                resolve();
+                return;
+              }
+              const r = await CandidateAuth.googleAuth({
+                token: idToken,
+                userType: "candidate",
+              });
+
+              const data = r.data;
+              const token =
+                data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+              if (!token) {
+                setError("Login succeeded but token was not returned by the server.");
+                resolve();
+                return;
+              }
+
+              if (typeof window !== "undefined") {
+                localStorage.setItem("wc_token", token);
+                if (data?.data) {
+                  localStorage.setItem("wc_candidate", JSON.stringify(data.data));
+                  localStorage.removeItem("wc_recruiter");
+                }
+              }
+
+              router.push("/onboarding/upload-resume");
+            } catch (e: any) {
+              setError(
+                e?.response?.data?.message ||
+                  e?.message ||
+                  "Google login failed. Please try again."
+              );
+            } finally {
+              resolve();
+            }
+          },
+          ux_mode: "popup",
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        // Trigger Google popup
+        window.google.accounts.id.prompt(() => resolve());
+      });
+    } catch (e: any) {
+      setError(e?.message || "Could not start Google Sign-In.");
+    }
   }
 
   return (
     <main className="flex min-h-screen">
-      {/* LEFT (Blue half) */}
       <section className="relative hidden w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
-        {/* WorkCrew icon: 50px from left, 50px below navbar */}
         <Image
           src="/workcrew-icon.png"
           alt="WorkCrew.ai"
@@ -31,9 +183,7 @@ export default function LoginPage() {
           priority
         />
 
-        {/* Centered content block */}
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
-          {/* White card like Figma tile */}
           <div className="mb-6 w-full overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <div className="relative aspect-[16/10] w-full">
               <video
@@ -46,9 +196,7 @@ export default function LoginPage() {
                 autoPlay
                 controls={false}
                 preload="metadata"
-              >
-                Your browser does not support the video tag.
-              </video>
+              />
             </div>
           </div>
 
@@ -66,7 +214,6 @@ export default function LoginPage() {
             achievements from any resume format.
           </T>
 
-          {/* Slider bars */}
           <div className="mt-8 flex gap-2">
             <div className="h-1.5 w-16 rounded-full bg-white" />
             <div className="h-1.5 w-10 rounded-full bg-white/40" />
@@ -76,7 +223,6 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* RIGHT (Form) */}
       <section className="flex w-full items-center justify-center px-8 py-16 md:w-1/2 md:px-24">
         <div className="w-full max-w-lg">
           <T
@@ -99,9 +245,9 @@ export default function LoginPage() {
             Enter your credentials to login
           </T>
 
-          {/* Role toggle */}
           <div className="mt-6 flex justify-center gap-6">
             <button
+              type="button"
               onClick={() => setRole("candidate")}
               className={`rounded-md px-8 py-2 transition ${
                 role === "candidate"
@@ -114,6 +260,7 @@ export default function LoginPage() {
               </T>
             </button>
             <button
+              type="button"
               onClick={() => setRole("employer")}
               className={`rounded-md px-8 py-2 transition ${
                 role === "employer"
@@ -127,22 +274,30 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {error && (
+            <div className="mt-4 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div>
-              {/* keep htmlFor on a real <label>, render text with T */}
               <label htmlFor="username" className="mb-1 block">
                 <T as="span" variant="body16" weight={500}>
-                  Username
+                  {role === "employer" ? "Company email" : "Username or email"}
                 </T>
               </label>
               <input
                 id="username"
                 name="username"
-                // RULES: 3–30 chars, letters/numbers/_/., or email allowed
-                pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$"
+                pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$"
                 title="Use an email or 3–30 characters (letters, numbers, dot or underscore)."
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="Enter your username or email"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#4D31EC]"
+                placeholder={
+                  role === "employer"
+                    ? "you@company.com"
+                    : "Enter your username or email"
+                }
                 autoComplete="username"
                 required
               />
@@ -158,30 +313,17 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                // RULES: at least 8 chars (add stronger rules in backend)
                 minLength={8}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
               />
-              <T
-                as="p"
-                variant="sub14"
-                className="mt-1 text-gray-400"
-                lineHeightPx={18}
-              >
-                Minimum 8 characters. (Enforce complexity on the server.)
-              </T>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input
-                  name="remember"
-                  type="checkbox"
-                  className="accent-[#4D31EC]"
-                />
+                <input name="remember" type="checkbox" className="accent-[#4D31EC]" />
                 <T as="span" variant="sub14">
                   Remember me
                 </T>
@@ -195,27 +337,28 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-full bg-[#4D31EC] py-3 text-white hover:bg-[#3b25b5]"
+              disabled={loading}
+              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <T as="span" variant="button">
-                Login →
+                {loading ? "Logging in..." : "Login →"}
               </T>
             </button>
 
-            {/* OR divider */}
             <div className="flex items-center gap-3">
               <span className="h-px w-full bg-gray-200" />
               <T as="span" variant="sub14" weight={600} className="text-black">
-                or continue with
+                or
               </T>
               <span className="h-px w-full bg-gray-200" />
             </div>
 
-            {/* Social buttons with real icons */}
             <div className="flex justify-center gap-4">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
+                onClick={handleGoogleClick}
+                disabled={!gsiReady || role !== "candidate"}
+                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2 disabled:opacity-60"
                 aria-label="Continue with Google"
               >
                 <Image
@@ -248,7 +391,10 @@ export default function LoginPage() {
 
             <T as="p" variant="sub14" className="text-center">
               Don’t have an account?{" "}
-              <Link href="/signup" className="font-semibold text-[#4D31EC]">
+              <Link
+                href={role === "employer" ? "/onboarding-employer/signup" : "/signup"}
+                className="font-semibold text-[#4D31EC]"
+              >
                 <T as="span" variant="sub14" weight={600}>
                   Sign up
                 </T>

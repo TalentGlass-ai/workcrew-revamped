@@ -1,4 +1,3 @@
-// PATH: workcrew-ui/components/onboarding/Stepper.tsx
 "use client";
 
 import * as React from "react";
@@ -7,14 +6,13 @@ export type Step = { key: string; label: string };
 
 type Props = {
   steps: Step[];
-  active: number; // 0-based index of the active step
+  active: number; 
   className?: string;
 };
 
 export default function Stepper({ steps, active, className }: Props) {
   return (
     <div className={["relative w-full", className].filter(Boolean).join(" ")}>
-      {/* connector line through the center of circles */}
       <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-[#E7E3FF]" />
 
       <div className="relative z-10 flex items-center justify-between">

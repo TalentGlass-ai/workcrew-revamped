@@ -35,143 +35,93 @@ const ROW3: Review[] = [
 
 export default function ReviewsSection() {
   const ref = React.useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 15%"] });
 
+  
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 85%", "end 15%"],
+  });
+
+  
   const x1 = useTransform(scrollYProgress, [0, 1], ["-10%", "-25%"]);
   const x2 = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
   const x3 = useTransform(scrollYProgress, [0, 1], ["-10%", "-30%"]);
 
   return (
+  
     <section
       ref={ref}
-      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden text-white z-10"
-      style={{
-        paddingTop: 40,
-        paddingBottom: 40,
-        background: "linear-gradient(180deg,#4D31EC 0%,#4a2fe9 50%,#462ae1 100%)",
-      }}
+      className="reviews-section relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden bg-[linear-gradient(180deg,#4D31EC_0%,#4a2fe9_50%,#462ae1_100%)] !my-0 !py-0 text-white"
     >
-      {/* === Center headline capsule (stronger radial pill) === */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-        <div
-          className="flex items-center justify-center rounded-full"
-          style={{
-            width: 765,
-            height: 304,
-            background:
-              "radial-gradient(circle at center, rgba(77,49,236,1) 0%, rgba(77,49,236,1) 35%, rgba(77,49,236,0.75) 55%, rgba(77,49,236,0.4) 70%, rgba(77,49,236,0) 100%)",
-            boxShadow: "0 0 100px rgba(105,81,242,0.65)",
-          }}
-        >
-          <h2
-            className="text-center"
-            style={{
-              fontFamily: "var(--font-schibsted,'Schibsted Grotesk',ui-sans-serif)",
-              fontWeight: 600,
-              fontSize: 38,
-              letterSpacing: "0.01em",
-              lineHeight: 1.2,
-              color: "#ffffff",
-            }}
-          >
-            What our users are saying
-          </h2>
+      {/* internal vertical breathing */}
+      <div className="py-12 md:py-16">
+        {/* Centered halo + headline */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex h-[304px] w-[765px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(77,49,236,1)_0%,rgba(77,49,236,1)_35%,rgba(77,49,236,0.75)_55%,rgba(77,49,236,0.4)_70%,rgba(77,49,236,0)_100%)] shadow-[0_0_100px_rgba(105,81,242,0.65)]">
+            <h2 className="font-display text-[38px] font-semibold leading-[1.2] tracking-[0.01em] text-white">
+              What our users are saying
+            </h2>
+          </div>
         </div>
-      </div>
 
-      {/* === Rows of reviews === */}
-      <div className="relative mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12 z-10">
-        <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
-          {repeatToFill(ROW1, 10).map((r, i) => (
-            <ReviewCard key={`r1-${i}`} r={r} />
-          ))}
-        </motion.div>
-        <motion.div style={{ x: x2 }} className="flex w-[220%] gap-16">
-          {repeatToFill(ROW2, 10).map((r, i) => (
-            <ReviewCard key={`r2-${i}`} r={r} />
-          ))}
-        </motion.div>
-        <motion.div style={{ x: x3 }} className="flex w-[220%] gap-16">
-          {repeatToFill(ROW3, 10).map((r, i) => (
-            <ReviewCard key={`r3-${i}`} r={r} />
-          ))}
-        </motion.div>
+  
+        <div className="relative z-10 mx-auto mt-8 grid gap-y-[28px] px-6 md:px-12">
+          <motion.div style={{ x: x1 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW1, 10).map((r, i) => (
+              <ReviewCard key={`r1-${i}`} r={r} />
+            ))}
+          </motion.div>
+
+          <motion.div style={{ x: x2 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW2, 10).map((r, i) => (
+              <ReviewCard key={`r2-${i}`} r={r} />
+            ))}
+          </motion.div>
+
+          <motion.div style={{ x: x3 }} className="flex w-[220%] gap-16">
+            {repeatToFill(ROW3, 10).map((r, i) => (
+              <ReviewCard key={`r3-${i}`} r={r} />
+            ))}
+          </motion.div>
+        </div>
       </div>
     </section>
   );
 }
-/* === Review Card — Crisp stroke with subtle inner white line === */
+
+
 function ReviewCard({ r }: { r: Review }) {
   return (
-    <article
-      className="relative shrink-0"
-      style={{
-        width: 410,
-        height: 215,
-        borderRadius: 24,
-        background: "transparent",
-        // Stronger violet border + inner white line for separation
-        border: "2px solid #6951F2",
-        boxShadow:
-          "inset 0 0 0 1px rgba(255,255,255,0.25), 0 0 12px rgba(105,81,242,0.25)",
-        padding: 24,
-      }}
-    >
+    <article className="relative h-[215px] w-[410px] shrink-0 rounded-[24px] border-2 border-[#6951F2] bg-transparent p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25),0_0_12px_rgba(105,81,242,0.25)]">
       <div className="mb-3.5 flex items-center gap-3">
-        <div
-          className="relative overflow-hidden"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: "2px solid #6951F2",
-            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.25)",
-          }}
-        >
+        <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[#6951F2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]">
           {r.avatar && (
-            <Image src={r.avatar} alt={r.name} fill sizes="40px" className="object-cover" />
+            <Image
+              src={r.avatar}
+              alt={r.name}
+              fill
+              sizes="40px"
+              className="object-cover"
+            />
           )}
         </div>
         <div className="leading-none">
-          <div
-            style={{
-              fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
-              fontWeight: 600,
-              fontSize: 24,
-              lineHeight: "23px",
-            }}
-          >
+          <div className="font-alt text-[24px] font-semibold leading-[23px]">
             {r.name}
           </div>
-          <div
-            style={{
-              fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
-              fontWeight: 500,
-              fontSize: 14,
-              lineHeight: "23px",
-              opacity: 0.95,
-            }}
-          >
+          <div className="font-alt text-[14px] font-medium leading-[23px] opacity-95">
             {r.title} at {r.company}
           </div>
         </div>
       </div>
 
-      <blockquote
-        style={{
-          fontFamily: "var(--font-archivo,Archivo,ui-sans-serif)",
-          fontWeight: 400,
-          fontSize: 16,
-          lineHeight: "23px",
-        }}
-      >
+      <blockquote className="font-alt text-[16px] font-normal leading-[23px]">
         {r.quote}
       </blockquote>
     </article>
   );
 }
 
-/* === helper === */
 function repeatToFill<T>(arr: T[], min: number): T[] {
   const out: T[] = [];
   while (out.length < min) out.push(...arr);

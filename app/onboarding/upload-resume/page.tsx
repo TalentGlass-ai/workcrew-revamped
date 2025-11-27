@@ -55,22 +55,11 @@ function normalizeParserOutput(raw: RawParserOut) {
   const summary: string = base.about || "";
 
   // ---------- EMAIL / PHONE / LOCATION ----------
-  const email: string =
-    contact.email ||
-    base.email ||
-    "";
+  const email: string = contact.email || base.email || "";
+  const phone: string = contact.phone_number || contact.phone || "";
+  const location: string = contact.address || base.address || "";
 
-  const phone: string =
-    contact.phone_number ||
-    contact.phone ||
-    "";
-
-  const location: string =
-    contact.address ||
-    base.address ||
-    "";
-
-  // ---------- NAME (parser doesn’t give name, so infer from "about" if possible) ----------
+  // ---------- NAME (try to infer from "about" line) ----------
   let name = "";
   if (typeof summary === "string" && summary.length) {
     // e.g. "Kommu Shiva Gnana Yeseswini is an AI-focused Computer Science undergraduate..."
@@ -129,6 +118,7 @@ function normalizeParserOutput(raw: RawParserOut) {
   const projects = toArray(base.projects);
 
   const normalized = {
+    // personal details
     name,
     firstName,
     lastName,
@@ -137,11 +127,18 @@ function normalizeParserOutput(raw: RawParserOut) {
     location,
     headline: "",
     summary,
+
+    // global skills list from parser
     skills,
+    skillsFromResume: skills, // this is what the review page will read
+
+    // structured sections for later steps / dashboard
     education,
     experience,
     links,
     projects,
+
+    // bookkeeping
     autoFilledFromResume: true,
     rawParserOutput: base,
   };
@@ -170,23 +167,21 @@ export default function UploadResumePage() {
       const fd = new FormData();
       fd.append("resume", f);
 
-      // If onboarding happens after login, this is fine:
+      // if onboarding happens after login, this is fine:
       const res = await CandidateAPI.uploadResume(fd);
-
-      // If onboarding is before login, swap to:
-      // const res = await CandidateAPI.uploadResumePublic(fd);
 
       const payload = res?.data ?? {};
 
-      // DEBUG: see exactly what backend sent
+      // debug logs to inspect once
       console.log("RAW RESUME PAYLOAD:", JSON.stringify(payload, null, 2));
 
       const normalized = normalizeParserOutput(payload);
 
-      // DEBUG: see what we are saving
       console.log("NORMALIZED RESUME DATA:", normalized);
 
+      // merge normalized data into whatever we might already have
       saveDraft(normalized);
+
       router.push("/onboarding/personal-details");
     } catch (err: any) {
       console.error("resume parse error", err);

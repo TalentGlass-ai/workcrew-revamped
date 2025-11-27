@@ -27,7 +27,7 @@ function Connector({
 
   return (
     <div className="relative mx-2 h-10 flex-1">
-      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
+      <div className="absolute top-1/2 -translate-y-1/2 -mt-[21px] h-1 w-full overflow-hidden rounded-full bg-gray-200">
         <div
           className={`h-full transition-[width] duration-500 ease-out ${
             grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"
@@ -58,7 +58,12 @@ function OnboardStepper({
 
           return (
             <React.Fragment key={s.key}>
-              <div className="relative flex shrink-0 basis-[88px] flex-col items-center">
+               <div
+                 className={[
+                   "relative flex shrink-0 basis-[88px] flex-col items-center",
+                    i === 2 ? "-mt-[10px]" : ""   // lift step 3 only
+                ].join(" ")}
+                >
                 <div
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
@@ -353,3 +358,4 @@ export default function PersonalDetailsPage() {
     </main>
   );
 }
+

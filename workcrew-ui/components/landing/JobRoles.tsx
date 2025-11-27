@@ -3,6 +3,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import api from "../../lib/api";
 import GlassPill from "../primitives/tags/GlassPill";
 import LayeredPill, {
   ArrowNortheastIcon,
@@ -30,8 +32,6 @@ type Job = {
   goodToHaveSkills?: string[];
   category?: string;
 };
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
 const companyName = (c: Job["company"]) =>
   (typeof c === "string" ? c : c?.companyName || c?.name) || "—";
@@ -79,7 +79,9 @@ export default function JobRoles() {
 
   // auth: just need to know if candidate is logged in
   const [isCandidateLoggedIn, setIsCandidateLoggedIn] = useState(false);
+
   const [isApplying, setIsApplying] = useState<string | null>(null); // jobId currently applying
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set()); // jobs already applied to
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +96,55 @@ export default function JobRoles() {
     }
 
     checkCandidateAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Hydrate appliedJobs from backend for this candidate
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAppliedJobs() {
+      try {
+        // Use shared axios client → respects NEXT_PUBLIC_API_BASE_URL and /api prefix
+        const res = await api.get("/candidate/jobapply");
+
+        // Try to be robust to response shape
+        const payload = res.data as {
+          result?: any[];
+          appliedJobs?: any[];
+          jobs?: any[];
+        };
+
+        const rawList =
+          payload.result || payload.appliedJobs || payload.jobs || [];
+
+        const ids: string[] = rawList
+          .map((item: any) => {
+            const job = item.job ?? item.jobpost ?? item;
+            if (!job) return null;
+            if (typeof job === "string") return job;
+            return job._id || job.id || null;
+          })
+          .filter(Boolean) as string[];
+
+        if (!cancelled && ids.length > 0) {
+          setAppliedJobs(new Set(ids));
+        }
+      } catch (e: any) {
+        // If unauth / not candidate, just ignore
+        if (axios.isAxiosError(e) && e.response) {
+          const status = e.response.status;
+          if (status === 401 || status === 403) {
+            return;
+          }
+        }
+        console.error("Error fetching applied jobs (home roles)", e);
+      }
+    }
+
+    loadAppliedJobs();
     return () => {
       cancelled = true;
     };
@@ -153,11 +204,9 @@ export default function JobRoles() {
         setLoading(true);
         setErr(null);
 
-        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=24`, {
-          cache: "no-store",
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        // Use JobsAPI helper → goes through axios + baseURL
+        const res = await JobsAPI.list({ page: 1, limit: 24 });
+        const json: any = res.data;
 
         const list: Job[] =
           (Array.isArray(json)
@@ -250,17 +299,67 @@ export default function JobRoles() {
       return;
     }
 
+    const jobIdStr = String(jobId);
+
+    // Already applied – don't spam backend
+    if (appliedJobs.has(jobIdStr)) {
+      alert("You’ve already applied to this job.");
+      return;
+    }
+
     try {
-      setIsApplying(String(jobId));
+      setIsApplying(jobIdStr);
       const res = await JobsAPI.apply({ jobId });
       console.log("Apply response:", res.data);
-      alert("Application submitted!");
-    } catch (err: any) {
-      console.error("Apply failed", err);
+
       const msg =
-        err?.response?.data?.message ||
-        "Failed to apply for this job. Please try again.";
+        res?.data?.message || res?.data?.Message || "Application submitted!";
       alert(msg);
+
+      setAppliedJobs((prev) => {
+        const next = new Set(prev);
+        next.add(jobIdStr);
+        return next;
+      });
+    } catch (err: any) {
+      if (axios.isAxiosError(err) && err.response) {
+        const { status, data } = err.response as {
+          status: number;
+          data?: { message?: string; Message?: string };
+        };
+
+        if (status === 409) {
+          // Already applied — normal case
+          const msg =
+            data?.message ||
+            data?.Message ||
+            "You’ve already applied to this job.";
+          alert(msg);
+
+          setAppliedJobs((prev) => {
+            const next = new Set(prev);
+            next.add(jobIdStr);
+            return next;
+          });
+        } else if (status === 401) {
+          const msg =
+            data?.message ||
+            data?.Message ||
+            "Please log in as a candidate to apply for jobs.";
+          alert(msg);
+          router.push("/login?role=candidate");
+        } else {
+          console.error("Apply failed", err);
+          const msg =
+            data?.message ||
+            data?.Message ||
+            "Failed to apply for this job. Please try again.";
+          alert(msg);
+        }
+      } else {
+        console.error("Apply failed", err);
+        alert("Network error. Please try again.");
+      }
     } finally {
       setIsApplying(null);
     }
@@ -286,7 +385,7 @@ export default function JobRoles() {
           <T
             as="p"
             variant="sub20"
-            className="mx-auto mt-3 max-w-none text-center text-black md:whitespace-nowrap leading-[27px]"
+            className="mx-auto mt-3 max-w-none text-center text.black md:whitespace-nowrap leading-[27px]"
             trackingPct={3}
           >
             From startups to big companies, discover roles that match your
@@ -359,7 +458,7 @@ export default function JobRoles() {
               <button
                 onClick={() => scrollBy(-SCROLL)}
                 aria-label="Previous"
-                className="absolute left-0 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+                className="absolute left-0 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg.white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
                 title="Previous"
               >
                 ‹
@@ -367,7 +466,7 @@ export default function JobRoles() {
               <button
                 onClick={() => scrollBy(SCROLL)}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
+                className="absolute right-2 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg.white ring-1 ring-slate-200 hover:bg-slate-50 md:flex"
                 title="Next"
               >
                 ›
@@ -380,7 +479,7 @@ export default function JobRoles() {
                   overflow-x-auto overflow-y-hidden px-2 pb-2
                   snap-x snap-mandatory touch-pan-x overscroll-x-contain
                   [scrollbar-width:none] [-ms-overflow-style:'none']
-                  [&::-webkit-scrollbar]:hidden
+                  [&::-webkit.scrollbar]:hidden
                 "
               >
                 <div className="flex gap-6">
@@ -389,7 +488,7 @@ export default function JobRoles() {
                     Array.from({ length: 3 }).map((_, i) => (
                       <div
                         key={i}
-                        className="flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg-white/70 p-6 animate-pulse"
+                        className="flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg.white/70 p-6 animate-pulse"
                       >
                         <div className="h-6 w-40 rounded bg-slate-200" />
                         <div className="mt-2 h-4 w-28 rounded bg-slate-200" />
@@ -423,11 +522,12 @@ export default function JobRoles() {
 
                       const jobIdStr = String(job._id || job.id || id);
                       const applyingThis = isApplying === jobIdStr;
+                      const hasApplied = appliedJobs.has(jobIdStr);
 
                       return (
                         <article
                           key={id}
-                          className="flex flex-col flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg-white p-6"
+                          className="flex flex-col flex-none w-[519px] snap-start overflow-hidden rounded-2xl border border-[#E7EAFF] bg.white p-6"
                         >
                           <div className="grid grid-cols-[1fr_auto] items-start gap-3">
                             <div className="min-w-0">
@@ -557,15 +657,22 @@ export default function JobRoles() {
                           <button
                             type="button"
                             onClick={() => handleApplyClick(job)}
-                            className="mt-[20px] w-full rounded-xl bg-[#4D31EC] py-3 text-center hover:brightness-110 disabled:opacity-60"
-                            disabled={applyingThis}
+                            className={`mt-[20px] w-full rounded-xl py-3 text-center transition
+                              ${
+                                hasApplied
+                                  ? "bg-gray-300 text-gray-700 cursor-not-allowed"
+                                  : "bg-[#4D31EC] text-white hover:brightness-110"
+                              }
+                              disabled:opacity-60
+                            `}
+                            disabled={applyingThis || hasApplied}
                           >
-                            <T
-                              as="span"
-                              variant="body16"
-                              className="text-white"
-                            >
-                              {applyingThis ? "Applying..." : "Apply Now"}
+                            <T as="span" variant="body16">
+                              {hasApplied
+                                ? "Applied"
+                                : applyingThis
+                                ? "Applying..."
+                                : "Apply Now"}
                             </T>
                           </button>
                         </article>

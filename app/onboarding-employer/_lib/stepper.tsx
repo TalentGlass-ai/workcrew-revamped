@@ -20,7 +20,7 @@ function Connector({ filled, animate=false }: { filled:boolean; animate?:boolean
   }, [filled, animate]);
 
   return (
-    <div className="mx-2 h-1 flex-1 overflow-hidden rounded-full bg-gray-200">
+    <div className="mx-2 h-1 flex-1 -mt-[21px] overflow-hidden rounded-full bg-gray-200">
       <div className={`h-full transition-[width] duration-500 ease-out ${grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"}`} />
     </div>
   );

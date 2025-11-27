@@ -1,3 +1,4 @@
+// app/login/page.tsx
 "use client";
 
 import Image from "next/image";
@@ -13,6 +14,8 @@ declare global {
   }
 }
 
+// IMPORTANT: set NEXT_PUBLIC_GOOGLE_ID in your Next.js .env.local
+// It should match backend GOOGLE_ID
 const GOOGLE_ID = process.env.NEXT_PUBLIC_GOOGLE_ID || "";
 
 export default function LoginPage() {
@@ -29,12 +32,15 @@ export default function LoginPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [gsiReady, setGsiReady] = React.useState(false);
 
-  // Load Google Identity Services once
+  // Load Google Identity Services once on client
   React.useEffect(() => {
-    if (window.google) {
+    if (typeof window === "undefined") return;
+
+    if (window.google?.accounts?.id) {
       setGsiReady(true);
       return;
     }
+
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
@@ -42,6 +48,8 @@ export default function LoginPage() {
     s.onload = () => setGsiReady(true);
     s.onerror = () => setGsiReady(false);
     document.head.appendChild(s);
+
+    // no cleanup needed for script
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -59,10 +67,12 @@ export default function LoginPage() {
         const data = res.data;
         const token =
           data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+
         if (!token) {
           setError("Login succeeded but token was not returned by the server.");
           return;
         }
+
         if (typeof window !== "undefined") {
           localStorage.setItem("wc_token", token);
           if (data?.candidate) {
@@ -70,16 +80,19 @@ export default function LoginPage() {
             localStorage.removeItem("wc_recruiter");
           }
         }
+
         router.push("/onboarding/upload-resume");
       } else {
         const res = await RecruiterAuth.login({ email: username, password });
         const data = res.data;
         const token =
           data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+
         if (!token) {
           setError("Login succeeded but token was not returned by the server.");
           return;
         }
+
         if (typeof window !== "undefined") {
           localStorage.setItem("wc_token", token);
           if (data?.recruiter) {
@@ -87,6 +100,7 @@ export default function LoginPage() {
             localStorage.removeItem("wc_candidate");
           }
         }
+
         router.push("/onboarding-employer/company");
       }
     } catch (err: any) {
@@ -100,7 +114,7 @@ export default function LoginPage() {
     }
   }
 
-  // Google Sign-In (candidate only, matches controller/googleAuth.js)
+  // Google Sign-In (candidate only, uses existing /google-auth backend)
   async function handleGoogleClick() {
     setError(null);
 
@@ -108,7 +122,13 @@ export default function LoginPage() {
       setError("Google Sign-In is available for candidates only.");
       return;
     }
-    if (!gsiReady || !GOOGLE_ID || !window.google?.accounts?.id) {
+
+    if (!GOOGLE_ID) {
+      setError("Google Client ID is not configured on the frontend.");
+      return;
+    }
+
+    if (!gsiReady || !window.google?.accounts?.id) {
       setError("Google Sign-In is not ready. Please try again.");
       return;
     }
@@ -125,6 +145,8 @@ export default function LoginPage() {
                 resolve();
                 return;
               }
+
+              // This hits backend routes/auth.js -> controller/googleAuth.js
               const r = await CandidateAuth.googleAuth({
                 token: idToken,
                 userType: "candidate",
@@ -133,8 +155,11 @@ export default function LoginPage() {
               const data = r.data;
               const token =
                 data?.token ?? data?.accessToken ?? data?.data?.token ?? null;
+
               if (!token) {
-                setError("Login succeeded but token was not returned by the server.");
+                setError(
+                  "Login succeeded but token was not returned by the server."
+                );
                 resolve();
                 return;
               }
@@ -163,7 +188,7 @@ export default function LoginPage() {
           cancel_on_tap_outside: true,
         });
 
-        // Trigger Google popup
+        // Trigger the popup
         window.google.accounts.id.prompt(() => resolve());
       });
     } catch (e: any) {
@@ -172,8 +197,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen">
-      <section className="relative hidden w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
+    // Left side fixed, right side scrolls
+    <main className="flex h-screen bg-white overflow-hidden">
+      {/* LEFT: static illustration (desktop only) */}
+      <section className="relative hidden h-full w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
         <Image
           src="/workcrew-icon.png"
           alt="WorkCrew.ai"
@@ -223,8 +250,9 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="flex w-full items-center justify-center px-8 py-16 md:w-1/2 md:px-24">
-        <div className="w-full max-w-lg">
+      {/* RIGHT: scrollable login column */}
+      <section className="flex h-full w-full items-center justify-center px-8 py-10 md:w-1/2 md:px-24 overflow-y-auto">
+        <div className="w-full max-w-lg pb-10">
           <T
             as="h1"
             variant="hero48"
@@ -323,7 +351,11 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input name="remember" type="checkbox" className="accent-[#4D31EC]" />
+                <input
+                  name="remember"
+                  type="checkbox"
+                  className="accent-[#4D31EC]"
+                />
                 <T as="span" variant="sub14">
                   Remember me
                 </T>
@@ -338,7 +370,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-12 w-full rounded-full bg-[#4D31EC] text-white transition hover:bg-[#3b25b5] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <T as="span" variant="button">
                 {loading ? "Logging in..." : "Login →"}
@@ -392,7 +424,11 @@ export default function LoginPage() {
             <T as="p" variant="sub14" className="text-center">
               Don’t have an account?{" "}
               <Link
-                href={role === "employer" ? "/onboarding-employer/signup" : "/signup"}
+                href={
+                  role === "employer"
+                    ? "/onboarding-employer/signup"
+                    : "/signup"
+                }
                 className="font-semibold text-[#4D31EC]"
               >
                 <T as="span" variant="sub14" weight={600}>

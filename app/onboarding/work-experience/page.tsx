@@ -4,10 +4,27 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 
-// step label shape we reuse
+// Basic shape for the stepper labels
 type Step = { key: string; label: string };
 
-// tiny connector between the step circles
+// Shape for a single work experience block
+type Experience = {
+  company: string;
+  title: string;
+  start: string;
+  end: string;
+  current: boolean;
+  bullets: string;
+};
+
+const BULLET_PREFIX = "• ";
+const BULLET_HELP = `• Describe your key responsibilities and achievements
+• Use bullet points for better readability
+• Include metrics wherever possible
+• Focus on results and impact
+• Use AI suggestions to optimise your information`;
+
+/* ----------------------- Connector between circles ----------------------- */
 function Connector({
   filled,
   animate = false,
@@ -27,7 +44,7 @@ function Connector({
 
   return (
     <div className="relative mx-2 h-10 flex-1">
-      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
+      <div className="absolute top-1/2 -mt-[21px] h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
         <div
           className={`h-full transition-[width] duration-500 ease-out ${
             grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"
@@ -38,7 +55,7 @@ function Connector({
   );
 }
 
-// same stepper as personal / education / summary
+/* ----------------------------- Stepper UI -------------------------------- */
 function OnboardStepper({
   steps,
   active,
@@ -58,7 +75,12 @@ function OnboardStepper({
 
           return (
             <React.Fragment key={s.key}>
-              <div className="relative flex shrink-0 basis-[88px] flex-col items-center">
+              <div
+                className={[
+                  "relative flex shrink-0 basis-[88px] flex-col items-center",
+                  i === 2 ? "-mt-[10px]" : "", // only lift step 3
+                ].join(" ")}
+              >
                 <div
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
@@ -92,7 +114,7 @@ function OnboardStepper({
   );
 }
 
-// helpers to persist the draft across steps
+/* --------------------------- Draft helpers -------------------------------- */
 function loadDraft<T = any>(): T {
   if (typeof window === "undefined") return {} as T;
   try {
@@ -101,13 +123,14 @@ function loadDraft<T = any>(): T {
     return {} as T;
   }
 }
+
 function saveDraft(patch: Record<string, any>) {
   if (typeof window === "undefined") return;
   const cur = loadDraft();
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
 }
 
-// keep this in sync with other onboarding pages
+/* ----------------------------- Step list ---------------------------------- */
 const STEPS: Step[] = [
   { key: "personal", label: "Personal details" },
   { key: "work", label: "Work experience" },
@@ -117,33 +140,133 @@ const STEPS: Step[] = [
 
 export default function WorkExperiencePage() {
   const router = useRouter();
-  const draft = loadDraft();
+  const draft = loadDraft<{ exp?: Experience; experiences?: Experience[] }>();
 
-  // form state seeded from whatever we already have
-  const [exp, setExp] = React.useState({
-    company: draft.exp?.company || "",
-    title: draft.exp?.title || "",
-    start: draft.exp?.start || "",
-    end: draft.exp?.end || "",
-    current: draft.exp?.current || false,
-    bullets: draft.exp?.bullets || "",
+  // Initialise from draft: prefer the new array, fall back to legacy single exp
+  const [experiences, setExperiences] = React.useState<Experience[]>(() => {
+    if (draft.experiences && draft.experiences.length > 0) {
+      return draft.experiences;
+    }
+    if (draft.exp) {
+      return [draft.exp];
+    }
+    return [
+      {
+        company: "",
+        title: "",
+        start: "",
+        end: "",
+        current: false,
+        bullets: "",
+      },
+    ];
   });
 
-  // flag to let the connector animate before we go next
   const [advancing, setAdvancing] = React.useState(false);
+  const activeStep = 1; // 0=Personal, 1=Work, 2=Education, 3=Summary
 
-  // 1 = work step in the flow
-  const activeStep = 1;
+  // Helper to update a single experience
+  function updateExperience(index: number, patch: Partial<Experience>) {
+    setExperiences((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...patch };
+      return next;
+    });
+  }
 
-  // end date can be empty only if "current" is checked
-  const requiredFilled =
-    [exp.company, exp.title, exp.start, exp.bullets].every(
+  // Auto-bullet behaviour: every Enter adds a new "• "
+  function handleBulletsKeyDown(
+    index: number,
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    setExperiences((prev) => {
+      const next = [...prev];
+      const currentText = next[index].bullets || "";
+
+      const needsInitialBullet =
+        currentText.trim().length === 0 ||
+        !currentText.startsWith(BULLET_PREFIX);
+
+      const addition = needsInitialBullet
+        ? BULLET_PREFIX
+        : `\n${BULLET_PREFIX}`;
+
+      next[index] = {
+        ...next[index],
+        bullets: currentText + addition,
+      };
+      return next;
+    });
+  }
+
+  // When the user focuses an empty box, start them with the first bullet
+  function handleBulletsFocus(index: number) {
+    setExperiences((prev) => {
+      const next = [...prev];
+      if (!next[index].bullets.trim()) {
+        next[index] = {
+          ...next[index],
+          bullets: BULLET_PREFIX,
+        };
+      }
+      return next;
+    });
+  }
+
+  // AI suggestion handler – currently drops in the helper text.
+  // This is the place to call your backend AI endpoint.
+  async function handleAISuggestion(index: number) {
+    // TODO (backend hook): replace this with a fetch() call to your AI service.
+    // Example (pseudo):
+    // const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/ai/work-experience`, { ... })
+    // const data = await resp.json();
+    // const suggestion = data.text;
+    const suggestion = BULLET_HELP; // fallback: static helper text
+
+    setExperiences((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        bullets: suggestion,
+      };
+      return next;
+    });
+  }
+
+  // Basic validity check – make sure at least the first card is filled in
+  const first = experiences[0];
+  const firstIsValid =
+    [first.company, first.title, first.start, first.bullets].every(
       (v) => v.trim().length > 0
-    ) && (exp.current || exp.end.trim().length > 0);
+    ) && (first.current || first.end.trim().length > 0);
+
+  function addExperience() {
+    setExperiences((prev) => [
+      ...prev,
+      {
+        company: "",
+        title: "",
+        start: "",
+        end: "",
+        current: false,
+        bullets: "",
+      },
+    ]);
+  }
+
+  function persistDraft() {
+    saveDraft({
+      exp: experiences[0],
+      experiences,
+    });
+  }
 
   function next() {
-    if (!requiredFilled || advancing) return;
-    saveDraft({ exp });
+    if (!firstIsValid || advancing) return;
+    persistDraft();
     setAdvancing(true);
     setTimeout(() => {
       router.push("/onboarding/education");
@@ -151,13 +274,18 @@ export default function WorkExperiencePage() {
   }
 
   function prev() {
-    saveDraft({ exp });
+    persistDraft();
     router.back();
   }
 
+  function skip() {
+    persistDraft();
+    router.push("/onboarding/education");
+  }
+
   return (
-    <main className="min-h-screen flex bg-white">
-      {/* left side stays fixed on desktop and frames the step */}
+    <main className="flex min-h-screen bg-white">
+      {/* Left rail: static illustration + copy */}
       <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
         <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <Image
@@ -170,8 +298,9 @@ export default function WorkExperiencePage() {
           />
 
           <div className="mt-10 flex h-full flex-col items-center justify-center space-y-6 md:items-start">
+            {/* NOTE: file on disk is `work experience.png` */}
             <Image
-              src="/work-experience.png"
+              src="/work%20experience.png"
               alt="Work experience illustration"
               width={180}
               height={180}
@@ -191,7 +320,7 @@ export default function WorkExperiencePage() {
           </div>
 
           <button
-            onClick={() => router.push("/onboarding/education")}
+            onClick={skip}
             className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
           >
             Skip for now
@@ -199,10 +328,9 @@ export default function WorkExperiencePage() {
         </div>
       </section>
 
-      {/* right side scrolls with the form */}
+      {/* Right side: stepper + work experience cards */}
       <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          {/* stepper at the top */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
             <OnboardStepper
               steps={STEPS}
@@ -215,178 +343,200 @@ export default function WorkExperiencePage() {
             Work experience
           </h2>
 
-          {/* small tip bar */}
           <div className="mx-auto mb-8 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
-              Use bullet points and focus on impact. Numbers like “Increased
-              retention by 20%” help a lot.
+              Use bullet points and focus on impact. Numbers like &ldquo;Increased
+              retention by 20%&rdquo; help a lot.
             </p>
           </div>
 
-          {/* main form area */}
-          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Company name <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={exp.company}
-                onChange={(e) =>
-                  setExp({ ...exp, company: e.target.value })
-                }
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: WorkCrew.ai"
-              />
-            </div>
+          {/* Experience cards */}
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
+            {experiences.map((exp, index) => (
+              <div
+                key={index}
+                className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+              >
+                <h3 className="mb-4 text-sm font-semibold text-gray-800 md:text-base">
+                  Experience {index + 1}
+                </h3>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Job title <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={exp.title}
-                onChange={(e) => setExp({ ...exp, title: e.target.value })}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: Software developer"
-              />
-            </div>
-
-            {/* start date */}
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Start date <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Company name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={exp.company}
+                      onChange={(e) =>
+                        updateExperience(index, { company: e.target.value })
+                      }
+                      className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: WorkCrew.ai"
                     />
-                  </svg>
-                </span>
-                <input
-                  value={exp.start}
-                  onChange={(e) =>
-                    setExp({ ...exp, start: e.target.value })
-                  }
-                  className="w-full rounded-lg border px-4 py-3 pl-10 outline-none focus:border-[#4D31EC]"
-                  placeholder="DD-MM-YY"
-                />
-              </div>
-            </div>
+                  </div>
 
-            {/* end date and current toggle */}
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                End date{" "}
-                {exp.current ? "" : (
-                  <span className="text-red-500">*</span>
-                )}
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Job title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={exp.title}
+                      onChange={(e) =>
+                        updateExperience(index, { title: e.target.value })
+                      }
+                      className="w-full rounded-lg border px-4 py-3 text-sm outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: Software developer"
                     />
-                  </svg>
-                </span>
-                <input
-                  disabled={exp.current}
-                  value={exp.end}
-                  onChange={(e) => setExp({ ...exp, end: e.target.value })}
-                  className="w-full rounded-lg border px-4 py-3 pl-10 outline-none focus:border-[#4D31EC] disabled:bg-gray-100"
-                  placeholder="DD-MM-YY"
-                />
-              </div>
-              <label className="mt-2 flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="accent-[#4D31EC]"
-                  checked={exp.current}
-                  onChange={(e) =>
-                    setExp({ ...exp, current: e.target.checked })
-                  }
-                />
-                I currently work here
-              </label>
-            </div>
+                  </div>
 
-            {/* bullets textarea */}
-            <div className="md:col-span-2">
-              <div className="mb-1 flex items-center justify-between">
-                <label className="block text-sm font-medium">
-                  Responsibilities &amp; achievements{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <button
-                  type="button"
-                  className="text-sm font-medium text-[#4D31EC] hover:underline"
-                  onClick={() =>
-                    setExp((e) => ({
-                      ...e,
-                      bullets:
-                        e.bullets ||
-                        `• Describe your key responsibilities and achievements
-• Use bullet points for better readability
-• Include metrics wherever possible
-• Focus on results and impact
-• Use AI suggestions to optimise your information`,
-                    }))
-                  }
-                >
-                  + AI suggestion
-                </button>
-              </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Start date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </span>
+                      <input
+                        value={exp.start}
+                        onChange={(e) =>
+                          updateExperience(index, { start: e.target.value })
+                        }
+                        className="w-full rounded-lg border px-4 py-3 pl-10 text-sm outline-none focus:border-[#4D31EC]"
+                        placeholder="DD-MM-YY"
+                      />
+                    </div>
+                  </div>
 
-              <textarea
-                rows={6}
-                value={exp.bullets}
-                onChange={(e) =>
-                  setExp({ ...exp, bullets: e.target.value })
-                }
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder={`• Describe your key responsibilities and achievements
-• Use bullet points for better readability
-• Include metrics wherever possible
-• Focus on results and impact
-• Use AI suggestions to optimise your information`}
-              />
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      End date {!exp.current && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </span>
+                      <input
+                        disabled={exp.current}
+                        value={exp.end}
+                        onChange={(e) =>
+                          updateExperience(index, { end: e.target.value })
+                        }
+                        className="w-full rounded-lg border px-4 py-3 pl-10 text-sm outline-none focus:border-[#4D31EC] disabled:bg-gray-100"
+                        placeholder="DD-MM-YY"
+                      />
+                    </div>
+                    <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 md:text-sm">
+                      <input
+                        type="checkbox"
+                        className="accent-[#4D31EC]"
+                        checked={exp.current}
+                        onChange={(e) =>
+                          updateExperience(index, {
+                            current: e.target.checked,
+                            end: e.target.checked ? "" : exp.end,
+                          })
+                        }
+                      />
+                      I currently work here
+                    </label>
+                  </div>
+                </div>
+
+                {/* Responsibilities / achievements */}
+                <div className="mt-6">
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="block text-sm font-medium">
+                      Responsibilities &amp; achievements{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                       type="button"
+                       onClick={() => handleAISuggestion(index)}
+                       className="flex items-center gap-1 text-xs font-semibold text-[#4D31EC] hover:underline"
+                    >
+                    <Image
+                       src="/AIsuggestions_icon.png"
+                       alt="AI Suggestion"
+                      width={10}
+                      height={10}
+                      className="inline-block"
+                    />
+                     AI suggestion
+                   </button>
+
+                  </div>
+
+                  <textarea
+                    rows={6}
+                    value={exp.bullets}
+                    onChange={(e) =>
+                      updateExperience(index, { bullets: e.target.value })
+                    }
+                    onKeyDown={(e) => handleBulletsKeyDown(index, e)}
+                    onFocus={() => handleBulletsFocus(index)}
+                    className="w-full rounded-lg border px-4 py-3 text-sm outline-none placeholder:text-gray-400 focus:border-[#4D31EC]"
+                    placeholder={BULLET_HELP}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* Add another experience – slightly narrower than the card */}
+            <div className="mt-2 flex w-full justify-center">
+              <button
+                type="button"
+                onClick={addExperience}
+                className="w-[90%] max-w-2xl rounded-xl border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
+              >
+                Add another experience
+              </button>
             </div>
           </div>
 
-          {/* navigation buttons */}
+          {/* Navigation controls */}
           <div className="mt-8 flex justify-between">
             <button
               onClick={prev}
-              className="rounded-full border px-6 py-3 hover:border-[#4D31EC]"
+              className="rounded-full border px-6 py-3 text-sm hover:border-[#4D31EC]"
             >
               ← Previous
             </button>
             <button
               onClick={next}
-              disabled={!requiredFilled || advancing}
+              disabled={!firstIsValid || advancing}
               className={[
-                "rounded-full px-8 py-3 font-semibold text-white",
-                requiredFilled && !advancing
+                "rounded-full px-8 py-3 text-sm font-semibold text-white",
+                firstIsValid && !advancing
                   ? "bg-[#4D31EC] hover:bg-[#3b25b5]"
                   : "cursor-not-allowed bg-gray-300",
               ].join(" ")}

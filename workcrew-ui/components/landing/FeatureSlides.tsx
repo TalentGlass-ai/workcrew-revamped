@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import T from "../primitives/Typography";
+
 export type FeatureSlide = {
   id?: "resume" | "matching" | "assessments" | "interviews" | string;
   title: string;
@@ -22,7 +23,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "Smart resume parsing",
     copy:
       "AI smartly extracts and organizes your skills, experience, and achievements from any resume format.",
-    ctaHref: "/login?type=candidate",
+    ctaHref: "/login?role=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -30,7 +31,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "AI job matching",
     copy:
       "Get matched with jobs that truly fit your skills, experience and career goals. Quality over quantity, always.",
-    ctaHref: "/login?type=candidate",
+    ctaHref: "/login?role=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -38,7 +39,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "Structured assessments",
     copy:
       "AI assessments accurately measure your strengths using data-driven, personalized evaluations.",
-    ctaHref: "/login?type=candidate",
+    ctaHref: "/login?role=candidate",
     ctaLabel: "Try it out",
   },
   {
@@ -46,7 +47,7 @@ const SLIDES_DEFAULT: FeatureSlide[] = [
     title: "AI interviews",
     copy:
       "AI interviews simulate real-world questions to evaluate your communication, problem-solving, and role-specific skills.",
-    ctaHref: "/login?type=candidate",
+    ctaHref: "/login?role=candidate",
     ctaLabel: "Try it out",
   },
 ];
@@ -86,7 +87,7 @@ export default function FeatureSlides({
               variant="body16"
               trackingPct={3}
               className="how-subtitle mx-auto mt-4 max-w-[800px] text-slate-700"
-              lineHeightPx={24} /* ~leading-6 */
+              lineHeightPx={24}
             >
               We provide clarity, efficiency, and intelligence at every stage of the hiring process.
               Whether you are changing careers or expanding your team, we make each step simpler.
@@ -110,13 +111,22 @@ export default function FeatureSlides({
                   <div className="flex flex-col justify-center text-white">
                     <FeatureIcon index={i} />
 
-                    {/* slide title — now uses our 28px token so designers don't fight classes */}
-                    <T as="h3" variant="title28" className="mb-3 text-white" weight={600} lineHeightPx={34}>
+                    <T
+                      as="h3"
+                      variant="title28"
+                      className="mb-3 text-white"
+                      weight={600}
+                      lineHeightPx={34}
+                    >
                       {s.title}
                     </T>
 
-                    {/* blurb — sub14 + exact leading instead of hand-rolled sizes */}
-                    <T as="p" variant="sub14" className="max-w-[480px] text-white/90" lineHeightPx={24}>
+                    <T
+                      as="p"
+                      variant="sub14"
+                      className="max-w-[480px] text-white/90"
+                      lineHeightPx={24}
+                    >
                       {s.copy}
                     </T>
                   </div>
@@ -125,7 +135,7 @@ export default function FeatureSlides({
                   <div className="mt-8 flex flex-col items-center justify-center gap-6 md:mt-0">
                     <Illustration key={s.id} slide={s} />
                     <CtaElliptical
-                      href={s.ctaHref ?? "/login?type=candidate"}
+                      href={s.ctaHref ?? "/login?role=candidate"}
                       label={s.ctaLabel ?? "Try it out"}
                     />
                   </div>
@@ -140,13 +150,15 @@ export default function FeatureSlides({
               />
             </div>
 
-            {/* pagination dots — simple and accessible */}
+            {/* pagination dots */}
             <div className="mt-4 flex justify-center gap-2">
               {slides.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setI(idx)}
-                  className={`h-1.5 rounded-full transition ${idx === i ? "w-8 bg-[#4D31EC]" : "w-3 bg-slate-300"}`}
+                  className={`h-1.5 rounded-full transition ${
+                    idx === i ? "w-8 bg-[#4D31EC]" : "w-3 bg-slate-300"
+                  }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
@@ -172,11 +184,29 @@ function NavButton({
   return (
     <button aria-label={ariaLabel} onClick={onClick} className={`p-1 ${className}`}>
       {direction === "left" ? (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#4D31EC"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M15 18l-6-6 6-6" />
         </svg>
       ) : (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4D31EC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#4D31EC"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M9 6l6 6-6 6" />
         </svg>
       )}
@@ -191,7 +221,7 @@ function CtaElliptical({ href, label }: { href: string; label: string }) {
     <div className="grid h-[67px] w-[169px] place-items-center rounded-full bg-[rgba(196,211,239,0.43)]">
       <div className="grid h-[59px] w-[159px] place-items-center rounded-full bg-[#E7E3FF]">
         <button
-          onClick={() => router.push(href || "/login?type=candidate")}
+          onClick={() => router.push(href || "/login?role=candidate")}
           className="inline-flex h-[50px] w-[149px] items-center justify-center gap-2 rounded-full bg-white text-[#4D31EC] shadow-[0_10px_24px_rgba(91,75,255,0.20)] transition hover:brightness-105 active:translate-y-[1px]"
         >
           <ArrowNortheast />
@@ -204,7 +234,7 @@ function CtaElliptical({ href, label }: { href: string; label: string }) {
   );
 }
 
-/* tiny icon chip that changes by slide index — keeps the visual cue consistent */
+/* tiny icon chip that changes by slide index */
 function FeatureIcon({ index }: { index: number }) {
   const stroke = "currentColor";
   const size = 24;
@@ -292,18 +322,21 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
     );
   }
 
-  /* fallback card — still looks product-y so design doesn’t collapse in demos */
   return (
-    <div className="w-[458px] max-w-full rounded-[9px] bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
+    <div className="w-[458px] max-w-full rounded-[9px] bg.white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.20)]">
       <div className="space-y-3 rounded-[8px] border border-slate-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <T as="div" variant="sub14" weight={600} className="text-slate-700">TechCorp</T>
+            <T as="div" variant="sub14" weight={600} className="text-slate-700">
+              TechCorp
+            </T>
             <T as="div" variant="sub14" className="text-slate-500" lineHeightPx={20}>
               Senior software engineer | Remote
             </T>
           </div>
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Now</span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
+            Now
+          </span>
         </div>
 
         <button className="w-full rounded bg-[#4D31EC] py-2">
@@ -313,7 +346,9 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
         </button>
 
         <div className="pt-2">
-          <T as="div" variant="sub14" weight={600} className="text-slate-700">TechViz</T>
+          <T as="div" variant="sub14" weight={600} className="text-slate-700">
+            TechViz
+          </T>
           <T as="div" variant="sub14" className="text-slate-500" lineHeightPx={20}>
             Backend engineer | Bangalore, India
           </T>
@@ -323,7 +358,6 @@ function Illustration({ slide }: { slide: FeatureSlide }) {
   );
 }
 
-/* tiny arrow for buttons — keeping props lightweight */
 function ArrowNortheast() {
   return (
     <svg

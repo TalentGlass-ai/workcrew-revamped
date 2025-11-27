@@ -3,12 +3,14 @@
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import axios from "axios";
 import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
 import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
 import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
 import T from "../../workcrew-ui/components/primitives/Typography";
 import bg from "../../public/bg.png";
 import { JobsAPI } from "../../workcrew-ui/lib/endpoints";
+import api from "../../workcrew-ui/lib/api"; // ✅ NEW
 
 /*Types */
 type Job = {
@@ -26,7 +28,7 @@ type Job = {
     | null;
   tags?: string[];
   skills?: string[];
-  mustHaveSkills?: string[]; // legacy field we keep and use
+  mustHaveSkills?: string[];
 
   experienceLevel?: string;
   category?: string;
@@ -296,10 +298,12 @@ const FilterBlock: React.FC<{
 };
 
 /* Job card */
-const JobCard: React.FC<{ job: Job; onApply: (job: Job) => void }> = ({
-  job,
-  onApply,
-}) => {
+const JobCard: React.FC<{
+  job: Job;
+  onApply: (job: Job) => void;
+  isApplying: boolean;
+  isApplied: boolean;
+}> = ({ job, onApply, isApplying, isApplied }) => {
   const [expanded, setExpanded] = useState(false);
   const skills = normalizeSkills(job);
   const desc = job.description || "No description provided.";
@@ -381,10 +385,16 @@ const JobCard: React.FC<{ job: Job; onApply: (job: Job) => void }> = ({
 
         <div className="shrink-0">
           <button
-            className="bg-[#4D31EC] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#3b25b5] whitespace-nowrap"
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap
+              ${
+                isApplied
+                  ? "bg-gray-300 text-gray-700 cursor-not-allowed"
+                  : "bg-[#4D31EC] text-white hover:bg-[#3b25b5]"
+              }`}
             onClick={() => onApply(job)}
+            disabled={isApplying || isApplied}
           >
-            Apply Now
+            {isApplied ? "Applied" : isApplying ? "Applying..." : "Apply Now"}
           </button>
         </div>
       </div>
@@ -446,40 +456,147 @@ export default function FindJobsPage() {
   const PAGE_SIZE = 6;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+
+  /* ==== Hydrate appliedJobs from backend for this candidate ==== */
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAppliedJobs() {
+      try {
+        // ✅ use shared axios client (baseURL + /api + token)
+        const res = await api.get("/candidate/jobapply");
+
+        const payload = res.data as {
+          result?: any[];
+          appliedJobs?: any[];
+          jobs?: any[];
+          data?: any[];
+        };
+
+        const rawList =
+          payload.result ||
+          payload.appliedJobs ||
+          payload.jobs ||
+          payload.data ||
+          [];
+
+        const ids: string[] = rawList
+          .map((item: any) => {
+            const job = item.job ?? item.jobpost ?? item;
+            if (!job) return null;
+
+            if (typeof job === "string") return job;
+            return job._id || job.id || null;
+          })
+          .filter(Boolean) as string[];
+
+        if (!cancelled && ids.length > 0) {
+          setAppliedJobs(new Set(ids));
+        }
+      } catch (e: any) {
+        if (axios.isAxiosError(e) && e.response) {
+          const status = e.response.status;
+          // Not logged in / not candidate → silently ignore
+          if (status === 401 || status === 403) {
+            return;
+          }
+        }
+        console.error("Error fetching applied jobs", e);
+      }
+    }
+
+    loadAppliedJobs();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function applyToJob(job: Job) {
-  try {
-    const jobId = job._id || job.id;
-    if (!jobId) {
-      console.error("No job ID found on job object", job);
-      alert("Unable to apply: missing job ID.");
-      return;
+    try {
+      const jobId = job._id || job.id;
+      if (!jobId) {
+        // This is a real unexpected error, log it
+        console.error("No job ID found on job object", job);
+        alert("Unable to apply: missing job ID.");
+        return;
+      }
+
+      const jobIdStr = String(jobId);
+
+      if (appliedJobs.has(jobIdStr)) {
+        alert("You’ve already applied to this job.");
+        return;
+      }
+
+      setApplyingJobId(jobIdStr);
+
+      const res = await JobsAPI.apply({ jobId });
+      console.log("Apply response:", res.data);
+
+      const msg =
+        res?.data?.message || res?.data?.Message || "Application submitted!";
+      alert(msg);
+
+      // mark as applied so button becomes 'Applied' and disabled
+      setAppliedJobs((prev) => {
+        const next = new Set(prev);
+        next.add(jobIdStr);
+        return next;
+      });
+    } catch (err: any) {
+      if (axios.isAxiosError(err) && err.response) {
+        const { status, data } = err.response as {
+          status: number;
+          data?: { message?: string; Message?: string };
+        };
+
+        if (status === 401) {
+          // Not logged in – normal case, no scary console error
+          const msg =
+            data?.message ||
+            data?.Message ||
+            "Please log in as a candidate to apply for jobs.";
+          alert(msg);
+          return;
+        }
+
+        if (status === 409) {
+          // Already applied – also normal, no console.error
+          const msg =
+            data?.message ||
+            data?.Message ||
+            "You’ve already applied to this job.";
+          alert(msg);
+
+          const jobId = job._id || job.id;
+          if (jobId) {
+            const jobIdStr = String(jobId);
+            setAppliedJobs((prev) => {
+              const next = new Set(prev);
+              next.add(jobIdStr);
+              return next;
+            });
+          }
+          return;
+        }
+
+        // Only log truly unexpected server errors
+        console.error("Apply failed", err);
+        const msg =
+          data?.message ||
+          data?.Message ||
+          "Failed to apply for this job. Please try again.";
+        alert(msg);
+      } else {
+        console.error("Apply failed", err);
+        alert("Network error. Please try again.");
+      }
+    } finally {
+      setApplyingJobId(null);
     }
-
-    const res = await JobsAPI.apply({ jobId });
-    console.log("Apply response:", res.data);
-
-    const msg =
-      res?.data?.message ||
-      res?.data?.Message ||
-      "Application submitted!";
-    alert(msg);
-  } catch (err: any) {
-    console.error("Apply failed", err);
-    const status = err?.response?.status;
-    const msgFromServer = err?.response?.data?.message;
-
-    if (status === 401) {
-      alert("Please log in as a candidate to apply for jobs.");
-      return;
-    }
-
-    alert(
-      msgFromServer ||
-        "Failed to apply for this job. Please try again."
-    );
   }
-}
-
 
   /* ==== Fetch with server-side filters ==== */
   useEffect(() => {
@@ -511,7 +628,11 @@ export default function FindJobsPage() {
           _id: j._id,
           id:
             j.id ??
+
+
             j._id ??
+
+
             `${j.title ?? "job"}|${companyName(j.company)}|${j.location}|1-${i}`,
           title: j.title ?? "Untitled Role",
           description: j.description ?? "",
@@ -543,7 +664,7 @@ export default function FindJobsPage() {
       cancelled = true;
     };
     // NOTE: locationText is intentionally NOT a dependency (it's client-side partial)
-  }, [API, search, fType, fCategory, selectedChips, fCities, fSkills]);
+  }, [search, fType, fCategory, selectedChips, fCities, fSkills]);
 
   /*  Dynamic options (keep original casing) */
   const dynamicTypeOpts: Option[] = useMemo(() => {
@@ -618,7 +739,8 @@ export default function FindJobsPage() {
         let norm: "startup" | "mid" | "big" | null = null;
         if (typeof sizeVal === "string") {
           const s = sizeVal.toLowerCase();
-          if (/start/.test(s) || /\b(1-50|1–50|<\s*50)\b/.test(s)) norm = "startup";
+          if (/start/.test(s) || /\b(1-50|1–50|<\s*50)\b/.test(s))
+            norm = "startup";
           else if (/\b(51-500|51–500|100-1000|100–1000)\b/.test(s)) norm = "mid";
           else if (/big|enterprise|>\s*1000|1000\+/.test(s)) norm = "big";
         } else if (typeof sizeVal === "number") {
@@ -881,17 +1003,25 @@ export default function FindJobsPage() {
                 )}
 
                 {!loading &&
-                  displayJobs.slice(0, visibleCount).map((job) => (
-                    <JobCard
-                      key={
-                        job._id ||
+                  displayJobs.slice(0, visibleCount).map((job) => {
+                    const jobIdStr = String(
+                      job._id ||
                         job.id ||
                         `${job.title}-${companyName(job.company)}`
-                      }
-                      job={job}
-                      onApply={applyToJob}
-                    />
-                  ))}
+                    );
+                    const isApplied = appliedJobs.has(jobIdStr);
+                    const isApplying = applyingJobId === jobIdStr;
+
+                    return (
+                      <JobCard
+                        key={jobIdStr}
+                        job={job}
+                        onApply={applyToJob}
+                        isApplied={isApplied}
+                        isApplying={isApplying}
+                      />
+                    );
+                  })}
 
                 {!loading && displayJobs.length > visibleCount && (
                   <div className="flex justify-center pt-2">
@@ -913,3 +1043,5 @@ export default function FindJobsPage() {
     </>
   );
 }
+
+console.log("API Base URL:", API);

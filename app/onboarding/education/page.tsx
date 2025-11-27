@@ -7,6 +7,14 @@ import React from "react";
 // step label shape we reuse
 type Step = { key: string; label: string };
 
+type EduEntry = {
+  institution: string;
+  degree: string;
+  field: string;
+  year: string;
+  gpa: string;
+};
+
 // tiny connector between the step circles
 function Connector({
   filled,
@@ -27,7 +35,7 @@ function Connector({
 
   return (
     <div className="relative mx-2 h-10 flex-1">
-      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
+      <div className="absolute top-1/2 -mt-[21px] h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
         <div
           className={`h-full transition-[width] duration-500 ease-out ${
             grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"
@@ -58,7 +66,12 @@ function OnboardStepper({
 
           return (
             <React.Fragment key={s.key}>
-              <div className="relative flex shrink-0 basis-[88px] flex-col items-center">
+              <div
+                className={[
+                  "relative flex shrink-0 basis-[88px] flex-col items-center",
+                  i === 2 ? "-mt-[10px]" : "", // lift step 3 only
+                ].join(" ")}
+              >
                 <div
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
@@ -119,13 +132,32 @@ export default function EducationPage() {
   const router = useRouter();
   const draft = loadDraft();
 
-  // form state coming from the draft if it exists
-  const [edu, setEdu] = React.useState({
-    institution: draft.edu?.institution || "",
-    degree: draft.edu?.degree || "",
-    field: draft.edu?.field || "",
-    year: draft.edu?.year || "",
-    gpa: draft.edu?.gpa || "",
+  // normalise whatever is in localStorage into an array of education entries
+  const [educations, setEducations] = React.useState<EduEntry[]>(() => {
+    const fromArray = Array.isArray(draft.educations)
+      ? draft.educations
+      : null;
+
+    if (fromArray && fromArray.length > 0) {
+      return fromArray.map((e: Partial<EduEntry>) => ({
+        institution: e.institution || "",
+        degree: e.degree || "",
+        field: e.field || "",
+        year: e.year || "",
+        gpa: e.gpa || "",
+      }));
+    }
+
+    // fallback: older draft shape that only had a single `edu` object
+    const single: EduEntry = {
+      institution: draft.edu?.institution || "",
+      degree: draft.edu?.degree || "",
+      field: draft.edu?.field || "",
+      year: draft.edu?.year || "",
+      gpa: draft.edu?.gpa || "",
+    };
+
+    return [single];
   });
 
   // flag to let the connector animate before we move to next page
@@ -134,14 +166,57 @@ export default function EducationPage() {
   // 2 = education in the step list
   const activeStep = 2;
 
-  // gpa is optional, the rest should not be empty
-  const requiredFilled = [edu.institution, edu.degree, edu.field, edu.year].every(
-    (v) => v.trim().length > 0
+  // internal helpers: decide when a block is "empty" vs "complete"
+  const isEmptyEdu = (e: EduEntry) =>
+    !e.institution && !e.degree && !e.field && !e.year && !e.gpa;
+
+  const isCompleteEdu = (e: EduEntry) =>
+    [e.institution, e.degree, e.field, e.year].every(
+      (v) => v.trim().length > 0
+    );
+
+  // at least one block should be fully filled,
+  // and we don't allow half-filled blocks
+  const hasAtLeastOneComplete = educations.some(isCompleteEdu);
+  const allBlocksValid = educations.every(
+    (e) => isEmptyEdu(e) || isCompleteEdu(e)
   );
+  const requiredFilled = hasAtLeastOneComplete && allBlocksValid;
+
+  function handleChange(
+    index: number,
+    field: keyof EduEntry,
+    value: string
+  ) {
+    setEducations((prev) =>
+      prev.map((e, i) => (i === index ? { ...e, [field]: value } : e))
+    );
+  }
+
+  function addEducation() {
+    setEducations((prev) => [
+      ...prev,
+      { institution: "", degree: "", field: "", year: "", gpa: "" },
+    ]);
+  }
 
   function next() {
     if (!requiredFilled || advancing) return;
-    saveDraft({ edu });
+
+    // keep both new (array) and old (first item) shapes in draft
+    const first = educations[0] || {
+      institution: "",
+      degree: "",
+      field: "",
+      year: "",
+      gpa: "",
+    };
+
+    saveDraft({
+      educations,
+      edu: first,
+    });
+
     setAdvancing(true);
     setTimeout(() => {
       router.push("/onboarding/professional-summary");
@@ -149,12 +224,23 @@ export default function EducationPage() {
   }
 
   function prev() {
-    saveDraft({ edu });
+    const first = educations[0] || {
+      institution: "",
+      degree: "",
+      field: "",
+      year: "",
+      gpa: "",
+    };
+
+    saveDraft({
+      educations,
+      edu: first,
+    });
     router.back();
   }
 
   return (
-    <main className="min-h-screen flex bg-white">
+    <main className="flex min-h-screen bg-white">
       {/* left side stays fixed on desktop and gives the story */}
       <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
         <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
@@ -218,71 +304,104 @@ export default function EducationPage() {
           <div className="mx-auto mb-8 w-full max-w-3xl rounded-xl bg-[#EEEAFE] px-4 py-3 text-[#4D31EC]">
             <p className="text-sm">
               List your highest degree first. Include relevant coursework,
-              honors, or academic achievements.
+              honours, or academic achievements.
             </p>
           </div>
 
-          {/* main form area */}
-          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium">
-                Institution name <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={edu.institution}
-                onChange={(e) =>
-                  setEdu({ ...edu, institution: e.target.value })
-                }
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: National Institute of Technology"
-              />
-            </div>
+          {/* repeated education blocks */}
+          <div className="space-y-8">
+            {educations.map((edu, index) => (
+              <div
+                key={index}
+                className="mx-auto w-full max-w-3xl rounded-2xl border border-gray-100 bg-white px-4 py-5 shadow-sm"
+              >
+                <p className="mb-3 text-sm font-semibold text-gray-700">
+                  {`Education ${index + 1}`}
+                </p>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-medium">
+                      Institution name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={edu.institution}
+                      onChange={(e) =>
+                        handleChange(index, "institution", e.target.value)
+                      }
+                      className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: National Institute of Technology"
+                    />
+                  </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Degree <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={edu.degree}
-                onChange={(e) => setEdu({ ...edu, degree: e.target.value })}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: Bachelor of Science"
-              />
-            </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Degree <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={edu.degree}
+                      onChange={(e) =>
+                        handleChange(index, "degree", e.target.value)
+                      }
+                      className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: Bachelor of Science"
+                    />
+                  </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Field of study <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={edu.field}
-                onChange={(e) => setEdu({ ...edu, field: e.target.value })}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: Computer science"
-              />
-            </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Field of study <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={edu.field}
+                      onChange={(e) =>
+                        handleChange(index, "field", e.target.value)
+                      }
+                      className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: Computer science"
+                    />
+                  </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Graduation year <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={edu.year}
-                onChange={(e) => setEdu({ ...edu, year: e.target.value })}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: 2020"
-              />
-            </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      Graduation year <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={edu.year}
+                      onChange={(e) =>
+                        handleChange(index, "year", e.target.value)
+                      }
+                      className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: 2020"
+                    />
+                  </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">GPA</label>
-              <input
-                value={edu.gpa}
-                onChange={(e) => setEdu({ ...edu, gpa: e.target.value })}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="eg: 8.3"
-              />
-            </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">
+                      GPA
+                    </label>
+                    <input
+                      value={edu.gpa}
+                      onChange={(e) =>
+                        handleChange(index, "gpa", e.target.value)
+                      }
+                      className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                      placeholder="eg: 8.3"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* "Add another education" CTA – slightly narrower than the cards above */}
+          <div className="mx-auto mt-6 flex w-full max-w-2xl justify-center">
+            <button
+              type="button"
+              onClick={addEducation}
+              className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:border-[#4D31EC] hover:text-[#4D31EC]"
+            >
+              Add another education
+            </button>
           </div>
 
           {/* navigation buttons */}

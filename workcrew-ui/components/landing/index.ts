@@ -10,3 +10,4 @@ export { default as WhyTheyLoveUs } from "./RethinkingSection";
 export { default as WhyLoveUs } from "./WhyLoveUs";
 export { default as ReviewsSection } from "./ReviewsSection";
 export { default as RethinkingSection}from "./RethinkingSection";
+export { default as ContactUs } from "./ContactUs";

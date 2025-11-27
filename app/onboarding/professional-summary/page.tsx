@@ -27,7 +27,7 @@ function Connector({
 
   return (
     <div className="relative mx-2 h-10 flex-1">
-      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-gray-200">
+      <div className="absolute top-1/2 -translate-y-1/2 -mt-[21px] h-1 w-full overflow-hidden rounded-full bg-gray-200">
         <div
           className={`h-full transition-[width] duration-500 ease-out ${
             grow ? "w-full bg-[#4D31EC]" : "w-0 bg-[#4D31EC]"
@@ -58,7 +58,12 @@ function OnboardStepper({
 
           return (
             <React.Fragment key={s.key}>
-              <div className="relative flex shrink-0 basis-[88px] flex-col items-center">
+              <div
+                className={[
+                  "relative flex shrink-0 basis-[88px] flex-col items-center",
+                  i === 2 ? "-mt-[10px]" : "", // lift step 3 only
+                ].join(" ")}
+              >
                 <div
                   className={[
                     "z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium",
@@ -145,7 +150,7 @@ export default function ProfessionalSummaryPage() {
   }
 
   return (
-    <main className="min-h-screen flex bg-white">
+    <main className="flex min-h-screen bg-white">
       {/* left side stays fixed on desktop and explains the step */}
       <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
         <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
@@ -222,7 +227,7 @@ export default function ProfessionalSummaryPage() {
               </label>
               <button
                 type="button"
-                className="text-sm font-medium text-[#4D31EC] hover:underline"
+                className="inline-flex items-center gap-1 text-sm font-medium text-[#4D31EC] hover:underline"
                 onClick={() => {
                   if (!summary) {
                     setSummary(
@@ -231,7 +236,13 @@ export default function ProfessionalSummaryPage() {
                   }
                 }}
               >
-                + AI suggestion
+                <Image
+                  src="/AIsuggestions_icon.png"
+                  alt="AI suggestions"
+                  width={10}
+                  height={10}
+                />
+                <span>AI suggestion</span>
               </button>
             </div>
 

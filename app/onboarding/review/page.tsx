@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React from "react";
 import { CandidateAPI } from "workcrew-ui/lib/endpoints";
+import T from "workcrew-ui/components/primitives/Typography";
 
-// quick helpers for the onboarding draft
+/* ---------------- localStorage helpers ---------------- */
+
 function loadDraft<T = any>(): T {
   try {
     if (typeof window === "undefined") return {} as T;
@@ -15,21 +17,126 @@ function loadDraft<T = any>(): T {
   }
 }
 
+function saveDraft(patch: Record<string, any>) {
+  if (typeof window === "undefined") return;
+  const cur = loadDraft();
+  localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
+}
+
 function clearDraft() {
   if (typeof window !== "undefined") localStorage.removeItem("wc_onboard");
+}
+
+/* ------------- very light fallback skill extraction ------------- */
+/* Only used if the resume parser didn't return a skills array. */
+function deriveSkillsFromText(text: string, max = 6): string[] {
+  if (!text) return [];
+  const chunks = text
+    .split(/[\n•,\-–]/)
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0 && c.length <= 40);
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const chunk of chunks) {
+    const key = chunk.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(chunk);
+      if (result.length >= max) break;
+    }
+  }
+  return result;
+}
+
+/* small chip so skills look like the figma tags */
+function SkillChip({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="inline-flex items-center gap-2 rounded-full bg-[#EEEAFE] px-4 py-1.5 text-xs font-medium text-[#4D31EC] hover:bg-[#E0D9FF]"
+    >
+      <T as="span" variant="sub14" lineHeightPx={20}>
+        {label}
+      </T>
+      <span className="text-[10px] text-[#4D31EC]">✕</span>
+    </button>
+  );
 }
 
 export default function ReviewPage() {
   const router = useRouter();
 
-  // we pull the data from localStorage once the page mounts
   const [data, setData] = React.useState<any>({});
   const [submitting, setSubmitting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
+  const [workSkills, setWorkSkills] = React.useState<string[]>([]);
+  const [eduSkills, setEduSkills] = React.useState<string[]>([]);
+
+  // pull everything once on mount & seed the skill chips
   React.useEffect(() => {
-    setData(loadDraft());
+    const draft = loadDraft<any>();
+    setData(draft);
+
+    const skillsFromResume: string[] =
+      draft.skillsFromResume ||
+      draft.skills ||
+      draft.rawParserOutput?.skills ||
+      [];
+
+    // if user already curated skills earlier, respect that
+    let initialWork: string[] = [];
+    let initialEdu: string[] = [];
+
+    if (Array.isArray(draft.workSkills) && draft.workSkills.length) {
+      initialWork = draft.workSkills;
+    } else if (skillsFromResume.length) {
+      // first few skills under work experience
+      initialWork = skillsFromResume.slice(0, 6);
+    } else {
+      // fallback: derive from bullets / summary
+      initialWork = deriveSkillsFromText(
+        draft.exp?.bullets || draft.summary || "",
+        6
+      );
+    }
+
+    if (Array.isArray(draft.eduSkills) && draft.eduSkills.length) {
+      initialEdu = draft.eduSkills;
+    } else if (skillsFromResume.length > 6) {
+      // next few under education, just to spread them a bit
+      initialEdu = skillsFromResume.slice(6, 12);
+    } else {
+      initialEdu = deriveSkillsFromText(
+        [draft.edu?.degree, draft.edu?.field, draft.edu?.institution].join(
+          " "
+        ),
+        4
+      );
+    }
+
+    setWorkSkills(initialWork);
+    setEduSkills(initialEdu);
   }, []);
+
+  // keep latest chip state in localStorage so we can reuse elsewhere if needed
+  React.useEffect(() => {
+    saveDraft({ workSkills, eduSkills });
+  }, [workSkills, eduSkills]);
+
+  const fullName = data.firstName
+    ? [data.firstName, data.lastName].filter(Boolean).join(" ")
+    : "";
+  const phoneDisplay =
+    [data.phoneCountry || "+91", data.phone].filter(Boolean).join(" ") || "";
 
   // Calls backend /candidate/complete/:id to persist resume/profile data
   async function complete() {
@@ -41,21 +148,27 @@ export default function ReviewPage() {
 
       // 1) Get logged-in candidate info to know their ID
       const profileRes = await CandidateAPI.profile();
-      const candidate =
-        profileRes.data?.result ?? profileRes.data ?? null;
+      const candidate = profileRes.data?.result ?? profileRes.data ?? null;
       const candidateId = candidate?._id;
 
       if (!candidateId) {
         throw new Error("Could not determine candidate id from profile.");
       }
 
-      // 2) Build payload in the shape backend expects:
-      //    patchCandidateByResume reads: const { data } = req.body;
-      //    and then: const { about, contact, skills, links, education, workExperience, projects } = data.result;
-      //
-      // We already stored the raw parser output as rawParserOutput in wc_onboard
-      // when parsing the resume on the upload step.
-      const rawForBackend = draft.rawParserOutput || {};
+      // 2) Build payload in the shape backend expects.
+      //    We already stored the raw parser output on upload as rawParserOutput.
+      const rawForBackend: any = draft.rawParserOutput || {};
+
+      // Merge curated skills back into what goes to Flask/Node.
+      const combinedSkills = Array.from(
+        new Set<string>([
+          ...(rawForBackend.skills || []),
+          ...workSkills,
+          ...eduSkills,
+        ])
+      ).filter(Boolean);
+
+      rawForBackend.skills = combinedSkills;
 
       const payload = {
         data: {
@@ -63,7 +176,6 @@ export default function ReviewPage() {
         },
       };
 
-      // Optional: log to verify once
       console.log("Completing resume with payload:", payload);
 
       // 3) Call backend to complete candidate profile from resume data
@@ -83,9 +195,17 @@ export default function ReviewPage() {
     }
   }
 
+  /* ------------------------------ UI ------------------------------ */
+
+  // clean bullets for the work experience preview
+  const workBulletLines: string[] = (data.exp?.bullets || "")
+    .split("\n")
+    .map((l: string) => l.trim())
+    .filter(Boolean);
+
   return (
     <main className="min-h-screen flex bg-white">
-      {/* left side stays fixed on desktop and explains what this step is */}
+      {/* left rail: static explanation for this step */}
       <section className="relative hidden w-1/2 bg-[#F6F5FF] md:block">
         <div className="sticky top-0 h-screen px-10 py-16 md:px-20">
           <div className="relative h-full">
@@ -107,13 +227,18 @@ export default function ReviewPage() {
                 className="object-contain"
                 priority
               />
-              <h1 className="mt-6 text-xl font-semibold text-black md:text-2xl">
+              <T as="h1" variant="title24" className="mt-6">
                 Review your details and submit
-              </h1>
-              <p className="mt-3 max-w-md text-sm text-gray-600 md:text-base">
+              </T>
+              <T
+                as="p"
+                variant="body14"
+                lineHeightPx={20}
+                className="mt-3 max-w-md text-gray-600"
+              >
                 Take a quick look at everything you have filled in so far and
                 make sure it reflects you the way you want.
-              </p>
+              </T>
             </div>
 
             <button
@@ -126,63 +251,164 @@ export default function ReviewPage() {
         </div>
       </section>
 
-      {/* right side scrolls and shows the review cards */}
+      {/* right side: review cards + final CTA */}
       <section className="flex w-full items-start justify-center bg-white px-6 py-10 md:w-1/2 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          <h2 className="mb-6 text-2xl font-semibold text-[#4D31EC] md:mb-8">
+          <T
+            as="h2"
+            variant="hero48"
+            autoLeading
+            className="mb-6 text-[#4D31EC] md:mb-8"
+          >
             Review data
-          </h2>
+          </T>
 
           <div className="space-y-6">
-            {/* personal info card */}
-            <div className="rounded-xl border bg-white p-6">
+            {/* ---------------- PERSONAL INFO CARD ---------------- */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Personal information</h3>
+                <T as="h3" variant="sub20">
+                  Personal information
+                </T>
                 <button
-                  className="text-[#4D31EC] hover:underline"
+                  className="text-sm font-medium text-[#4D31EC] hover:underline"
                   onClick={() => router.push("/onboarding/personal-details")}
                 >
                   Edit
                 </button>
               </div>
-              <div className="grid gap-4 text-sm md:grid-cols-2">
-                <div>
-                  <span className="font-medium">Name:</span>{" "}
-                  {data.firstName
-                    ? `${data.firstName} ${data.lastName ?? ""}`
-                    : "—"}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* left column */}
+                <div className="space-y-2">
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      Name
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-900"
+                    >
+                      {fullName || "—"}
+                    </T>
+                  </div>
+
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      Phone
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-900"
+                    >
+                      {phoneDisplay || "—"}
+                    </T>
+                  </div>
+
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      LinkedIn
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-[#4D31EC]"
+                    >
+                      {data.linkedin || "—"}
+                    </T>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">Email:</span>{" "}
-                  {data.email || "—"}
-                </div>
-                <div>
-                  <span className="font-medium">Phone:</span>{" "}
-                  {[data.phoneCountry, data.phone]
-                    .filter(Boolean)
-                    .join(" ") || "—"}
-                </div>
-                <div>
-                  <span className="font-medium">Location:</span>{" "}
-                  {data.location || "—"}
-                </div>
-                <div className="md:col-span-2">
-                  <span className="font-medium">LinkedIn:</span>{" "}
-                  {data.linkedin || "—"}
-                </div>
-                <div className="md:col-span-2">
-                  <span className="font-medium">Portfolio:</span>{" "}
-                  {data.portfolio || "—"}
+
+                {/* right column */}
+                <div className="space-y-2">
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      Email
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-900"
+                    >
+                      {data.email || "—"}
+                    </T>
+                  </div>
+
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      Location
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-900"
+                    >
+                      {data.location || "—"}
+                    </T>
+                  </div>
+
+                  <div>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-400"
+                    >
+                      Portfolio
+                    </T>
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-[#4D31EC]"
+                    >
+                      {data.portfolio || "—"}
+                    </T>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* work experience card */}
-            <div className="rounded-xl border bg-white p-6">
+            {/* ---------------- WORK EXPERIENCE CARD ---------------- */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Work experience</h3>
+                <T as="h3" variant="sub20">
+                  Work experience
+                </T>
                 <button
-                  className="text-[#4D31EC] hover:underline"
+                  className="text-sm font-medium text-[#4D31EC] hover:underline"
                   onClick={() => router.push("/onboarding/work-experience")}
                 >
                   Edit
@@ -190,42 +416,83 @@ export default function ReviewPage() {
               </div>
 
               {data.exp ? (
-                <div className="space-y-2 text-sm">
-                  <div className="font-medium">
-                    {data.exp.title} at {data.exp.company}
-                  </div>
-                  <div className="text-gray-600">
-                    {data.exp.start} –{" "}
-                    {data.exp.current ? "Present" : data.exp.end}
-                  </div>
-                  <pre className="whitespace-pre-wrap rounded-lg bg-[#F8F9FC] p-3">
-                    {data.exp.bullets}
-                  </pre>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
-                      Leadership
-                    </span>
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
-                      Python
-                    </span>
-                    <span className="rounded-full bg-[#F4F3FF] px-3 py-1 text-xs text-[#4D31EC]">
-                      SQL
-                    </span>
-                  </div>
+                <div className="space-y-2">
+                  <T
+                    as="p"
+                    variant="body14"
+                    lineHeightPx={20}
+                    className="font-semibold text-gray-900"
+                  >
+                    {data.exp.title || "Title"}{" "}
+                    {data.exp.company ? `at ${data.exp.company}` : ""}
+                  </T>
+
+                  <T
+                    as="p"
+                    variant="body14"
+                    lineHeightPx={20}
+                    className="text-gray-500"
+                  >
+                    {data.exp.start
+                      ? `${data.exp.start} – ${
+                          data.exp.current ? "Present" : data.exp.end || ""
+                        }`
+                      : "Dates not provided"}
+                  </T>
+
+                  {/* responsibilities list */}
+                  {workBulletLines.length > 0 && (
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {workBulletLines.map((line: string, idx: number) => (
+                        <li key={idx}>
+                          <T
+                            as="span"
+                            variant="body14"
+                            lineHeightPx={20}
+                            className="text-gray-800"
+                          >
+                            {line.replace(/^•\s*/, "")}
+                          </T>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* skills chips pulled from parser or text */}
+                  {workSkills.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {workSkills.map((s) => (
+                        <SkillChip
+                          key={s}
+                          label={s}
+                          onRemove={() =>
+                            setWorkSkills((prev) => prev.filter((x) => x !== s))
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">
+                <T
+                  as="p"
+                  variant="body14"
+                  lineHeightPx={20}
+                  className="text-gray-500"
+                >
                   No experience added.
-                </div>
+                </T>
               )}
             </div>
 
-            {/* education card */}
-            <div className="rounded-xl border bg-white p-6">
+            {/* ---------------- EDUCATION CARD ---------------- */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Education</h3>
+                <T as="h3" variant="sub20">
+                  Education
+                </T>
                 <button
-                  className="text-[#4D31EC] hover:underline"
+                  className="text-sm font-medium text-[#4D31EC] hover:underline"
                   onClick={() => router.push("/onboarding/education")}
                 >
                   Edit
@@ -233,28 +500,72 @@ export default function ReviewPage() {
               </div>
 
               {data.edu ? (
-                <div className="space-y-1 text-sm">
-                  <div className="font-medium">
-                    {data.edu.degree} — {data.edu.field}
-                  </div>
-                  <div>
-                    {data.edu.institution}, {data.edu.year}
-                  </div>
-                  {data.edu.gpa && <div>CGPA: {data.edu.gpa}</div>}
+                <div className="space-y-2">
+                  <T
+                    as="p"
+                    variant="body14"
+                    lineHeightPx={20}
+                    className="font-semibold text-gray-900"
+                  >
+                    {data.edu.degree || "Degree"}{" "}
+                    {data.edu.field ? `in ${data.edu.field}` : ""}
+                  </T>
+
+                  <T
+                    as="p"
+                    variant="body14"
+                    lineHeightPx={20}
+                    className="text-gray-700"
+                  >
+                    {data.edu.institution || "Institution not provided"}
+                    {data.edu.year ? `, ${data.edu.year}` : ""}
+                  </T>
+
+                  {data.edu.gpa && (
+                    <T
+                      as="p"
+                      variant="body14"
+                      lineHeightPx={20}
+                      className="text-gray-500"
+                    >
+                      CGPA: {data.edu.gpa}
+                    </T>
+                  )}
+
+                  {eduSkills.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {eduSkills.map((s) => (
+                        <SkillChip
+                          key={s}
+                          label={s}
+                          onRemove={() =>
+                            setEduSkills((prev) => prev.filter((x) => x !== s))
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">
+                <T
+                  as="p"
+                  variant="body14"
+                  lineHeightPx={20}
+                  className="text-gray-500"
+                >
                   No education added.
-                </div>
+                </T>
               )}
             </div>
 
-            {/* summary card */}
-            <div className="rounded-xl border bg-white p-6">
+            {/* ---------------- SUMMARY CARD ---------------- */}
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Professional summary</h3>
+                <T as="h3" variant="sub20">
+                  Professional summary
+                </T>
                 <button
-                  className="text-[#4D31EC] hover:underline"
+                  className="text-sm font-medium text-[#4D31EC] hover:underline"
                   onClick={() =>
                     router.push("/onboarding/professional-summary")
                   }
@@ -262,7 +573,14 @@ export default function ReviewPage() {
                   Edit
                 </button>
               </div>
-              <p className="text-sm">{data.summary || "—"}</p>
+              <T
+                as="p"
+                variant="body14"
+                lineHeightPx={20}
+                className="text-gray-800"
+              >
+                {data.summary || "You haven’t added a professional summary yet."}
+              </T>
             </div>
 
             {/* error message, if any */}
@@ -276,14 +594,14 @@ export default function ReviewPage() {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => router.back()}
-                className="rounded-full border px-6 py-3 hover:border-[#4D31EC]"
+                className="rounded-full border px-6 py-3 text-sm hover:border-[#4D31EC]"
                 disabled={submitting}
               >
                 ← Previous
               </button>
               <button
                 onClick={complete}
-                className="rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50"
+                className="rounded-full bg-[#4D31EC] px-8 py-3 text-sm font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50"
                 disabled={submitting}
               >
                 {submitting ? "Saving..." : "Complete resume ✓"}

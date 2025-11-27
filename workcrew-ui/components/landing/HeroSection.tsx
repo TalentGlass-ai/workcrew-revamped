@@ -25,7 +25,9 @@ export default function HeroSection(): React.ReactElement {
       try {
         // Try candidate first
         await CandidateAuth.me();
-        if (!cancelled) setAuthRole("candidate");
+        if (!cancelled) {
+          setAuthRole("candidate");
+        }
         return;
       } catch {
         // ignore
@@ -34,13 +36,17 @@ export default function HeroSection(): React.ReactElement {
       try {
         // Then try recruiter
         await RecruiterAuth.me();
-        if (!cancelled) setAuthRole("recruiter");
+        if (!cancelled) {
+          setAuthRole("recruiter");
+        }
         return;
       } catch {
         // ignore
       }
 
-      if (!cancelled) setAuthRole("none");
+      if (!cancelled) {
+        setAuthRole("none");
+      }
     }
 
     checkAuth();

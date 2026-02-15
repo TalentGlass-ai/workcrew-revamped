@@ -5,10 +5,10 @@ import * as React from "react";
 import {
   Section,
   Container,
-} from "../../workcrew-ui/components/primitives";
-import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
-import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
-import T from "../../workcrew-ui/components/primitives/Typography";
+} from "@/components/primitives";
+import NewNavbar from "@/components/landing/NewNavbar";
+import NewFooter from "@/components/landing/NewFooter";
+import T from "@/components/primitives/Typography";
 
 /* ——— Tiny inline SVG icon kept only for the arrow on buttons ——— */
 const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (

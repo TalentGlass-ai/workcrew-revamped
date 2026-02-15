@@ -10,13 +10,15 @@ import {
   WhyLoveUs,
   ReviewsSection,
   NewFooter,
-} from "../workcrew-ui/components/landing";
+} from "@/components/landing";
 
-import JobRoles from "../workcrew-ui/components/landing/JobRoles";
-import { Section } from "../workcrew-ui/components/primitives";
+import JobRoles from "@/components/landing/JobRoles";
+import { Section } from "@/components/primitives";
+
+import { config } from "@/lib/config";
 
 function DevBuildBadge() {
-  if (process.env.NODE_ENV !== "development") return null;
+  if (config.env.nodeEnv !== "development") return null;
   return (
     <div
       style={{
@@ -237,7 +239,26 @@ export default function HomePage() {
    Form primitives
    */
 
-function ContactField({ label, htmlFor, required, children }: any) {
+// Add these interface definitions before the components
+interface ContactFieldProps {
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}
+
+interface ContactSelectOption {
+  label: string;
+  value: string;
+}
+
+interface ContactSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'className'> {
+  options: ContactSelectOption[];
+  placeholder?: string;
+  className?: string;
+}
+
+function ContactField({ label, htmlFor, required, children }: ContactFieldProps) {
   return (
     <div>
       <label
@@ -281,12 +302,7 @@ function ContactTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   );
 }
 
-function ContactSelect({
-  options,
-  placeholder,
-  className,
-  ...rest
-}: any) {
+function ContactSelect({ options, placeholder, className, ...rest }: ContactSelectProps) {
   return (
     <div className={`relative ${className ?? ""}`}>
       <select
@@ -303,7 +319,7 @@ function ContactSelect({
             {placeholder}
           </option>
         )}
-        {options.map((o: any) => (
+        {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

@@ -19,14 +19,36 @@ export interface Job {
   description?: string;
   location?: string;
   type?: string;
+  salary?: string;
   salaryRange?: string;
+  skills?: string[];
   tags?: string[];
   category?: string;
+  experienceLevel?: string;
+  companySize?: string | number;
   requirements?: string[];
   benefits?: string[];
   postedDate?: string;
   applicationDeadline?: string;
   isActive?: boolean;
+}
+
+export type JobsEnvelope =
+  | Job[]
+  | {
+      data?: Job[];
+      jobs?: Job[];
+      jobposts?: Job[];
+      result?: Job[];
+      total?: number;
+      count?: number;
+      page?: number;
+      limit?: number;
+    };
+
+export interface Option {
+  label: string;
+  value: string;
 }
 
 export interface JobSearchParams {

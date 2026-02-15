@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link"; // kept for brand link
 import { usePathname, useRouter } from "next/navigation";
-import LayeredPill from "../primitives/buttons/LayeredPill";
+import LayeredPill from "@/components/primitives/buttons/LayeredPill";
 
 const links = [
   { href: "/", label: "Home" },

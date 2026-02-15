@@ -5,15 +5,15 @@ import Image from "next/image";
 import React from "react";
 import Stepper, { Step } from "../Stepper";
 
-function loadDraft<T = any>(): T {
-  if (typeof window === "undefined") return {} as T;
+function loadDraft(): Record<string, unknown> {
+  if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem("wc_onboard") || "{}");
   } catch {
-    return {} as T;
+    return {};
   }
 }
-function saveDraft(patch: Record<string, any>) {
+function saveDraft(patch: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   const cur = loadDraft();
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
@@ -31,14 +31,14 @@ export default function PersonalDetailsPage() {
   const draft = loadDraft();
 
   const [form, setForm] = React.useState({
-    firstName: draft.firstName || "",
-    lastName: draft.lastName || "",
-    email: draft.email || "",
-    phoneCountry: draft.phoneCountry || "+91",
-    phone: draft.phone || "",
-    location: draft.location || "",
-    linkedin: draft.linkedin || "",
-    portfolio: draft.portfolio || "",
+    firstName: (draft.firstName as string) || "",
+    lastName: (draft.lastName as string) || "",
+    email: (draft.email as string) || "",
+    phoneCountry: (draft.phoneCountry as string) || "+91",
+    phone: (draft.phone as string) || "",
+    location: (draft.location as string) || "",
+    linkedin: (draft.linkedin as string) || "",
+    portfolio: (draft.portfolio as string) || "",
   });
 
   function next() {

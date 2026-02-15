@@ -1,5 +1,5 @@
 import * as React from "react";
-import { container, sectionBg } from "../../styles/theme";
+import { container, sectionBg } from "@/styles/theme";
 
 type SectionProps = React.HTMLAttributes<HTMLElement> & {
   as?: React.ElementType;

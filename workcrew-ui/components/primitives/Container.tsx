@@ -1,5 +1,5 @@
 import * as React from "react";
-import { container } from "../../styles/theme";
+import { container } from "@/styles/theme";
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 

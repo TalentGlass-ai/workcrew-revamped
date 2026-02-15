@@ -3,8 +3,8 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
-import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
+import NewNavbar from "@/components/landing/NewNavbar";
+import NewFooter from "@/components/landing/NewFooter";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 
 type Blog = {

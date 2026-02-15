@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ layered pill
+import GlassPill from "@/components/primitives/tags/GlassPill";
+import LayeredPill, { ArrowNortheastIcon } from "@/components/primitives/buttons/LayeredPill"; // ✅ layered pill
 
 /* ---------------------------- Types ---------------------------- */
 type Feature = {

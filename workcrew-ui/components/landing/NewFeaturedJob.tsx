@@ -1,9 +1,12 @@
 "use client";
 import * as React from "react";
-import { Section, Container, Grid, Card,  Button, Badge } from "../primitives";
-import { T } from "../primitives/Typography";
+import { Section, Container, Grid, Card,  Button, Badge } from "@/components/primitives";
+import { T } from "@/components/primitives/Typography";
+import type { Job } from '@/types/index';
 
-type Props = { setJobs?: (x:any[])=>void };
+type Props = { 
+  setJobs?: (jobs: Job[]) => void;
+};
 
 const NewFeaturedJob: React.FC<Props> = () => {
   const sample = [

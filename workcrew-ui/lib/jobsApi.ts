@@ -1,5 +1,6 @@
 import { config } from './config';
 import type { Job, JobSearchParams, JobsApiResponse } from '@/types/index';
+import { getCompanyName } from './utils/jobUtils';
 
 const API_BASE = config.api.baseUrl;
 
@@ -30,8 +31,5 @@ export async function getJobById(id: string): Promise<Job> {
   return res.json() as Promise<Job>;
 }
 
-export function companyName(company: Job['company']): string {
-  if (!company) return '';
-  if (typeof company === 'string') return company;
-  return company.companyName ?? '';
-}
+// Export utility for backward compatibility
+export { getCompanyName as companyName } from './utils/jobUtils';

@@ -54,7 +54,7 @@ export default function GlowPillButton({
   type = "button",
   ...rest
 }: GlowPillButtonProps) {
-  const Comp: any = as;
+  const Comp = as as React.ElementType;
 
   const style: React.CSSProperties = {
     ...sizeVars[size],

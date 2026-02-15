@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
-import T from "../../workcrew-ui/components/primitives/Typography";
+import T from "@/components/primitives/Typography";
 
 export default function LoginPage() {
   const router = useRouter();

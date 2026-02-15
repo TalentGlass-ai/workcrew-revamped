@@ -6,15 +6,15 @@ import Image from "next/image";
 import React from "react";
 import Stepper, { Step } from "../Stepper";
 
-function loadDraft<T = any>(): T {
-  if (typeof window === "undefined") return {} as T;
+function loadDraft(): Record<string, unknown> {
+  if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem("wc_onboard") || "{}");
   } catch {
-    return {} as T;
+    return {};
   }
 }
-function saveDraft(patch: Record<string, any>) {
+function saveDraft(patch: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   const cur = loadDraft();
   localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
@@ -32,12 +32,12 @@ export default function WorkExperiencePage() {
   const draft = loadDraft();
 
   const [exp, setExp] = React.useState({
-    company: draft.exp?.company || "",
-    title: draft.exp?.title || "",
-    start: draft.exp?.start || "",
-    end: draft.exp?.end || "",
-    current: draft.exp?.current || false,
-    bullets: draft.exp?.bullets || "",
+    company: ((draft.exp as Record<string, unknown>)?.company as string) || "",
+    title: ((draft.exp as Record<string, unknown>)?.title as string) || "",
+    start: ((draft.exp as Record<string, unknown>)?.start as string) || "",
+    end: ((draft.exp as Record<string, unknown>)?.end as string) || "",
+    current: ((draft.exp as Record<string, unknown>)?.current as boolean) || false,
+    bullets: ((draft.exp as Record<string, unknown>)?.bullets as string) || "",
   });
 
   function next() {

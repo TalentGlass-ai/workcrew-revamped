@@ -1,6 +1,6 @@
 import * as React from "react";
-import { tokens } from "../../styles/tokens";
-import { text, radius, shadow } from "../../styles/theme";
+import { tokens } from "@/styles/tokens";
+import { text, radius, shadow } from "@/styles/theme";
 
 
 

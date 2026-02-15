@@ -4,12 +4,12 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Section, Container } from "../../workcrew-ui/components/primitives";
-import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
-import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
-import GlassPill from "../../workcrew-ui/components/primitives/tags/GlassPill";
-import LayeredPill from "../../workcrew-ui/components/primitives/buttons/LayeredPill";
-import T from "../../workcrew-ui/components/primitives/Typography"; // ← reuse typography
+import { Section, Container } from "@/components/primitives";
+import NewNavbar from "@/components/landing/NewNavbar";
+import NewFooter from "@/components/landing/NewFooter";
+import GlassPill from "@/components/primitives/tags/GlassPill";
+import LayeredPill from "@/components/primitives/buttons/LayeredPill";
+import T from "@/components/primitives/Typography"; // ← reuse typography
 
 // helper
 const cx = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(" ");

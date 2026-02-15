@@ -1,5 +1,5 @@
 import * as React from "react";
-import { mq } from "../../styles/theme";
+import { mq } from "@/styles/theme";
 
 
 type ResponsiveCols = { base?: number; md?: number; lg?: number; xl?: number };

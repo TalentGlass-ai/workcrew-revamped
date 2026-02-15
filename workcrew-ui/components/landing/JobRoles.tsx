@@ -1,24 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import GlassPill from "../primitives/tags/GlassPill";
-import LayeredPill, { ArrowNortheastIcon } from "../primitives/buttons/LayeredPill"; // ✅ new reusable pill
-
-type Job = {
-  _id?: string;
-  id?: string;
-  title?: string;
-  description?: string;
-  type?: string;
-  location?: string;
-  salaryRange?: string;
-  company?: { companyName?: string; name?: string } | string | null;
-  tags?: string[];
-};
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-const companyName = (c: Job["company"]) =>
-  (typeof c === "string" ? c : c?.companyName || c?.name) || "—";
+import { config } from '@/lib/config';
+import type { Job } from '@/types/index';
+import { getCompanyName } from '@/lib/utils/jobUtils';
+import GlassPill from "@/components/primitives/tags/GlassPill";
+import LayeredPill, { ArrowNortheastIcon } from "@/components/primitives/buttons/LayeredPill"; // ✅ new reusable pill
 
 export default function JobRoles() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -54,15 +41,16 @@ export default function JobRoles() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${API}/api/v2/jobs?page=1&limit=12`, {
+        const res = await fetch(`${config.api.baseUrl}/api/v2/jobs?page=1&limit=12`, {
           cache: "no-store",
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const list: Job[] = json?.jobposts || json?.result || [];
         if (!cancelled) setJobs(list);
-      } catch (e: any) {
-        if (!cancelled) setErr(e?.message || "Failed to load jobs");
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to load jobs';
+        if (!cancelled) setErr(errorMessage);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -232,7 +220,7 @@ export default function JobRoles() {
                               {job.title || "Untitled role"}
                             </div>
                             <div className="mt-1 text-[20px] leading-[23px] tracking-[0.03em] font-medium text-[#4D31EC] break-words">
-                              {companyName(job.company)}
+                              {getCompanyName(job.company)}
                             </div>
                           </div>
 

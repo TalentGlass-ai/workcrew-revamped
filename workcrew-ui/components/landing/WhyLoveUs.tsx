@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import GlassPill from "../primitives/tags/GlassPill"; // ✅ reuse the shared pill
+import GlassPill from "@/components/primitives/tags/GlassPill"; // ✅ reuse the shared pill
 
 /* ————— Small helpers ————— */
 const SectionTitle: React.FC = () => (

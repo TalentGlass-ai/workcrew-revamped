@@ -5,8 +5,8 @@ import Image from "next/image";
 import React from "react";
 import LogoMarquee from "./LogoMarquee";
 import FeatureSlides from "./FeatureSlides";
-import T from "../primitives/Typography"; // default export
-import GlassPill from "../primitives/tags/GlassPill";
+import T from "@/components/primitives/Typography"; // default export
+import GlassPill from "@/components/primitives/tags/GlassPill";
 
 export default function HeroSection(): React.ReactElement {
   return (

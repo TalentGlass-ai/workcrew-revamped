@@ -5,55 +5,24 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
 
+/* Config */
+import { config } from '@/lib/config';
+
 /* Navbar & Footer */
-import NewNavbar from "../../workcrew-ui/components/landing/NewNavbar";
-import NewFooter from "../../workcrew-ui/components/landing/NewFooter";
+import NewNavbar from "@/components/landing/NewNavbar";
+import NewFooter from "@/components/landing/NewFooter";
 
 /* Typography */
-import T from "../../workcrew-ui/components/primitives/Typography";
+import T from "@/components/primitives/Typography";
 
 /* Decorative (static import) */
-import bg from "../../public/bg.png";
+import bg from "@/public/bg.png";
 
 /* Types  */
-type Job = {
-  _id?: string;
-  id?: string | number;
-  title?: string;
-  description?: string;
-  type?: string;
-  location?: string;
-  salaryRange?: string;
-  salary?: string;
-  company?:
-    | { companyName?: string; name?: string; size?: string | number }
-    | string
-    | null;
-  tags?: string[];
-  skills?: string[];
+import type { Job, JobsEnvelope, Option } from '@/types/index';
 
-  experienceLevel?: string;
-  category?: string;
-  companySize?: string | number;
-};
-
-type JobsEnvelope =
-  | Job[]
-  | {
-      data?: Job[];
-      jobs?: Job[];
-      jobposts?: Job[];
-      result?: Job[];
-      total?: number;
-      count?: number;
-      page?: number;
-      limit?: number;
-    };
-
-type Option = { label: string; value: string };
-
-const companyName = (c: Job["company"]) =>
-  (typeof c === "string" ? c : c?.companyName || c?.name) || "—";
+/* Utils */
+import { getCompanyName, formatSalary, extractCity, normalizeSkills, getSalaryBucket, inferExperience, inferCategory, normalizeCompanySize } from '@/lib/utils/jobUtils';
 
 /*  Category Chip (multi-select)  */
 const Chip: React.FC<
@@ -195,102 +164,6 @@ const FilterBlock: React.FC<{
   );
 };
 
-/* Helpers  */
-function formatSalary(s: string | undefined) {
-  if (!s) return "—";
-  return s.replace(/^₹\s*/i, "");
-}
-function onlyCity(loc?: string) {
-  if (!loc) return "";
-  const [city] = (loc || "").split(",").map((x) => x.trim());
-  return city || loc || "";
-}
-function normalizeSkills(job: Job): string[] {
-  const base = (job.skills && job.skills.length ? job.skills : job.tags) || [];
-  return Array.from(new Set(base.map((s) => s.trim()).filter(Boolean)));
-}
-function salaryBucket(s?: string) {
-  if (!s) return null;
-  const str = s.toLowerCase().replace(/[,₹\s]/g, "");
-  const lpaMatch = str.match(/(\d+)(?:-|\sto\s)?(\d+)?lpa/);
-  if (lpaMatch) {
-    const a = parseInt(lpaMatch[1], 10);
-    const b = parseInt(lpaMatch[2] ? lpaMatch[2] : lpaMatch[1], 10);
-    const mid = (a + b) / 2;
-    if (mid <= 3) return "0-3";
-    if (mid <= 5) return "3-5";
-    if (mid <= 7) return "5-7";
-    if (mid <= 10) return "7-10";
-    if (mid <= 15) return "10-15";
-    if (mid <= 20) return "15-20";
-    if (mid <= 30) return "20-30";
-    if (mid <= 50) return "30-50";
-    return "50+";
-  }
-  const kMatch = str.match(/(\d+)\s*k(?:-|\sto\s)?(\d+)?\s*k?/);
-  if (kMatch) {
-    const a = parseInt(kMatch[1], 10);
-    const b = parseInt(kMatch[2] || String(a), 10);
-    const mid = (a + b) / 2;
-    if (mid <= 300) return "0-3";
-    if (mid <= 500) return "3-5";
-    if (mid <= 700) return "5-7";
-    if (mid <= 1000) return "7-10";
-    if (mid <= 1500) return "10-15";
-    if (mid <= 2000) return "15-20";
-    if (mid <= 3000) return "20-30";
-    if (mid <= 5000) return "30-50";
-    return "50+";
-  }
-  return null;
-}
-
-/*  Heuristics  */
-function inferExperience(title?: string, desc?: string): string | null {
-  const blob = `${title || ""} ${desc || ""}`.toLowerCase();
-  if (/\b(intern|internship|fresher|entry[-\s]?level|junior)\b/.test(blob))
-    return "fresher";
-  if (/\b(1[\s-]?3|1–3|1 to 3|1-3)\b/.test(blob)) return "1-3";
-  if (/\b(3[\s-]?5|3–5|3 to 5|3-5)\b/.test(blob)) return "3-5";
-  if (/\b(5[\s-]?7|5–7|5 to 7|5-7)\b/.test(blob)) return "5-7";
-  if (/\b(7[\s-]?10|7–10|7 to 10|7-10)\b/.test(blob)) return "7-10";
-  if (/\b(10\+|10\+ years|senior|lead|principal)\b/.test(blob)) return "10+";
-  return null;
-}
-function inferCategory(title?: string, skills: string[] = []): string {
-  const blob = `${title || ""} ${skills.join(" ")}`.toLowerCase();
-  if (
-    /\b(ui|ux|designer|figma|illustrator|photoshop|product\s*design)\b/.test(
-      blob
-    )
-  )
-    return "design";
-  if (/\b(marketing|seo|sem|content|growth)\b/.test(blob)) return "marketing";
-  if (/\b(sales|bd|business\s*development|account\s*executive)\b/.test(blob))
-    return "sales";
-  if (/\b(finance|accounting|analyst|fp&a|treasury)\b/.test(blob))
-    return "finance";
-  if (/\b(ops|operations|supply\s*chain|logistics)\b/.test(blob))
-    return "operations";
-  return "tech";
-}
-function normalizeCompanySize(j: Job): "startup" | "mid" | "big" | null {
-  const size =
-    j.companySize ??
-    (typeof j.company === "object" ? j.company?.size : undefined);
-  if (typeof size === "string") {
-    const s = size.toLowerCase();
-    if (/start/.test(s) || /\b(1-50|1–50|<\s*50)\b/.test(s)) return "startup";
-    if (/\b(51-500|51–500|100-1000|100–1000)\b/.test(s)) return "mid";
-    if (/big|enterprise|>\s*1000|1000\+/.test(s)) return "big";
-  } else if (typeof size === "number") {
-    if (size <= 50) return "startup";
-    if (size <= 1000) return "mid";
-    return "big";
-  }
-  return null;
-}
-
 /*  JobCard  */
 const JobCard: React.FC<{ job: Job }> = ({ job }) => {
   const [expanded, setExpanded] = useState(false);
@@ -306,7 +179,7 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
             {job.title || "Untitled Role"}
           </T>
           <T as="p" variant="sub14" weight={500} trackingPct={3} className="text-[#4D31EC] mt-0.5 truncate">
-            {companyName(job.company)}
+            {getCompanyName(job.company)}
           </T>
 
           {/* Meta */}
@@ -410,8 +283,6 @@ export default function FindJobsPage() {
   const PAGE_SIZE = 6;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -420,7 +291,7 @@ export default function FindJobsPage() {
         const pages = [1, 2];
         const chunked: Job[] = [];
         for (const p of pages) {
-          const res = await fetch(`${API}/api/v2/jobs?page=${p}&limit=10`, {
+          const res = await fetch(`${config.api.baseUrl}/api/v2/jobs?page=${p}&limit=10`, {
             cache: "no-store",
           });
           if (!res.ok) continue;
@@ -435,7 +306,7 @@ export default function FindJobsPage() {
             id:
               j.id ??
               j._id ??
-              `${j.title ?? "job"}|${companyName(j.company)}|${
+              `${j.title ?? "job"}|${getCompanyName(j.company)}|${
                 j.location
               }|${p}-${i}`,
             title: j.title ?? "Untitled Role",
@@ -467,7 +338,7 @@ export default function FindJobsPage() {
     return () => {
       cancelled = true;
     };
-  }, [API]);
+  }, []);
 
   /* Dynamic filter options */
   const dynamicTypeOpts: Option[] = useMemo(() => {
@@ -481,7 +352,7 @@ export default function FindJobsPage() {
   const dynamicCityOpts: Option[] = useMemo(() => {
     const s = new Set<string>();
     allJobs.forEach((j) => {
-      const city = onlyCity(j.location);
+      const city = extractCity(j.location);
       if (city) s.add(city);
     });
     return Array.from(s)
@@ -500,7 +371,7 @@ export default function FindJobsPage() {
   const dynamicPayOpts: Option[] = useMemo(() => {
     const counts: Record<string, number> = {};
     allJobs.forEach((j) => {
-      const b = salaryBucket(j.salaryRange || j.salary || "");
+      const b = getSalaryBucket(j.salaryRange || j.salary || "");
       if (b) counts[b] = (counts[b] || 0) + 1;
     });
     const order: { label: string; value: string }[] = [
@@ -524,13 +395,13 @@ export default function FindJobsPage() {
 
     return allJobs.filter((j) => {
       if (term) {
-        const blob = `${j.title} ${companyName(j.company)} ${normalizeSkills(j).join(
+        const blob = `${j.title} ${getCompanyName(j.company)} ${normalizeSkills(j).join(
           " "
         )}`.toLowerCase();
         if (!blob.includes(term)) return false;
       }
       if (locTerm) {
-        const city = onlyCity(j.location).toLowerCase();
+        const city = extractCity(j.location).toLowerCase();
         if (!city.includes(locTerm)) return false;
       }
 
@@ -547,7 +418,7 @@ export default function FindJobsPage() {
       if (fType.size && !fType.has(j.type || "")) return false;
 
       if (fCities.size) {
-        const city = onlyCity(j.location).toLowerCase();
+        const city = extractCity(j.location).toLowerCase();
         if (!fCities.has(city)) return false;
       }
 
@@ -559,7 +430,7 @@ export default function FindJobsPage() {
       }
 
       if (fPay.size) {
-        const b = salaryBucket(j.salaryRange || j.salary || "");
+        const b = getSalaryBucket(j.salaryRange || j.salary || "");
         if (!b || !fPay.has(b)) return false;
       }
 
@@ -832,7 +703,7 @@ export default function FindJobsPage() {
                       key={
                         job._id ||
                         job.id ||
-                        `${job.title}-${companyName(job.company)}`
+                        `${job.title}-${getCompanyName(job.company)}`
                       }
                       job={job}
                     />

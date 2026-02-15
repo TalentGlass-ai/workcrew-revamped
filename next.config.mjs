@@ -13,10 +13,13 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
+      "@": path.join(process.cwd()),
       "@/app": path.join(process.cwd(), "app"),
-      "@/components": path.join(process.cwd(), "workcrew-ui/components"),
       "@/workcrew-ui": path.join(process.cwd(), "workcrew-ui"),
+      "@/components": path.join(process.cwd(), "workcrew-ui/components"),
       "@/styles": path.join(process.cwd(), "workcrew-ui/styles"),
+      "@/lib": path.join(process.cwd(), "workcrew-ui/lib"),
+      "@/types": path.join(process.cwd(), "workcrew-ui/types"),
     };
     return config;
   },

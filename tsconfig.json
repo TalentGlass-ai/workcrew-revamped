@@ -2,29 +2,26 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "*"
+      "@/*": [
+        "./*"
       ],
-      "workcrew-ui/*": [
+      "@/app/*": [
+        "app/*"
+      ],
+      "@/workcrew-ui/*": [
         "workcrew-ui/*"
       ],
-      "components/*": [
-        "components/*"
+      "@/components/*": [
+        "workcrew-ui/components/*"
       ],
-      "styles/*": [
-        "styles/*"
+      "@/styles/*": [
+        "workcrew-ui/styles/*"
       ],
-      "lib/*": [
-        "lib/*"
+      "@/lib/*": [
+        "workcrew-ui/lib/*"
       ],
-      "hooks/*": [
-        "hooks/*"
-      ],
-      "utils/*": [
-        "utils/*"
-      ],
-      "app/*": [
-        "app/*"
+      "@/types/*": [
+        "workcrew-ui/types/*"
       ]
     },
     "module": "ESNext",

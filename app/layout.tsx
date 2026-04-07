@@ -18,6 +18,9 @@ const archivo = Archivo({
   weight: "variable",
 });
 
+import { Toaster } from "sonner";
+import { Providers } from "./Providers";
+
 export default function RootLayout({
   children,
 }: {
@@ -26,8 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${schibsted.variable} ${archivo.variable}`}>
       <body>
-        {/* Page content */}
-        {children}
+        <Providers>
+          <Toaster position="top-center" />
+          {/* Page content */}
+          {children}
 
         {/* ✅ Floating Chatbot visible on all pages */}
         <button
@@ -46,6 +51,7 @@ export default function RootLayout({
             priority
           />
         </button>
+        </Providers>
       </body>
     </html>
   );

@@ -2,22 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect } from "react";
 import Stepper, { Step } from "../Stepper";
-
-function loadDraft(): Record<string, unknown> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem("wc_onboard") || "{}");
-  } catch {
-    return {};
-  }
-}
-function saveDraft(patch: Record<string, unknown>) {
-  if (typeof window === "undefined") return;
-  const cur = loadDraft();
-  localStorage.setItem("wc_onboard", JSON.stringify({ ...cur, ...patch }));
-}
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useOnboardingStore, personalDetailsSchema, type PersonalDetails } from "@/components/../lib/stores/onboardingStore";
 
 const STEPS: Step[] = [
   { key: "personal",  label: "Personal details" },
@@ -28,31 +17,29 @@ const STEPS: Step[] = [
 
 export default function PersonalDetailsPage() {
   const router = useRouter();
-  const draft = loadDraft();
+  const { personalDetails, updatePersonalDetails } = useOnboardingStore();
 
-  const [form, setForm] = React.useState({
-    firstName: (draft.firstName as string) || "",
-    lastName: (draft.lastName as string) || "",
-    email: (draft.email as string) || "",
-    phoneCountry: (draft.phoneCountry as string) || "+91",
-    phone: (draft.phone as string) || "",
-    location: (draft.location as string) || "",
-    linkedin: (draft.linkedin as string) || "",
-    portfolio: (draft.portfolio as string) || "",
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PersonalDetails>({
+    resolver: zodResolver(personalDetailsSchema),
+    defaultValues: personalDetails,
   });
 
-  function next() {
-    saveDraft(form);
-    router.push("/onboarding/work-experience");
-    // If you don't want persistence after submit, uncomment:
-    // localStorage.removeItem("wc_onboard");
-  }
+  useEffect(() => {
+    reset(personalDetails);
+  }, [personalDetails, reset]);
 
-  const activeStep = 0;
+  const onSubmit = (data: PersonalDetails) => {
+    updatePersonalDetails(data);
+    router.push("/onboarding/work-experience");
+  };
 
   return (
     <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* LEFT */}
       <section className="relative flex flex-col justify-center bg-[#F6F5FF] px-10 py-16 md:px-20">
         <Image
           src="/logo.png"
@@ -62,7 +49,6 @@ export default function PersonalDetailsPage() {
           className="absolute left-[50px] top-[50px]"
           priority
         />
-
         <div className="mt-10 flex flex-col items-center justify-center space-y-6 md:items-start">
           <Image
             src="/cuate.png"
@@ -72,7 +58,6 @@ export default function PersonalDetailsPage() {
             className="object-contain"
             priority
           />
-
           <div className="text-center md:text-left">
             <h1 className="text-xl md:text-2xl font-semibold text-black">
               Share your personal information
@@ -83,8 +68,8 @@ export default function PersonalDetailsPage() {
             </p>
           </div>
         </div>
-
         <button
+          type="button"
           onClick={() => router.push("/onboarding/work-experience")}
           className="absolute bottom-[30px] left-[50px] text-sm text-gray-400 hover:text-gray-600"
         >
@@ -92,30 +77,27 @@ export default function PersonalDetailsPage() {
         </button>
       </section>
 
-      {/* RIGHT */}
       <section className="flex items-start justify-center px-6 py-10 md:px-12 md:py-16">
         <div className="w-full max-w-4xl">
-          {/* Stepper */}
           <div className="mx-auto mb-8 mt-2 w-full max-w-3xl">
-            <Stepper steps={STEPS} active={activeStep} />
+            <Stepper steps={STEPS} active={0} />
           </div>
 
           <h2 className="mb-8 text-center text-2xl font-semibold text-[#4D31EC]">
             Personal details
           </h2>
 
-          {/* Form */}
-          <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">
                 First name <span className="text-red-500">*</span>
               </label>
               <input
-                value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                {...register("firstName")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="John"
               />
+              {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName.message}</p>}
             </div>
 
             <div>
@@ -123,11 +105,11 @@ export default function PersonalDetailsPage() {
                 Last name <span className="text-red-500">*</span>
               </label>
               <input
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                {...register("lastName")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="Doe"
               />
+              {errors.lastName && <p className="text-sm text-red-500 mt-1">{errors.lastName.message}</p>}
             </div>
 
             <div>
@@ -136,25 +118,23 @@ export default function PersonalDetailsPage() {
               </label>
               <input
                 type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                {...register("email")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="john.doe@example.com"
               />
+              {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
             </div>
 
-            {/* Code + Phone */}
             <div className="grid grid-cols-[110px_1fr] gap-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">Code</label>
                 <select
-                  value={form.phoneCountry}
-                  onChange={(e) => setForm({ ...form, phoneCountry: e.target.value })}
+                  {...register("phoneCountry")}
                   className="w-full rounded-lg border px-3 py-3 outline-none focus:border-[#4D31EC]"
                 >
-                  <option>+91</option>
-                  <option>+1</option>
-                  <option>+44</option>
+                  <option value="+91">+91</option>
+                  <option value="+1">+1</option>
+                  <option value="+44">+44</option>
                 </select>
               </div>
               <div>
@@ -162,11 +142,11 @@ export default function PersonalDetailsPage() {
                   Phone number <span className="text-red-500">*</span>
                 </label>
                 <input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  {...register("phone")}
                   className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                   placeholder="9876543210"
                 />
+                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>}
               </div>
             </div>
 
@@ -175,43 +155,42 @@ export default function PersonalDetailsPage() {
                 Location <span className="text-red-500">*</span>
               </label>
               <input
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                {...register("location")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="CA, San Fransisco"
               />
+              {errors.location && <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>}
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium">LinkedIn profile</label>
               <input
-                value={form.linkedin}
-                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+                {...register("linkedin")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="https://linkedin.com/in/johndoe"
               />
+              {errors.linkedin && <p className="text-sm text-red-500 mt-1">{errors.linkedin.message}</p>}
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium">Portfolio link</label>
               <input
-                value={form.portfolio}
-                onChange={(e) => setForm({ ...form, portfolio: e.target.value })}
+                {...register("portfolio")}
                 className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
                 placeholder="https://johndoe.com"
               />
+              {errors.portfolio && <p className="text-sm text-red-500 mt-1">{errors.portfolio.message}</p>}
             </div>
-          </div>
 
-          {/* Next CTA centered */}
-          <div className="mx-auto mt-10 flex max-w-3xl justify-center">
-            <button
-              onClick={next}
-              className="flex items-center gap-2 rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5]"
-            >
-              <span>Next</span> <span aria-hidden>→</span>
-            </button>
-          </div>
+            <div className="md:col-span-2 mx-auto mt-10 w-full max-w-3xl flex justify-center">
+              <button
+                type="submit"
+                className="flex items-center gap-2 rounded-full bg-[#4D31EC] px-8 py-3 font-semibold text-white hover:bg-[#3b25b5]"
+              >
+                <span>Next</span> <span aria-hidden>→</span>
+              </button>
+            </div>
+          </form>
         </div>
       </section>
     </main>

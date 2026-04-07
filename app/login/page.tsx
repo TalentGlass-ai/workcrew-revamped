@@ -7,14 +7,38 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import T from "@/components/primitives/Typography";
 
+import { signIn } from "next-auth/react";
+import { toast } from "sonner"; // We can add sonner toasts for errors
+
 export default function LoginPage() {
   const router = useRouter();
   const [role, setRole] = React.useState<"candidate" | "employer">("candidate");
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: send username/password + rememberMe to your auth API here
-    router.push("/onboarding/upload-resume");
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+    
+    // Call NextAuth Credentials Provider
+    const result = await signIn("credentials", {
+      username,
+      password,
+      role,
+      redirect: false, // Handle routing manually
+    });
+
+    setIsLoading(false);
+
+    if (result?.error) {
+      toast.error("Invalid credentials", { description: "Please check your username and password." });
+    } else {
+      toast.success("Login successful!");
+      router.push("/onboarding/upload-resume");
+    }
   }
 
   return (
@@ -195,10 +219,13 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-full bg-[#4D31EC] py-3 text-white hover:bg-[#3b25b5]"
+              disabled={isLoading}
+              className={`w-full rounded-full py-3 text-white transition ${
+                isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-[#4D31EC] hover:bg-[#3b25b5]"
+              }`}
             >
               <T as="span" variant="button">
-                Login →
+                {isLoading ? "Logging in..." : "Login →"}
               </T>
             </button>
 

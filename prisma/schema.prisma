@@ -1,0 +1,235 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logo        String?
+  website     String?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  industry    String?
+  size        CompanySize?
+  benefits    String?  // Comma-separated benefits offered
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs Job[]
+
+  @@map("companies")
+}
+
+model JobCategory {
+  id   String @id @default(cuid())
+  name String @unique
+
+  jobs Job[]
+
+  @@map("job_categories")
+}
+
+model Job {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  companyId   String
+  categoryId  String
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  salaryMin   Int?
+  salaryMax   Int?
+  type        JobType     @default(FULL_TIME)
+  experience  String?
+  skills      String?    // Comma-separated required skills
+  benefits    String?    // Comma-separated job benefits
+  isRemote    Boolean     @default(false)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category    JobCategory @relation(fields: [categoryId], references: [id])
+  applications JobApplication[]
+  savedJobs    SavedJob[]
+
+  @@map("jobs")
+}
+
+model CandidateProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique // Assuming NextAuth user ID
+  name      String
+  email     String
+  phone     String?
+  location  String?
+  latitude  Float?
+  longitude Float?
+  resume    String?  // URL to resume file
+  bio       String?
+  experience String?
+  preferredSalaryMin Int?
+  preferredSalaryMax Int?
+  willingToRelocate Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skills      CandidateSkill[]
+  applications JobApplication[]
+  savedJobs    SavedJob[]
+  assessments  AssessmentSession[]
+  savedSearches SavedSearch[]
+  jobAlerts    JobAlert[]
+
+  @@map("candidate_profiles")
+}
+
+model CandidateSkill {
+  id           String   @id @default(cuid())
+  candidateId  String
+  skillName    String
+  proficiency  String?  // e.g., Beginner, Intermediate, Expert
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, skillName])
+  @@map("candidate_skills")
+}
+
+model JobApplication {
+  id           String   @id @default(cuid())
+  jobId        String
+  candidateId  String
+  status       ApplicationStatus @default(PENDING)
+  appliedAt    DateTime @default(now())
+  coverLetter  String?
+  resume       String?  // URL to submitted resume
+
+  job       Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  videoScreening VideoScreening?
+
+  @@unique([jobId, candidateId])
+  @@map("job_applications")
+}
+
+model SavedJob {
+  id          String   @id @default(cuid())
+  jobId       String
+  candidateId String
+  savedAt     DateTime @default(now())
+
+  job       Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, candidateId])
+  @@map("saved_jobs")
+}
+
+model AssessmentSession {
+  id          String   @id @default(cuid())
+  candidateId String
+  jobId       String?
+  type        String   // e.g., "personality", "skills_test"
+  status      String   @default("pending")
+  score       Int?
+  results     Json?    // Store assessment results
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("assessment_sessions")
+}
+
+model VideoScreening {
+  id          String   @id @default(cuid())
+  applicationId String @unique
+  videoUrl    String
+  transcription String?
+  analysis    Json?    // AI analysis results
+  createdAt   DateTime @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("video_screenings")
+}
+
+model SavedSearch {
+  id          String   @id @default(cuid())
+  candidateId String
+  name        String   // User-defined name for the search
+  query       String?  // Search query
+  location    String?
+  categoryId  String?
+  jobType     JobType?
+  salaryMin   Int?
+  salaryMax   Int?
+  isRemote    Boolean?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("saved_searches")
+}
+
+model JobAlert {
+  id          String   @id @default(cuid())
+  candidateId String
+  searchId    String?  // Reference to SavedSearch
+  name        String
+  criteria    Json     // Store search criteria as JSON
+  isActive    Boolean  @default(true)
+  frequency   AlertFrequency @default(DAILY)
+  lastSentAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("job_alerts")
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  INTERVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+enum CompanySize {
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum AlertFrequency {
+  INSTANT
+  DAILY
+  WEEKLY
+}

@@ -12,7 +12,7 @@ export const personalDetailsSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address').min(1, 'Email is required'),
-  phoneCountry: z.string().default('+91'),
+  phoneCountry: z.string().min(1, 'Country code is required'),
   phone: z.string().min(6, 'Phone is too short').max(15, 'Phone is too long'),
   location: z.string().min(1, 'Location is required'),
   linkedin: z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -24,7 +24,7 @@ export const workExperienceSchema = z.object({
   title: z.string().min(1, 'Job title is required'),
   start: z.string().min(1, 'Start date is required'),
   end: z.string().optional(),
-  current: z.boolean().default(false),
+  current: z.boolean(),
   bullets: z.string().min(10, 'Please provide some achievements/responsibilities'),
 });
 

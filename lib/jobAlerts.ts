@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from './prisma'
 import { subDays, subHours } from 'date-fns'
 
 export async function processJobAlerts() {

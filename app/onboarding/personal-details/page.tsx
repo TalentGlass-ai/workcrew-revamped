@@ -26,7 +26,16 @@ export default function PersonalDetailsPage() {
     formState: { errors },
   } = useForm<PersonalDetails>({
     resolver: zodResolver(personalDetailsSchema),
-    defaultValues: personalDetails,
+    defaultValues: {
+      firstName: personalDetails.firstName || '',
+      lastName: personalDetails.lastName || '',
+      email: personalDetails.email || '',
+      phoneCountry: personalDetails.phoneCountry || '+91',
+      phone: personalDetails.phone || '',
+      location: personalDetails.location || '',
+      linkedin: personalDetails.linkedin || '',
+      portfolio: personalDetails.portfolio || '',
+    },
   });
 
   useEffect(() => {

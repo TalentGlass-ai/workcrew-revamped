@@ -20,6 +20,7 @@ const archivo = Archivo({
 
 import { Toaster } from "sonner";
 import { Providers } from "./Providers";
+import { SEO_CONFIG } from "../lib/seo";
 
 export default function RootLayout({
   children,
@@ -28,6 +29,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${schibsted.variable} ${archivo.variable}`}>
+      <head>
+        {/* Website Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(SEO_CONFIG.structuredData.website),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(SEO_CONFIG.structuredData.organization),
+          }}
+        />
+      </head>
       <body>
         <Providers>
           <Toaster position="top-center" />

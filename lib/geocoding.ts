@@ -18,10 +18,12 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
 
     if (results && results.length > 0) {
       const result = results[0]
-      return {
-        latitude: result.latitude,
-        longitude: result.longitude,
-        formattedAddress: result.formattedAddress,
+      if (result.latitude && result.longitude) {
+        return {
+          latitude: result.latitude,
+          longitude: result.longitude,
+          formattedAddress: result.formattedAddress || address,
+        }
       }
     }
 

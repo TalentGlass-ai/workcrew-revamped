@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { calculateDistance } from '@/lib/geocoding'
+import { getPrisma } from '../../../../lib/prisma'
+import { calculateDistance } from '../../../../lib/geocoding'
 
 export async function GET(request: NextRequest) {
   try {
+    const prisma = await getPrisma()
+    if (!prisma) {
+      return NextResponse.json({ jobs: [], total: 0 })
+    }
+
     const { searchParams } = new URL(request.url)
 
     const query = searchParams.get('q') || ''
@@ -120,7 +125,7 @@ export async function GET(request: NextRequest) {
     // Filter by distance if coordinates provided
     let filteredJobs = jobs
     if (latitude && longitude) {
-      filteredJobs = jobs.filter(job => {
+      filteredJobs = jobs.filter((job: any) => {
         if (!job.latitude || !job.longitude) return false
         const distance = calculateDistance(latitude, longitude, job.latitude, job.longitude)
         return distance <= radius
@@ -142,5 +147,118 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const filters = await request.json()
+    const prisma = await getPrisma()
+
+    if (!prisma) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 })
+    }
+
+    const {
+      query = '',
+      location = '',
+      category = [],
+      type = [],
+      cities = [],
+      skills = [],
+      salaryRange = [],
+      experienceLevel = [],
+      isRemote,
+      page = 1,
+      limit = 10,
+    } = filters
+
+    // Build where clause
+    const where: any = {
+      isActive: true,
+    }
+
+    // Text search
+    if (query) {
+      where.OR = [
+        { title: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+        { company: { name: { contains: query, mode: 'insensitive' } } },
+      ]
+    }
+
+    // Location filter
+    if (location) {
+      where.location = { contains: location, mode: 'insensitive' }
+    }
+
+    // Category filter
+    if (category.length > 0) {
+      where.category = { name: { in: category } }
+    }
+
+    // Type filter
+    if (type.length > 0) {
+      where.type = { in: type }
+    }
+
+    // Remote filter
+    if (isRemote !== undefined) {
+      where.isRemote = isRemote
+    }
+
+    // Skills filter
+    if (skills.length > 0) {
+      where.skills = {
+        some: {
+          name: { in: skills }
+        }
+      }
+    }
+
+    // Get total count
+    const total = await prisma.job.count({ where })
+
+    // Get paginated results
+    const jobs = await prisma.job.findMany({
+      where,
+      include: {
+        company: true,
+        skills: true,
+        category: true,
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Transform to match expected format
+    const transformedJobs = jobs.map((job: any) => ({
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      company: job.company,
+      location: job.location,
+      type: job.type,
+      salaryRange: job.salaryMin && job.salaryMax ? `${job.salaryMin}-${job.salaryMax}` : '',
+      isRemote: job.isRemote,
+      skills: job.skills?.map((s: any) => s.name) || [],
+      category: job.category?.name,
+      experienceLevel: job.experienceLevel,
+      createdAt: job.createdAt.toISOString(),
+      updatedAt: job.updatedAt.toISOString(),
+    }))
+
+    return NextResponse.json({
+      jobs: transformedJobs,
+      total,
+      page,
+      limit,
+      hasMore: total > page * limit,
+    })
+
+  } catch (error) {
+    console.error('Advanced search error:', error)
+    return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 }

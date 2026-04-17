@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../../../../lib/prisma'
+
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
+    const { id } = await context.params
     const job = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         company: true,
         category: true,

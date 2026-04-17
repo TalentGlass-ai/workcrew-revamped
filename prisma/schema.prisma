@@ -64,6 +64,7 @@ model Job {
   category    JobCategory @relation(fields: [categoryId], references: [id])
   applications JobApplication[]
   savedJobs    SavedJob[]
+  interactions UserInteraction[]
 
   @@map("jobs")
 }
@@ -92,6 +93,7 @@ model CandidateProfile {
   assessments  AssessmentSession[]
   savedSearches SavedSearch[]
   jobAlerts    JobAlert[]
+  interactions UserInteraction[]
 
   @@map("candidate_profiles")
 }
@@ -202,6 +204,24 @@ model JobAlert {
   candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
   @@map("job_alerts")
+}
+
+model UserInteraction {
+  id          String   @id @default(cuid())
+  sessionId   String
+  candidateId String?
+  jobId       String?
+  action      String   // 'view', 'apply', 'save', 'contact', etc.
+  metadata    Json?    // Additional context data
+  userAgent   String?
+  referrer    String?
+  timestamp   DateTime @default(now())
+
+  // Optional relations
+  candidate   CandidateProfile? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  job         Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@map("user_interactions")
 }
 
 enum JobType {

@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { calculateDistance } from '@/lib/geocoding'
+import { getPrisma } from '../../../../lib/prisma'
+import { calculateDistance } from '../../../../lib/geocoding'
 
 export async function GET(request: NextRequest) {
   try {
+    const prisma = await getPrisma()
+    if (!prisma) {
+      return NextResponse.json({ recommendations: [] })
+    }
+
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const candidateId = searchParams.get('candidateId')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    if (!userId) {
-      // Return general recommendations if no user specified
+    if (!candidateId) {
+      // Return general recommendations if no candidate specified
       const jobs = await prisma.job.findMany({
         where: { isActive: true },
         include: {
@@ -37,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Get candidate profile and skills
     const candidate = await prisma.candidateProfile.findUnique({
-      where: { userId },
+      where: { id: candidateId },
       include: {
         skills: true,
         savedJobs: {
@@ -78,19 +83,19 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate match scores
-    const candidateSkills = candidate.skills.map(s => s.skillName.toLowerCase())
-    const savedJobIds = new Set(candidate.savedJobs.map(s => s.jobId))
-    const appliedJobIds = new Set(candidate.applications.map(a => a.jobId))
+    const candidateSkills = candidate.skills.map((s: any) => s.skillName.toLowerCase())
+    const savedJobIds = new Set(candidate.savedJobs.map((s: any) => s.jobId))
+    const appliedJobIds = new Set(candidate.applications.map((a: any) => a.jobId))
 
     const scoredJobs = allJobs
-      .filter(job => !savedJobIds.has(job.id) && !appliedJobIds.has(job.id)) // Exclude already interacted jobs
-      .map(job => {
+      .filter((job: any) => !savedJobIds.has(job.id) && !appliedJobIds.has(job.id)) // Exclude already interacted jobs
+      .map((job: any) => {
         let score = 0
-        const jobSkills = job.skills ? job.skills.split(',').map(s => s.trim().toLowerCase()) : []
+        const jobSkills = job.skills ? job.skills.split(',').map((s: string) => s.trim().toLowerCase()) : []
 
         // Skill matching (40% weight)
-        const matchingSkills = jobSkills.filter(skill =>
-          candidateSkills.some(candidateSkill =>
+        const matchingSkills = jobSkills.filter((skill: string) =>
+          candidateSkills.some((candidateSkill: string) =>
             candidateSkill.includes(skill) || skill.includes(candidateSkill)
           )
         )
@@ -138,7 +143,7 @@ export async function GET(request: NextRequest) {
 
         return { ...job, matchScore: Math.round(score) }
       })
-      .sort((a, b) => b.matchScore - a.matchScore)
+      .sort((a: any, b: any) => b.matchScore - a.matchScore)
       .slice(0, limit)
 
     return NextResponse.json({

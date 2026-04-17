@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getPrisma } from '../../../lib/prisma'
 
 export async function GET() {
   try {
+    const prisma = await getPrisma()
+    if (!prisma) {
+      return NextResponse.json({ categories: [] })
+    }
+
     const categories = await prisma.jobCategory.findMany({
       include: {
         _count: {

@@ -1,14 +1,33 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSQLite } from '@prisma/adapter-better-sqlite3'
-import Database from 'better-sqlite3'
+// Dynamic Prisma client to avoid initialization during build
+let prismaInstance: any = null
 
-const sqlite = new Database('./dev.db')
-const adapter = new PrismaBetterSQLite(sqlite)
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+export const getPrisma = async () => {
+  if (!prismaInstance && process.env.DATABASE_URL) {
+    const { PrismaClient } = await import('@prisma/client')
+    prismaInstance = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      transactionOptions: {
+        maxWait: 5000,
+        timeout: 10000,
+      },
+    })
+  }
+  return prismaInstance
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// For backward compatibility, export a proxy that calls getPrisma
+export const prisma = new Proxy({} as any, {
+  get(target, prop) {
+    return async (...args: any[]) => {
+      const client = await getPrisma()
+      if (!client) {
+        throw new Error('Database not available')
+      }
+      const method = client[prop]
+      if (typeof method === 'function') {
+        return method.apply(client, args)
+      }
+      return method
+    }
+  }
+})

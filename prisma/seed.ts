@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma'
+import { indexJob, indexCompany } from '../lib/typesense'
 
 async function main() {
   // Create categories
@@ -60,7 +61,7 @@ async function main() {
   ])
 
   // Create jobs
-  await Promise.all([
+  const jobs = await Promise.all([
     prisma.job.upsert({
       where: { id: 'job-1' },
       update: {},
@@ -123,6 +124,24 @@ async function main() {
       },
     }),
   ])
+
+  // Index jobs and companies to Typesense
+  console.log('Indexing data to Typesense...')
+  try {
+    // Index companies
+    for (const company of companies) {
+      await indexCompany(company.id)
+    }
+
+    // Index jobs
+    for (const job of jobs) {
+      await indexJob(job.id)
+    }
+
+    console.log('Data indexed successfully')
+  } catch (error) {
+    console.log('Typesense indexing failed (this is OK if Typesense is not running):', error)
+  }
 
   // Create sample candidate profile
   const candidate = await prisma.candidateProfile.upsert({

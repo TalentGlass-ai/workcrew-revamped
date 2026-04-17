@@ -404,6 +404,7 @@ model Subscription {
   plan                    Plan @relation(fields: [planId], references: [id])
   usages                  Usage[]
   invoices                Invoice[]
+  usageAlerts             UsageAlert[]
 
   @@map("subscriptions")
 }
@@ -496,6 +497,40 @@ model WebhookEvent {
 
   @@unique([eventId, gateway])
   @@map("webhook_events")
+}
+
+model UsageAlert {
+  id             String @id @default(uuid()) 
+  subscriptionId String 
+  metric         String // e.g. job_posts, candidate_unlocks
+  threshold      Float // percentage (0-1) when alert was triggered
+  currentUsage   Int @map("current_usage")
+  limit          Int
+  alertType      String @map("alert_type") // warning, critical
+  message        String
+  acknowledgedAt DateTime? @map("acknowledged_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("usage_alerts")
+}
+
+model ABTest {
+  id                   String @id @default(uuid()) 
+  name                 String
+  strategyA            Json @map("strategy_a") // PricingStrategy
+  strategyB            Json @map("strategy_b") // PricingStrategy
+  startDate            DateTime @map("start_date")
+  endDate              DateTime? @map("end_date")
+  targetUsers          Int @map("target_users")
+  currentParticipants  Int @map("current_participants")
+  results              Json? // { strategyA: { conversions, revenue }, strategyB: { conversions, revenue } }
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("ab_tests")
 }
 
 model OrganizationBilling {

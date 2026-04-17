@@ -533,6 +533,40 @@ model ABTest {
   @@map("ab_tests")
 }
 
+model IdempotencyKey {
+  id               String   @id @default(uuid())
+  key              String   @unique
+  responseBody     String   @map("response_body")
+  responseHeaders  Json     @map("response_headers")
+  statusCode       Int      @map("status_code")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("idempotency_keys")
+}
+
+model IdempotencyRetry {
+  key   String @id
+  count Int    @default(0)
+
+  @@map("idempotency_retries")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  userId         String?
+  organizationId String?
+  action         String
+  resource       String
+  resourceId     String?
+  details        Json
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+  severity       String   @default("medium") // low, medium, high, critical
+
+  @@map("audit_logs")
+}
+
 model OrganizationBilling {
   id             String @id @default(uuid()) 
   organizationId String @unique 

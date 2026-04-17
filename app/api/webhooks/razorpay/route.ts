@@ -1,24 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
+import { SecurityUtils } from '../../../../lib/utils/security';
+import { AuditLogger } from '../../../../lib/services/audit-logger';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const clientIP = request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
+                   'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+
   try {
     const body = await request.text();
     const signature = request.headers.get('x-razorpay-signature');
 
     if (!signature) {
+      await AuditLogger.logSecurityEvent(
+        undefined,
+        undefined,
+        'webhook_missing_signature',
+        {
+          gateway: 'razorpay',
+          ipAddress: clientIP,
+          userAgent,
+          bodyLength: body.length,
+        },
+        'high'
+      );
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+    }
+
+    // Validate webhook signature using security utils
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('RAZORPAY_WEBHOOK_SECRET not configured');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const isValidSignature = SecurityUtils.validateRazorpayWebhook(body, signature, webhookSecret);
+    if (!isValidSignature) {
+      await AuditLogger.logSecurityEvent(
+        undefined,
+        undefined,
+        'webhook_invalid_signature',
+        {
+          gateway: 'razorpay',
+          ipAddress: clientIP,
+          userAgent,
+          signatureProvided: !!signature,
+        },
+        'critical'
+      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    // Parse webhook payload
+    let webhookData;
+    try {
+      webhookData = JSON.parse(body);
+    } catch (error) {
+      await AuditLogger.logSecurityEvent(
+        undefined,
+        undefined,
+        'webhook_invalid_payload',
+        {
+          gateway: 'razorpay',
+          ipAddress: clientIP,
+          error: error.message,
+        },
+        'high'
+      );
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
     // Get payment service for India region (Razorpay)
     const paymentService = getPaymentServiceForRegion('india');
 
-    // Handle webhook
-    const result = await paymentService.handleWebhook(JSON.parse(body), signature);
+    // Handle webhook with enhanced error handling
+    const result = await paymentService.handleWebhook(webhookData, signature);
 
     // Check idempotency using database
     const eventId = result.id;
@@ -28,16 +90,29 @@ export async function POST(request: NextRequest) {
 
     if (existingEvent) {
       console.log(`Duplicate Razorpay event ${eventId}, skipping`);
+      await AuditLogger.logBillingEvent(
+        undefined,
+        undefined,
+        'webhook_duplicate_event',
+        {
+          gateway: 'razorpay',
+          eventId,
+          eventType: result.type,
+          ipAddress: clientIP,
+        },
+        'low'
+      );
       return NextResponse.json({ received: true });
     }
 
-    // Store event for idempotency
+    // Store event for idempotency with sanitized data
+    const sanitizedPayload = SecurityUtils.sanitizeForLogging(webhookData);
     await prisma.webhookEvent.create({
       data: {
         eventId,
         gateway: 'razorpay',
         eventType: result.type,
-        payload: body,
+        payload: JSON.stringify(sanitizedPayload),
         processedAt: new Date(),
       },
     });
@@ -45,9 +120,52 @@ export async function POST(request: NextRequest) {
     // Update database based on event
     await updateDatabaseFromWebhook(result, 'razorpay');
 
+    // Log successful processing
+    await AuditLogger.logBillingEvent(
+      undefined,
+      undefined,
+      'webhook_processed',
+      {
+        gateway: 'razorpay',
+        eventId,
+        eventType: result.type,
+        processingTime: Date.now() - startTime,
+        ipAddress: clientIP,
+      },
+      'low'
+    );
+
     console.log(`Processed Razorpay webhook: ${result.type} (${eventId})`);
 
-    return NextResponse.json({ received: true });
+    // Return with security headers
+    const response = NextResponse.json({ received: true });
+    Object.entries(SecurityUtils.getSecurityHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
+  } catch (error) {
+    console.error('Razorpay webhook error:', error);
+
+    // Log error with context
+    await AuditLogger.logSecurityEvent(
+      undefined,
+      undefined,
+      'webhook_processing_error',
+      {
+        gateway: 'razorpay',
+        error: error.message,
+        stack: error.stack,
+        processingTime: Date.now() - startTime,
+        ipAddress: clientIP,
+        userAgent,
+      },
+      'high'
+    );
+
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+  }
+}
   } catch (error) {
     console.error('Razorpay webhook error:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });

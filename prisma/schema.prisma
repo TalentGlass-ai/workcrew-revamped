@@ -1,255 +1,358 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model Company {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  logo        String?
-  website     String?
-  location    String?
-  latitude    Float?
-  longitude   Float?
-  industry    String?
-  size        CompanySize?
-  benefits    String?  // Comma-separated benefits offered
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// -----------------------------------------------------------------------------
+// TENANT / ORGANIZATION
+// -----------------------------------------------------------------------------
 
-  jobs Job[]
+model Organization {
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String
+  slug             String   @unique
+  logo             String?
+  website          String?
+  industry         String?
+  size             String?
+  subscriptionPlan String   @default("free") @map("subscription_plan")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  @@map("companies")
+  settings         OrganizationSettings?
+  users            User[]
+  jobs             Job[]
+  jobPipelineStages JobPipelineStage[]
+  assessments       Assessment[]
+
+  @@map("organizations")
 }
 
-model JobCategory {
-  id   String @id @default(cuid())
-  name String @unique
+model OrganizationSettings {
+  id                   String  @id @default(uuid()) @db.Uuid
+  organizationId       String  @unique @map("organization_id") @db.Uuid
+  branding             Json?
+  workflowRules        Json?   @map("workflow_rules")
+  aiAssessmentEnabled  Boolean @default(false) @map("ai_assessment_enabled")
+  aiInterviewerEnabled Boolean @default(false) @map("ai_interviewer_enabled")
+  integrationsConfig   Json?   @map("integrations_config")
+  seoSettings          Json?   @map("seo_settings")
 
-  jobs Job[]
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@map("job_categories")
+  @@map("organization_settings")
 }
+
+// -----------------------------------------------------------------------------
+// USERS + AUTH (Compatible with Auth.js / NextAuth)
+// -----------------------------------------------------------------------------
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
+  role           String    @default("candidate") // admin, recruiter, hiring_manager, interviewer, candidate
+  name           String?   // Auth.js compat
+  firstName      String?   @map("first_name")
+  lastName       String?   @map("last_name")
+  email          String?   @unique
+  emailVerified  DateTime? @map("email_verified") // Auth.js compat
+  image          String?   // Auth.js compat
+  passwordHash   String?   @map("password_hash")
+  phone          String?
+  status         String    @default("active")
+  lastLogin      DateTime? @map("last_login")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  accounts       Account[]     // Auth.js compat
+  sessions       Session[]     // Auth.js compat
+  candidate      Candidate?
+  createdJobs    Job[]         @relation("JobCreator")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// -----------------------------------------------------------------------------
+// CANDIDATE PROFILE INTELLIGENCE
+// -----------------------------------------------------------------------------
+
+model Candidate {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  profileSummary   String?  @db.Text @map("profile_summary")
+  totalExperience  Float?   @map("total_experience")
+  currentRole      String?  @map("current_role")
+  location         String?
+  resumeUrl        String?  @map("resume_url")
+  portfolioUrl     String?  @map("portfolio_url")
+  linkedinUrl      String?  @map("linkedin_url")
+  githubUrl        String?  @map("github_url")
+  stackoverflowUrl String?  @map("stackoverflow_url")
+  hackerrankUrl    String?  @map("hackerrank_url")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills           CandidateSkill[]
+  radar            CandidateCompetencyRadar?
+  applications     CandidateApplication[]
+  assessments      AssessmentAttempt[]
+
+  @@map("candidates")
+}
+
+model CandidateSkill {
+  id               String    @id @default(uuid()) @db.Uuid
+  candidateId      String    @map("candidate_id") @db.Uuid
+  skillName        String    @map("skill_name")
+  category         String?   // e.g. "technical", "soft_skill", "domain"
+  score            Float?    // Out of 10 or 100
+  confidenceScore  Float?    @map("confidence_score")
+  source           String?   // e.g. "resume", "github", "assessment"
+  lastVerifiedAt   DateTime? @map("last_verified_at")
+
+  candidate        Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("candidate_skills")
+}
+
+model CandidateCompetencyRadar {
+  id                 String   @id @default(uuid()) @db.Uuid
+  candidateId        String   @unique @map("candidate_id") @db.Uuid
+  technicalDepth     Float?   @map("technical_depth")
+  problemSolving     Float?   @map("problem_solving")
+  communication      Float?
+  leadership         Float?
+  collaboration      Float?
+  domainKnowledge    Float?   @map("domain_knowledge")
+  systemDesign       Float?   @map("system_design")
+  aiAssessmentScore  Float?   @map("ai_assessment_score")
+  aiInterviewScore   Float?   @map("ai_interview_score")
+
+  candidate          Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("candidate_competency_radars")
+}
+
+// -----------------------------------------------------------------------------
+// JOBS / ATS
+// -----------------------------------------------------------------------------
 
 model Job {
-  id          String      @id @default(cuid())
-  title       String
-  description String
-  companyId   String
-  categoryId  String
-  location    String?
-  latitude    Float?
-  longitude   Float?
-  salaryMin   Int?
-  salaryMax   Int?
-  type        JobType     @default(FULL_TIME)
-  experience  String?
-  skills      String?    // Comma-separated required skills
-  benefits    String?    // Comma-separated job benefits
-  isRemote    Boolean     @default(false)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                 String   @id @default(uuid()) @db.Uuid
+  organizationId     String   @map("organization_id") @db.Uuid
+  title              String
+  department         String?
+  location           String?
+  jobType            String?  @map("job_type")
+  employmentType     String?  @map("employment_type")
+  experienceRequired String?  @map("experience_required")
+  salaryMin          Float?   @map("salary_min")
+  salaryMax          Float?   @map("salary_max")
+  currency           String?
+  description        String   @db.Text
+  requiredSkills     Json?    @map("required_skills")
+  preferredSkills    Json?    @map("preferred_skills")
+  seoSlug            String?  @map("seo_slug")
+  publishedAt        DateTime? @map("published_at")
+  status             String   @default("draft") // draft, published, closed, archived
+  createdBy          String   @map("created_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  category    JobCategory @relation(fields: [categoryId], references: [id])
-  applications JobApplication[]
-  savedJobs    SavedJob[]
-  interactions UserInteraction[]
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator            User               @relation("JobCreator", fields: [createdBy], references: [id])
+  stages             JobPipelineStage[]
+  applications       CandidateApplication[]
+  assessments        Assessment[]
+  interviews         InterviewSession[]
 
   @@map("jobs")
 }
 
-model CandidateProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique // Assuming NextAuth user ID
-  name      String
-  email     String
-  phone     String?
-  location  String?
-  latitude  Float?
-  longitude Float?
-  resume    String?  // URL to resume file
-  bio       String?
-  experience String?
-  preferredSalaryMin Int?
-  preferredSalaryMax Int?
-  willingToRelocate Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model JobPipelineStage {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  jobId          String  @map("job_id") @db.Uuid
+  stageName      String  @map("stage_name")
+  stageOrder     Int     @map("stage_order")
 
-  skills      CandidateSkill[]
-  applications JobApplication[]
-  savedJobs    SavedJob[]
-  assessments  AssessmentSession[]
-  savedSearches SavedSearch[]
-  jobAlerts    JobAlert[]
-  interactions UserInteraction[]
+  job            Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@map("candidate_profiles")
+  @@map("job_pipeline_stages")
 }
 
-model CandidateSkill {
-  id           String   @id @default(cuid())
-  candidateId  String
-  skillName    String
-  proficiency  String?  // e.g., Beginner, Intermediate, Expert
+model CandidateApplication {
+  id             String   @id @default(uuid()) @db.Uuid
+  jobId          String   @map("job_id") @db.Uuid
+  candidateId    String   @map("candidate_id") @db.Uuid
+  currentStage   String   @map("current_stage")
+  aiMatchScore   Float?   @map("ai_match_score")
+  fraudRiskScore Float?   @map("fraud_risk_score")
+  recruiterRating Int?    @map("recruiter_rating")
+  status         String   @default("active") // active, rejected, hired, withdrawn
+  appliedAt      DateTime @default(now()) @map("applied_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job            Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-  @@unique([candidateId, skillName])
-  @@map("candidate_skills")
+  @@map("candidate_applications")
 }
 
-model JobApplication {
-  id           String   @id @default(cuid())
-  jobId        String
-  candidateId  String
-  status       ApplicationStatus @default(PENDING)
-  appliedAt    DateTime @default(now())
-  coverLetter  String?
-  resume       String?  // URL to submitted resume
+// -----------------------------------------------------------------------------
+// ASSESSMENT ENGINE
+// -----------------------------------------------------------------------------
 
-  job       Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+model Assessment {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  jobId           String?  @map("job_id") @db.Uuid
+  type            String   // e.g. mcq, coding, communication, scenario
+  difficulty      String?
+  durationMinutes Int?     @map("duration_minutes")
+  generatedByAi   Boolean  @default(false) @map("generated_by_ai")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  videoScreening VideoScreening?
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  job             Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  questions       AssessmentQuestion[]
+  attempts        AssessmentAttempt[]
 
-  @@unique([jobId, candidateId])
-  @@map("job_applications")
+  @@map("assessments")
 }
 
-model SavedJob {
-  id          String   @id @default(cuid())
-  jobId       String
-  candidateId String
-  savedAt     DateTime @default(now())
+model AssessmentQuestion {
+  id             String  @id @default(uuid()) @db.Uuid
+  assessmentId   String  @map("assessment_id") @db.Uuid
+  questionType   String  @map("question_type")
+  questionText   String  @db.Text @map("question_text")
+  expectedAnswer String? @db.Text @map("expected_answer")
+  scoringRubric  Json?   @map("scoring_rubric")
+  weightage      Float   @default(1.0)
 
-  job       Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
-  @@unique([jobId, candidateId])
-  @@map("saved_jobs")
+  @@map("assessment_questions")
 }
 
-model AssessmentSession {
-  id          String   @id @default(cuid())
-  candidateId String
-  jobId       String?
-  type        String   // e.g., "personality", "skills_test"
-  status      String   @default("pending")
-  score       Int?
-  results     Json?    // Store assessment results
-  createdAt   DateTime @default(now())
-  completedAt DateTime?
+model AssessmentAttempt {
+  id             String   @id @default(uuid()) @db.Uuid
+  candidateId    String   @map("candidate_id") @db.Uuid
+  assessmentId   String   @map("assessment_id") @db.Uuid
+  score          Float?
+  fraudRiskScore Float?   @map("fraud_risk_score")
+  submittedAt    DateTime @default(now()) @map("submitted_at")
 
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate      Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  fraudSignals   FraudSignal[]
 
-  @@map("assessment_sessions")
+  @@map("assessment_attempts")
 }
 
-model VideoScreening {
-  id          String   @id @default(cuid())
-  applicationId String @unique
-  videoUrl    String
-  transcription String?
-  analysis    Json?    // AI analysis results
-  createdAt   DateTime @default(now())
+// -----------------------------------------------------------------------------
+// AI INTERVIEW
+// -----------------------------------------------------------------------------
 
-  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+model InterviewSession {
+  id            String    @id @default(uuid()) @db.Uuid
+  jobId         String    @map("job_id") @db.Uuid
+  candidateId   String    @map("candidate_id") @db.Uuid
+  sessionType   String    @map("session_type") // video, audio, text, coding
+  status        String    @default("scheduled") // scheduled, in_progress, completed, cancelled
+  startTime     DateTime? @map("start_time")
+  endTime       DateTime? @map("end_time")
+  transcriptUrl String?   @map("transcript_url")
+  videoUrl      String?   @map("video_url")
+  audioUrl      String?   @map("audio_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
 
-  @@map("video_screenings")
+  job           Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  insights      InterviewInsight[]
+  fraudSignals  FraudSignal[]
+
+  @@map("interview_sessions")
 }
 
-model SavedSearch {
-  id          String   @id @default(cuid())
-  candidateId String
-  name        String   // User-defined name for the search
-  query       String?  // Search query
-  location    String?
-  categoryId  String?
-  jobType     JobType?
-  salaryMin   Int?
-  salaryMax   Int?
-  isRemote    Boolean?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model InterviewInsight {
+  id                 String  @id @default(uuid()) @db.Uuid
+  interviewSessionId String  @map("interview_session_id") @db.Uuid
+  confidenceScore    Float?  @map("confidence_score")
+  communicationScore Float?  @map("communication_score")
+  technicalScore     Float?  @map("technical_score")
+  behavioralScore    Float?  @map("behavioral_score")
+  riskScore          Float?  @map("risk_score")
+  recommendation     String? @db.Text
 
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
 
-  @@map("saved_searches")
+  @@map("interview_insights")
 }
 
-model JobAlert {
-  id          String   @id @default(cuid())
-  candidateId String
-  searchId    String?  // Reference to SavedSearch
-  name        String
-  criteria    Json     // Store search criteria as JSON
-  isActive    Boolean  @default(true)
-  frequency   AlertFrequency @default(DAILY)
-  lastSentAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// -----------------------------------------------------------------------------
+// CHEAT RESISTANCE
+// -----------------------------------------------------------------------------
 
-  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+model FraudSignal {
+  id                  String   @id @default(uuid()) @db.Uuid
+  candidateId         String?  @map("candidate_id") @db.Uuid
+  assessmentAttemptId String?  @map("assessment_attempt_id") @db.Uuid
+  interviewSessionId  String?  @map("interview_session_id") @db.Uuid
+  signalType          String   @map("signal_type") // e.g., tab_switch, copy_paste, multiple_face_detected
+  severity            String   // low, medium, high
+  metadataJson        Json?    @map("metadata_json")
+  createdAt           DateTime @default(now()) @map("created_at")
 
-  @@map("job_alerts")
-}
+  assessmentAttempt   AssessmentAttempt? @relation(fields: [assessmentAttemptId], references: [id], onDelete: SetNull)
+  interviewSession    InterviewSession?  @relation(fields: [interviewSessionId], references: [id], onDelete: SetNull)
 
-model UserInteraction {
-  id          String   @id @default(cuid())
-  sessionId   String
-  candidateId String?
-  jobId       String?
-  action      String   // 'view', 'apply', 'save', 'contact', etc.
-  metadata    Json?    // Additional context data
-  userAgent   String?
-  referrer    String?
-  timestamp   DateTime @default(now())
-
-  // Optional relations
-  candidate   CandidateProfile? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
-  job         Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
-
-  @@map("user_interactions")
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  FREELANCE
-  INTERNSHIP
-}
-
-enum ApplicationStatus {
-  PENDING
-  REVIEWED
-  INTERVIEWED
-  ACCEPTED
-  REJECTED
-}
-
-enum CompanySize {
-  STARTUP
-  SMALL
-  MEDIUM
-  LARGE
-  ENTERPRISE
-}
-
-enum AlertFrequency {
-  INSTANT
-  DAILY
-  WEEKLY
+  @@map("fraud_signals")
 }

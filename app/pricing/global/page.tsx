@@ -1,4 +1,4 @@
-// PATH: app/pricing/page.tsx
+// PATH: app/pricing/global/page.tsx
 "use client";
 
 import * as React from "react";
@@ -13,7 +13,7 @@ import T from "@/components/primitives/Typography";
 /* ——— Tiny inline SVG icon kept only for the arrow on buttons ——— */
 const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
-    <path d="M10.293 15.707a1 1 0 0 1 0-1.414L12.586 12H4a1 1 0 1 1 0-2h8.586l-2.293-2.293A1 1 0 0 1 11.707 6.293l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0Z" />
+    <path d="M10.293 15.707a1 1 0 0 1 0-1.414L12.586 12H4a1 1 0 1 1 0-2h8.586l-2.293-2.293A1 1 0 0 1 11.707 6.293l4 4a1 1 0 1 0 1.414 1.414l-4 4a1 1 0 0 1-1.414 0Z" />
   </svg>
 );
 
@@ -32,33 +32,11 @@ type Plan = {
   features: FeatureRow[];
 };
 
-export default function PricingPage() {
-  // Simple region detection - in production, use proper geolocation
-  React.useEffect(() => {
-    const detectRegion = () => {
-      // Check URL params first
-      const urlParams = new URLSearchParams(window.location.search);
-      const region = urlParams.get('region');
-
-      if (region === 'india') {
-        window.location.href = '/pricing/india';
-        return;
-      } else if (region === 'global') {
-        window.location.href = '/pricing/global';
-        return;
-      }
-
-      // Simple IP-based detection (in production, use proper service)
-      // For now, default to global but show region selector
-    };
-
-    detectRegion();
-  }, []);
-
+export default function GlobalPricingPage() {
   const [billing, setBilling] = React.useState<"monthly" | "yearly">("monthly");
   const isYearly = billing === "yearly";
 
-  // Default to global pricing for main page
+  // === THREE PLANS FOR GLOBAL ===
   const plans: Plan[] = [
     {
       name: "Starter",
@@ -118,6 +96,14 @@ export default function PricingPage() {
 
   return (
     <main>
+      {/* SEO Meta - would be in layout or head */}
+      <head>
+        <title>WorkCrew.ai Pricing - Global | AI-Powered Recruitment Platform</title>
+        <meta name="description" content="Choose the perfect WorkCrew.ai plan for your global business. AI-powered recruitment with competitive pricing. Start hiring smarter today." />
+        <meta name="keywords" content="recruitment software, AI hiring platform, job posting, talent acquisition, HR software" />
+        <link rel="canonical" href="https://workcrew.ai/pricing/global" />
+      </head>
+
       {/* Navbar */}
       <Section size="sm" background="default" withContainer={false}>
         <Container>
@@ -154,7 +140,7 @@ export default function PricingPage() {
               style={{ marginTop: "-100px" }}
             >
               <T as="h1" variant="hero48" className="text-black" autoLeading>
-                Pricing
+                Global Pricing
               </T>
 
               {/* Subtitle — black (#000) */}
@@ -168,7 +154,7 @@ export default function PricingPage() {
               >
                 Choose the perfect plan that allows you to post job openings,
                 source the best talent, and effectively grow your team to meet
-                your business goals.
+                your business goals. All prices in USD.
               </T>
 
               {/* Region selector */}
@@ -231,7 +217,7 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Arrow (image) + “10% off” */}
+                {/* Arrow (image) + "10% off" */}
                 <div
                   className="absolute flex items-center gap-2"
                   style={{ left: "calc(100% - 16px)", top: "-10px" }}
@@ -333,9 +319,9 @@ export default function PricingPage() {
                             letterSpacing: "0.005em",
                           }}
                         >
-                          ${plan.price.toLocaleString()}
+                          ${plan.price}
                         </div>
-                        {/* “/month” — Archivo medium 20/27, 0.03em, #808080 */}
+                        {/* "/month" — Archivo medium 20/27, 0.03em, #808080 */}
                         <T
                           as="div"
                           variant="sub20"
@@ -444,7 +430,7 @@ export default function PricingPage() {
         </div>
       </Section>
 
-      {/* Custom Plan CTA — viewport-aligned (180px from left) */}
+      {/* Custom Plan CTA */}
       <Section withContainer={false}>
         <div
           className="rounded-[16px] flex items-center gap-6"
@@ -534,7 +520,7 @@ export default function PricingPage() {
             trackingPct={3}
             className="text-center mb-10 text-black"
           >
-            Can’t find the answer you're looking for? Reach out to our support
+            Can&apos;t find the answer you&apos;re looking for? Reach out to our support
           </T>
 
           {/* FAQ items */}
@@ -542,7 +528,7 @@ export default function PricingPage() {
             {[
               {
                 q: "Can I upgrade or downgrade my subscription mid-billing cycle?",
-                a: "Absolutely. You can upgrade or downgrade your subscription at any time during the billing cycle. Your plan will adjust immediately according to the package tier you select, and you’ll be charged or credited on a prorated basis.",
+                a: "Absolutely. You can upgrade or downgrade your subscription at any time during the billing cycle. Your plan will adjust immediately according to the package tier you select, and you'll be charged or credited on a prorated basis.",
               },
               {
                 q: "What happens to unused job credits or posting allowances at the end of my billing cycle?",

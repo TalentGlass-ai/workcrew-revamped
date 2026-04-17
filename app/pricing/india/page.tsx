@@ -1,4 +1,4 @@
-// PATH: app/pricing/page.tsx
+// PATH: app/pricing/india/page.tsx
 "use client";
 
 import * as React from "react";
@@ -13,7 +13,7 @@ import T from "@/components/primitives/Typography";
 /* ——— Tiny inline SVG icon kept only for the arrow on buttons ——— */
 const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
-    <path d="M10.293 15.707a1 1 0 0 1 0-1.414L12.586 12H4a1 1 0 1 1 0-2h8.586l-2.293-2.293A1 1 0 0 1 11.707 6.293l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0Z" />
+    <path d="M10.293 15.707a1 1 0 0 1 0-1.414L12.586 12H4a1 1 0 1 1 0-2h8.586l-2.293-2.293A1 1 0 0 1 11.707 6.293l4 4a1 1 0 1 0 1.414 1.414l-4 4a1 1 0 0 1-1.414 0Z" />
   </svg>
 );
 
@@ -32,37 +32,16 @@ type Plan = {
   features: FeatureRow[];
 };
 
-export default function PricingPage() {
-  // Simple region detection - in production, use proper geolocation
-  React.useEffect(() => {
-    const detectRegion = () => {
-      // Check URL params first
-      const urlParams = new URLSearchParams(window.location.search);
-      const region = urlParams.get('region');
-
-      if (region === 'india') {
-        window.location.href = '/pricing/india';
-        return;
-      } else if (region === 'global') {
-        window.location.href = '/pricing/global';
-        return;
-      }
-
-      // Simple IP-based detection (in production, use proper service)
-      // For now, default to global but show region selector
-    };
-
-    detectRegion();
-  }, []);
-
+export default function IndiaPricingPage() {
   const [billing, setBilling] = React.useState<"monthly" | "yearly">("monthly");
   const isYearly = billing === "yearly";
 
-  // Default to global pricing for main page
+  // === THREE PLANS FOR INDIA ===
   const plans: Plan[] = [
     {
       name: "Starter",
-      price: billing === "monthly" ? 99 : Math.round(99 * 12 * 0.9),
+      price: billing === "monthly" ? 9000 : Math.round(9000 * 12 * 0.9),
+      priceSuffix: "/-",
       durationLine: "/month",
       highlight: false,
       cta: "Choose plan",
@@ -80,7 +59,8 @@ export default function PricingPage() {
     },
     {
       name: "Growth",
-      price: billing === "monthly" ? 199 : Math.round(199 * 12 * 0.9),
+      price: billing === "monthly" ? 16000 : Math.round(16000 * 12 * 0.9),
+      priceSuffix: "/-",
       durationLine: "/month",
       highlight: true, // ✅ Recommended
       cta: "Choose plan",
@@ -98,7 +78,8 @@ export default function PricingPage() {
     },
     {
       name: "Enterprise",
-      price: billing === "monthly" ? 399 : Math.round(399 * 12 * 0.9),
+      price: billing === "monthly" ? 35000 : Math.round(35000 * 12 * 0.9),
+      priceSuffix: "/-",
       durationLine: "/month",
       highlight: false,
       cta: "Contact sales",
@@ -118,6 +99,14 @@ export default function PricingPage() {
 
   return (
     <main>
+      {/* SEO Meta - would be in layout or head */}
+      <head>
+        <title>WorkCrew.ai Pricing - India | AI-Powered Recruitment Platform</title>
+        <meta name="description" content="Choose the perfect WorkCrew.ai plan for your Indian business. AI-powered recruitment with local pricing, GST included. Start hiring smarter today." />
+        <meta name="keywords" content="recruitment software India, AI hiring platform, job posting India, talent acquisition" />
+        <link rel="canonical" href="https://workcrew.ai/pricing/india" />
+      </head>
+
       {/* Navbar */}
       <Section size="sm" background="default" withContainer={false}>
         <Container>
@@ -154,7 +143,7 @@ export default function PricingPage() {
               style={{ marginTop: "-100px" }}
             >
               <T as="h1" variant="hero48" className="text-black" autoLeading>
-                Pricing
+                Pricing for India
               </T>
 
               {/* Subtitle — black (#000) */}
@@ -168,14 +157,14 @@ export default function PricingPage() {
               >
                 Choose the perfect plan that allows you to post job openings,
                 source the best talent, and effectively grow your team to meet
-                your business goals.
+                your business goals. All prices include GST.
               </T>
 
               {/* Region selector */}
               <div className="flex space-x-4 mt-4">
-                <span className="font-medium text-black">Global Pricing</span>
+                <a href="/pricing" className="text-blue-600 hover:underline">Global Pricing</a>
                 <span className="text-gray-600">•</span>
-                <a href="/pricing/india" className="text-blue-600 hover:underline">India Pricing</a>
+                <span className="font-medium text-black">India Pricing</span>
               </div>
 
               {/* Toggle */}
@@ -231,7 +220,7 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Arrow (image) + “10% off” */}
+                {/* Arrow (image) + "10% off" */}
                 <div
                   className="absolute flex items-center gap-2"
                   style={{ left: "calc(100% - 16px)", top: "-10px" }}
@@ -333,9 +322,10 @@ export default function PricingPage() {
                             letterSpacing: "0.005em",
                           }}
                         >
-                          ${plan.price.toLocaleString()}
+                          ₹{plan.price.toLocaleString()}
+                          {plan.priceSuffix ?? ""}
                         </div>
-                        {/* “/month” — Archivo medium 20/27, 0.03em, #808080 */}
+                        {/* "/month" — Archivo medium 20/27, 0.03em, #808080 */}
                         <T
                           as="div"
                           variant="sub20"
@@ -359,7 +349,7 @@ export default function PricingPage() {
                         if (typeof window !== 'undefined' && window.gtag) {
                           window.gtag('event', 'pricing_click', {
                             plan_name: plan.name,
-                            region: 'global',
+                            region: 'india',
                             billing: billing
                           });
                         }
@@ -444,7 +434,7 @@ export default function PricingPage() {
         </div>
       </Section>
 
-      {/* Custom Plan CTA — viewport-aligned (180px from left) */}
+      {/* Custom Plan CTA */}
       <Section withContainer={false}>
         <div
           className="rounded-[16px] flex items-center gap-6"
@@ -499,7 +489,7 @@ export default function PricingPage() {
               // Conversion tracking
               if (typeof window !== 'undefined' && window.gtag) {
                 window.gtag('event', 'custom_plan_click', {
-                  region: 'global'
+                  region: 'india'
                 });
               }
             }}
@@ -534,7 +524,7 @@ export default function PricingPage() {
             trackingPct={3}
             className="text-center mb-10 text-black"
           >
-            Can’t find the answer you're looking for? Reach out to our support
+            Can&apos;t find the answer you&apos;re looking for? Reach out to our support
           </T>
 
           {/* FAQ items */}
@@ -542,7 +532,7 @@ export default function PricingPage() {
             {[
               {
                 q: "Can I upgrade or downgrade my subscription mid-billing cycle?",
-                a: "Absolutely. You can upgrade or downgrade your subscription at any time during the billing cycle. Your plan will adjust immediately according to the package tier you select, and you’ll be charged or credited on a prorated basis.",
+                a: "Absolutely. You can upgrade or downgrade your subscription at any time during the billing cycle. Your plan will adjust immediately according to the package tier you select, and you'll be charged or credited on a prorated basis.",
               },
               {
                 q: "What happens to unused job credits or posting allowances at the end of my billing cycle?",
@@ -554,7 +544,7 @@ export default function PricingPage() {
               },
               {
                 q: "Are taxes or additional fees applied to my subscription, and how are they calculated?",
-                a: "Subscription prices are listed exclusive of taxes. Applicable taxes such as VAT, GST, or state tax will be calculated based on your billing region and added on top of the invoice amount.",
+                a: "Subscription prices are listed inclusive of GST. GST is calculated at 18% for all plans in India.",
               },
               {
                 q: "Do you support custom or enterprise plans with tailored features and pricing?",

@@ -28,6 +28,8 @@ model Organization {
   jobs             Job[]
   jobPipelineStages JobPipelineStage[]
   assessments       Assessment[]
+  subscriptions    Subscription[]
+  organizationBilling OrganizationBilling?
 
   @@map("organizations")
 }
@@ -73,6 +75,7 @@ model User {
   sessions       Session[]     // Auth.js compat
   candidate      Candidate?
   createdJobs    Job[]         @relation("JobCreator")
+  subscriptions  Subscription[]
 
   @@map("users")
 }
@@ -355,4 +358,118 @@ model FraudSignal {
   interviewSession    InterviewSession?  @relation(fields: [interviewSessionId], references: [id], onDelete: SetNull)
 
   @@map("fraud_signals")
+}
+
+// -----------------------------------------------------------------------------
+// BILLING & SUBSCRIPTION SYSTEM
+// -----------------------------------------------------------------------------
+
+model Plan {
+  id          String @id @default(uuid()) @db.Uuid
+  name        String
+  type        String // organization, candidate
+  tier        String // free, growth, pro, enterprise for org; free, pro for candidate
+  price       Float
+  currency    String @default("USD")
+  interval    String @default("month") // month, year
+  features    Json? // list of features
+  limits      Json? // limits like job posts, etc.
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                      String @id @default(uuid()) @db.Uuid
+  organizationId          String? @db.Uuid
+  userId                  String? @db.Uuid // for candidate plans
+  planId                  String @db.Uuid
+  status                  String @default("active") // active, canceled, past_due, etc.
+  currentPeriodStart      DateTime @map("current_period_start")
+  currentPeriodEnd        DateTime @map("current_period_end")
+  cancelAtPeriodEnd       Boolean @default(false) @map("cancel_at_period_end")
+  stripeSubscriptionId    String? @unique @map("stripe_subscription_id")
+  razorpaySubscriptionId  String? @unique @map("razorpay_subscription_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  organization            Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                    User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                    Plan @relation(fields: [planId], references: [id])
+  usages                  Usage[]
+  invoices                Invoice[]
+
+  @@map("subscriptions")
+}
+
+model Usage {
+  id             String @id @default(uuid()) @db.Uuid
+  subscriptionId String @db.Uuid
+  metric         String // e.g. job_posts, candidate_unlocks, ai_interviews
+  quantity       Int @default(0)
+  periodStart    DateTime @map("period_start")
+  periodEnd      DateTime @map("period_end")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("usages")
+}
+
+model Invoice {
+  id                   String @id @default(uuid()) @db.Uuid
+  subscriptionId       String @db.Uuid
+  amount               Float
+  currency             String @default("USD")
+  status               String @default("draft") // draft, open, paid, void, uncollectible
+  stripeInvoiceId      String? @unique @map("stripe_invoice_id")
+  razorpayInvoiceId    String? @unique @map("razorpay_invoice_id")
+  dueDate              DateTime? @map("due_date")
+  paidAt               DateTime? @map("paid_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  subscription         Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  payments             Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id                      String @id @default(uuid()) @db.Uuid
+  invoiceId               String @db.Uuid
+  amount                  Float
+  currency                String @default("USD")
+  status                  String @default("pending") // pending, succeeded, failed, canceled
+  stripePaymentIntentId   String? @unique @map("stripe_payment_intent_id")
+  razorpayPaymentId       String? @unique @map("razorpay_payment_id")
+  gateway                 String // stripe, razorpay
+  region                  String // global, india
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  invoice                 Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model OrganizationBilling {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @unique @db.Uuid
+  billingEmail   String? @map("billing_email")
+  taxId          String? @map("tax_id")
+  address        Json?
+  paymentMethod  String? @map("payment_method") // stripe, razorpay
+  region         String @default("global")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_billings")
 }

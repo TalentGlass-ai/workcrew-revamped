@@ -3,8 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
 }
 
 // -----------------------------------------------------------------------------
@@ -12,7 +11,7 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 model Organization {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid()) 
   name             String
   slug             String   @unique
   logo             String?
@@ -35,8 +34,8 @@ model Organization {
 }
 
 model OrganizationSettings {
-  id                   String  @id @default(uuid()) @db.Uuid
-  organizationId       String  @unique @map("organization_id") @db.Uuid
+  id                   String  @id @default(uuid()) 
+  organizationId       String  @unique @map("organization_id") 
   branding             Json?
   workflowRules        Json?   @map("workflow_rules")
   aiAssessmentEnabled  Boolean @default(false) @map("ai_assessment_enabled")
@@ -54,8 +53,8 @@ model OrganizationSettings {
 // -----------------------------------------------------------------------------
 
 model User {
-  id             String    @id @default(uuid()) @db.Uuid
-  organizationId String?   @map("organization_id") @db.Uuid
+  id             String    @id @default(uuid()) 
+  organizationId String?   @map("organization_id") 
   role           String    @default("candidate") // admin, recruiter, hiring_manager, interviewer, candidate
   name           String?   // Auth.js compat
   firstName      String?   @map("first_name")
@@ -81,17 +80,17 @@ model User {
 }
 
 model Account {
-  id                String  @id @default(uuid()) @db.Uuid
-  userId            String  @map("user_id") @db.Uuid
+  id                String  @id @default(uuid()) 
+  userId            String  @map("user_id") 
   type              String
   provider          String
   providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String? 
+  access_token      String? 
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String? 
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -101,9 +100,9 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String   @id @default(uuid()) 
   sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id") @db.Uuid
+  userId       String   @map("user_id") 
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -125,9 +124,9 @@ model VerificationToken {
 // -----------------------------------------------------------------------------
 
 model Candidate {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @unique @map("user_id") @db.Uuid
-  profileSummary   String?  @db.Text @map("profile_summary")
+  id               String   @id @default(uuid()) 
+  userId           String   @unique @map("user_id") 
+  profileSummary   String?   @map("profile_summary")
   totalExperience  Float?   @map("total_experience")
   currentRole      String?  @map("current_role")
   location         String?
@@ -145,13 +144,14 @@ model Candidate {
   radar            CandidateCompetencyRadar?
   applications     CandidateApplication[]
   assessments      AssessmentAttempt[]
+  interviewSessions InterviewSession[]
 
   @@map("candidates")
 }
 
 model CandidateSkill {
-  id               String    @id @default(uuid()) @db.Uuid
-  candidateId      String    @map("candidate_id") @db.Uuid
+  id               String    @id @default(uuid()) 
+  candidateId      String    @map("candidate_id") 
   skillName        String    @map("skill_name")
   category         String?   // e.g. "technical", "soft_skill", "domain"
   score            Float?    // Out of 10 or 100
@@ -165,8 +165,8 @@ model CandidateSkill {
 }
 
 model CandidateCompetencyRadar {
-  id                 String   @id @default(uuid()) @db.Uuid
-  candidateId        String   @unique @map("candidate_id") @db.Uuid
+  id                 String   @id @default(uuid()) 
+  candidateId        String   @unique @map("candidate_id") 
   technicalDepth     Float?   @map("technical_depth")
   problemSolving     Float?   @map("problem_solving")
   communication      Float?
@@ -187,8 +187,8 @@ model CandidateCompetencyRadar {
 // -----------------------------------------------------------------------------
 
 model Job {
-  id                 String   @id @default(uuid()) @db.Uuid
-  organizationId     String   @map("organization_id") @db.Uuid
+  id                 String   @id @default(uuid()) 
+  organizationId     String   @map("organization_id") 
   title              String
   department         String?
   location           String?
@@ -198,13 +198,13 @@ model Job {
   salaryMin          Float?   @map("salary_min")
   salaryMax          Float?   @map("salary_max")
   currency           String?
-  description        String   @db.Text
+  description        String   
   requiredSkills     Json?    @map("required_skills")
   preferredSkills    Json?    @map("preferred_skills")
   seoSlug            String?  @map("seo_slug")
   publishedAt        DateTime? @map("published_at")
   status             String   @default("draft") // draft, published, closed, archived
-  createdBy          String   @map("created_by") @db.Uuid
+  createdBy          String   @map("created_by") 
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
@@ -219,9 +219,9 @@ model Job {
 }
 
 model JobPipelineStage {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @map("organization_id") @db.Uuid
-  jobId          String  @map("job_id") @db.Uuid
+  id             String  @id @default(uuid()) 
+  organizationId String  @map("organization_id") 
+  jobId          String  @map("job_id") 
   stageName      String  @map("stage_name")
   stageOrder     Int     @map("stage_order")
 
@@ -232,9 +232,9 @@ model JobPipelineStage {
 }
 
 model CandidateApplication {
-  id             String   @id @default(uuid()) @db.Uuid
-  jobId          String   @map("job_id") @db.Uuid
-  candidateId    String   @map("candidate_id") @db.Uuid
+  id             String   @id @default(uuid()) 
+  jobId          String   @map("job_id") 
+  candidateId    String   @map("candidate_id") 
   currentStage   String   @map("current_stage")
   aiMatchScore   Float?   @map("ai_match_score")
   fraudRiskScore Float?   @map("fraud_risk_score")
@@ -254,9 +254,9 @@ model CandidateApplication {
 // -----------------------------------------------------------------------------
 
 model Assessment {
-  id              String   @id @default(uuid()) @db.Uuid
-  organizationId  String   @map("organization_id") @db.Uuid
-  jobId           String?  @map("job_id") @db.Uuid
+  id              String   @id @default(uuid()) 
+  organizationId  String   @map("organization_id") 
+  jobId           String?  @map("job_id") 
   type            String   // e.g. mcq, coding, communication, scenario
   difficulty      String?
   durationMinutes Int?     @map("duration_minutes")
@@ -272,11 +272,11 @@ model Assessment {
 }
 
 model AssessmentQuestion {
-  id             String  @id @default(uuid()) @db.Uuid
-  assessmentId   String  @map("assessment_id") @db.Uuid
+  id             String  @id @default(uuid()) 
+  assessmentId   String  @map("assessment_id") 
   questionType   String  @map("question_type")
-  questionText   String  @db.Text @map("question_text")
-  expectedAnswer String? @db.Text @map("expected_answer")
+  questionText   String   @map("question_text")
+  expectedAnswer String?  @map("expected_answer")
   scoringRubric  Json?   @map("scoring_rubric")
   weightage      Float   @default(1.0)
 
@@ -286,9 +286,9 @@ model AssessmentQuestion {
 }
 
 model AssessmentAttempt {
-  id             String   @id @default(uuid()) @db.Uuid
-  candidateId    String   @map("candidate_id") @db.Uuid
-  assessmentId   String   @map("assessment_id") @db.Uuid
+  id             String   @id @default(uuid()) 
+  candidateId    String   @map("candidate_id") 
+  assessmentId   String   @map("assessment_id") 
   score          Float?
   fraudRiskScore Float?   @map("fraud_risk_score")
   submittedAt    DateTime @default(now()) @map("submitted_at")
@@ -305,9 +305,9 @@ model AssessmentAttempt {
 // -----------------------------------------------------------------------------
 
 model InterviewSession {
-  id            String    @id @default(uuid()) @db.Uuid
-  jobId         String    @map("job_id") @db.Uuid
-  candidateId   String    @map("candidate_id") @db.Uuid
+  id            String    @id @default(uuid()) 
+  jobId         String    @map("job_id") 
+  candidateId   String    @map("candidate_id") 
   sessionType   String    @map("session_type") // video, audio, text, coding
   status        String    @default("scheduled") // scheduled, in_progress, completed, cancelled
   startTime     DateTime? @map("start_time")
@@ -326,14 +326,14 @@ model InterviewSession {
 }
 
 model InterviewInsight {
-  id                 String  @id @default(uuid()) @db.Uuid
-  interviewSessionId String  @map("interview_session_id") @db.Uuid
+  id                 String  @id @default(uuid()) 
+  interviewSessionId String  @map("interview_session_id") 
   confidenceScore    Float?  @map("confidence_score")
   communicationScore Float?  @map("communication_score")
   technicalScore     Float?  @map("technical_score")
   behavioralScore    Float?  @map("behavioral_score")
   riskScore          Float?  @map("risk_score")
-  recommendation     String? @db.Text
+  recommendation     String? 
 
   interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
 
@@ -345,10 +345,10 @@ model InterviewInsight {
 // -----------------------------------------------------------------------------
 
 model FraudSignal {
-  id                  String   @id @default(uuid()) @db.Uuid
-  candidateId         String?  @map("candidate_id") @db.Uuid
-  assessmentAttemptId String?  @map("assessment_attempt_id") @db.Uuid
-  interviewSessionId  String?  @map("interview_session_id") @db.Uuid
+  id                  String   @id @default(uuid()) 
+  candidateId         String?  @map("candidate_id") 
+  assessmentAttemptId String?  @map("assessment_attempt_id") 
+  interviewSessionId  String?  @map("interview_session_id") 
   signalType          String   @map("signal_type") // e.g., tab_switch, copy_paste, multiple_face_detected
   severity            String   // low, medium, high
   metadataJson        Json?    @map("metadata_json")
@@ -365,7 +365,7 @@ model FraudSignal {
 // -----------------------------------------------------------------------------
 
 model Plan {
-  id          String @id @default(uuid()) @db.Uuid
+  id          String @id @default(uuid()) 
   name        String
   type        String // organization, candidate
   tier        String // free, growth, pro, enterprise for org; free, pro for candidate
@@ -384,10 +384,10 @@ model Plan {
 }
 
 model Subscription {
-  id                      String @id @default(uuid()) @db.Uuid
-  organizationId          String? @db.Uuid
-  userId                  String? @db.Uuid // for candidate plans
-  planId                  String @db.Uuid
+  id                      String @id @default(uuid()) 
+  organizationId          String? 
+  userId                  String?  // for candidate plans
+  planId                  String 
   status                  String @default("active") // active, canceled, past_due, etc.
   currentPeriodStart      DateTime @map("current_period_start")
   currentPeriodEnd        DateTime @map("current_period_end")
@@ -407,8 +407,8 @@ model Subscription {
 }
 
 model Usage {
-  id             String @id @default(uuid()) @db.Uuid
-  subscriptionId String @db.Uuid
+  id             String @id @default(uuid()) 
+  subscriptionId String 
   metric         String // e.g. job_posts, candidate_unlocks, ai_interviews
   quantity       Int @default(0)
   periodStart    DateTime @map("period_start")
@@ -422,8 +422,8 @@ model Usage {
 }
 
 model Invoice {
-  id                   String @id @default(uuid()) @db.Uuid
-  subscriptionId       String @db.Uuid
+  id                   String @id @default(uuid()) 
+  subscriptionId       String 
   amount               Float
   currency             String @default("USD")
   status               String @default("draft") // draft, open, paid, void, uncollectible
@@ -441,8 +441,8 @@ model Invoice {
 }
 
 model Payment {
-  id                      String @id @default(uuid()) @db.Uuid
-  invoiceId               String @db.Uuid
+  id                      String @id @default(uuid()) 
+  invoiceId               String 
   amount                  Float
   currency                String @default("USD")
   status                  String @default("pending") // pending, succeeded, failed, canceled
@@ -459,8 +459,8 @@ model Payment {
 }
 
 model OrganizationBilling {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @unique @db.Uuid
+  id             String @id @default(uuid()) 
+  organizationId String @unique 
   billingEmail   String? @map("billing_email")
   taxId          String? @map("tax_id")
   address        Json?

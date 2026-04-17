@@ -485,6 +485,19 @@ model PaymentMethod {
   @@map("payment_methods")
 }
 
+model WebhookEvent {
+  id          String   @id @default(uuid()) 
+  eventId     String
+  gateway     String // stripe, razorpay
+  eventType   String @map("event_type")
+  payload     String
+  processedAt DateTime @map("processed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([eventId, gateway])
+  @@map("webhook_events")
+}
+
 model OrganizationBilling {
   id             String @id @default(uuid()) 
   organizationId String @unique 

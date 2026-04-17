@@ -1,7 +1,7 @@
 // lib/middleware/usage-middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { UsageService } from '@/lib/services/usage-service';
-import { prisma } from '@/lib/prisma';
+import { UsageService } from '../services/usage-service';
+import { prisma } from '../prisma';
 
 export interface UsageTrackedRequest extends NextRequest {
   subscriptionId?: string;

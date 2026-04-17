@@ -1,15 +1,13 @@
 // lib/services/stripe-service.ts
 
 import Stripe from 'stripe';
-import { PaymentService, CreateSubscriptionParams, SubscriptionResult, CancelResult, UpdateSubscriptionParams, UpdateResult, PaymentIntentParams, PaymentIntentResult, PaymentResult, SubscriptionDetails, Invoice, WebhookResult } from './payment-service';
+import { PaymentService, CreateSubscriptionParams, SubscriptionResult, CancelResult, UpdateSubscriptionParams, UpdateResult, PaymentIntentParams, PaymentIntentResult, PaymentResult, PaymentMethodResult, SubscriptionDetails, Invoice, WebhookResult } from './payment-service';
 
 export class StripeService implements PaymentService {
   private stripe: Stripe;
 
   constructor(apiKey: string) {
-    this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-06-20',
-    });
+    this.stripe = new Stripe(apiKey);
   }
 
   async createSubscription(params: CreateSubscriptionParams): Promise<SubscriptionResult> {
@@ -30,7 +28,7 @@ export class StripeService implements PaymentService {
         status: subscription.status,
       };
     } catch (error) {
-      throw new Error(`Stripe subscription creation failed: ${error.message}`);
+      throw new Error(`Stripe subscription creation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -42,10 +40,10 @@ export class StripeService implements PaymentService {
 
       return {
         success: true,
-        canceledAt: new Date(subscription.cancel_at * 1000),
+        canceledAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : undefined,
       };
     } catch (error) {
-      throw new Error(`Stripe subscription cancellation failed: ${error.message}`);
+      throw new Error(`Stripe subscription cancellation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -69,7 +67,7 @@ export class StripeService implements PaymentService {
         subscriptionId: subscription.id,
       };
     } catch (error) {
-      throw new Error(`Stripe subscription update failed: ${error.message}`);
+      throw new Error(`Stripe subscription update failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -86,7 +84,7 @@ export class StripeService implements PaymentService {
         paymentIntentId: paymentIntent.id,
       };
     } catch (error) {
-      throw new Error(`Stripe payment intent creation failed: ${error.message}`);
+      throw new Error(`Stripe payment intent creation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -100,7 +98,67 @@ export class StripeService implements PaymentService {
         amount: paymentIntent.amount / 100, // Convert from cents
       };
     } catch (error) {
-      throw new Error(`Stripe payment confirmation failed: ${error.message}`);
+      throw new Error(`Stripe payment confirmation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async retryFailedPayment(paymentId: string): Promise<PaymentResult> {
+    try {
+      // For Stripe, retrying a failed payment intent
+      const paymentIntent = await this.stripe.paymentIntents.confirm(paymentId);
+
+      return {
+        success: paymentIntent.status === 'succeeded',
+        paymentId: paymentIntent.id,
+        amount: paymentIntent.amount / 100,
+      };
+    } catch (error) {
+      throw new Error(`Stripe payment retry failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async addPaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult> {
+    try {
+      await this.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      });
+
+      return {
+        success: true,
+        paymentMethodId,
+      };
+    } catch (error) {
+      throw new Error(`Stripe payment method attachment failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async updatePaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult> {
+    try {
+      await this.stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+
+      return {
+        success: true,
+        paymentMethodId,
+      };
+    } catch (error) {
+      throw new Error(`Stripe payment method update failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async removePaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult> {
+    try {
+      await this.stripe.paymentMethods.detach(paymentMethodId);
+
+      return {
+        success: true,
+        paymentMethodId,
+      };
+    } catch (error) {
+      throw new Error(`Stripe payment method removal failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -124,7 +182,7 @@ export class StripeService implements PaymentService {
         },
       };
     } catch (error) {
-      throw new Error(`Stripe subscription retrieval failed: ${error.message}`);
+      throw new Error(`Stripe subscription retrieval failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -142,7 +200,7 @@ export class StripeService implements PaymentService {
         paidAt: invoice.status_transitions?.paid_at ? new Date(invoice.status_transitions.paid_at * 1000) : undefined,
       }));
     } catch (error) {
-      throw new Error(`Stripe invoices listing failed: ${error.message}`);
+      throw new Error(`Stripe invoices listing failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -151,15 +209,31 @@ export class StripeService implements PaymentService {
       const event = this.stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET!);
 
       // Process the event based on type
+      const processedData: any = {};
+
       switch (event.type) {
         case 'invoice.payment_succeeded':
-          // Handle successful payment
+          processedData.subscriptionId = event.data.object.subscription;
+          processedData.status = 'paid';
+          processedData.amount = event.data.object.amount_due / 100;
+          break;
+        case 'invoice.payment_failed':
+          processedData.subscriptionId = event.data.object.subscription;
+          processedData.status = 'past_due';
           break;
         case 'customer.subscription.updated':
-          // Handle subscription update
+          processedData.subscriptionId = event.data.object.id;
+          processedData.status = event.data.object.status;
+          processedData.currentPeriodStart = new Date(event.data.object.current_period_start * 1000);
+          processedData.currentPeriodEnd = new Date(event.data.object.current_period_end * 1000);
           break;
         case 'customer.subscription.deleted':
-          // Handle subscription cancellation
+          processedData.subscriptionId = event.data.object.id;
+          processedData.status = 'canceled';
+          break;
+        case 'customer.subscription.created':
+          processedData.subscriptionId = event.data.object.id;
+          processedData.status = event.data.object.status;
           break;
         default:
           console.log(`Unhandled event type ${event.type}`);
@@ -167,11 +241,11 @@ export class StripeService implements PaymentService {
 
       return {
         type: event.type,
-        data: event.data.object,
+        data: processedData,
         processed: true,
       };
     } catch (error) {
-      throw new Error(`Stripe webhook handling failed: ${error.message}`);
+      throw new Error(`Stripe webhook handling failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

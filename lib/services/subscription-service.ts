@@ -1,7 +1,7 @@
 // lib/services/subscription-service.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../prisma';
 import { PaymentService } from './payment-service';
-import { getPaymentServiceForRegion } from '@/lib/utils/region';
+import { getPaymentServiceForRegion } from '../utils/region';
 
 export interface CreateSubscriptionParams {
   organizationId?: string;

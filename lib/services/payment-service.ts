@@ -27,6 +27,26 @@ export interface PaymentService {
   confirmPayment(paymentId: string): Promise<PaymentResult>;
 
   /**
+   * Retries a failed payment with exponential backoff
+   */
+  retryFailedPayment(paymentId: string): Promise<PaymentResult>;
+
+  /**
+   * Adds a payment method for a customer
+   */
+  addPaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult>;
+
+  /**
+   * Updates the default payment method for a customer
+   */
+  updatePaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult>;
+
+  /**
+   * Removes a payment method from a customer
+   */
+  removePaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult>;
+
+  /**
    * Retrieves subscription details
    */
   getSubscription(subscriptionId: string): Promise<SubscriptionDetails>;
@@ -84,6 +104,11 @@ export interface PaymentResult {
   success: boolean;
   paymentId: string;
   amount: number;
+}
+
+export interface PaymentMethodResult {
+  success: boolean;
+  paymentMethodId: string;
 }
 
 export interface SubscriptionDetails {

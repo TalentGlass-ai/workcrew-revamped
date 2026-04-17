@@ -29,6 +29,7 @@ model Organization {
   assessments       Assessment[]
   subscriptions    Subscription[]
   organizationBilling OrganizationBilling?
+  paymentMethods   PaymentMethod[]
 
   @@map("organizations")
 }
@@ -75,6 +76,7 @@ model User {
   candidate      Candidate?
   createdJobs    Job[]         @relation("JobCreator")
   subscriptions  Subscription[]
+  paymentMethods PaymentMethod[]
 
   @@map("users")
 }
@@ -450,12 +452,37 @@ model Payment {
   razorpayPaymentId       String? @unique @map("razorpay_payment_id")
   gateway                 String // stripe, razorpay
   region                  String // global, india
+  retryCount              Int @default(0) @map("retry_count")
+  lastRetryAt             DateTime? @map("last_retry_at")
+  paidAt                  DateTime? @map("paid_at")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
 
   invoice                 Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+model PaymentMethod {
+  id                String @id @default(uuid()) 
+  organizationId    String? 
+  userId            String? 
+  gateway           String // stripe, razorpay
+  gatewayMethodId   String @map("gateway_method_id") // payment method ID from gateway
+  type              String // card, bank_account, etc.
+  last4             String? // last 4 digits
+  brand             String? // visa, mastercard, etc.
+  expiryMonth       Int? @map("expiry_month")
+  expiryYear        Int? @map("expiry_year")
+  isDefault         Boolean @default(false) @map("is_default")
+  status            String @default("active") // active, inactive, expired
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user              User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
 }
 
 model OrganizationBilling {

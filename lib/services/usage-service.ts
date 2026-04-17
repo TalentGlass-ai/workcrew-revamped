@@ -1,5 +1,5 @@
 // lib/services/usage-service.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../prisma';
 
 export interface TrackUsageParams {
   subscriptionId: string;

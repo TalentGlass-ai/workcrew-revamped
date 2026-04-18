@@ -23,10 +23,10 @@ export interface AlertThreshold {
 
 export class UsageAlertsService {
   private static readonly DEFAULT_THRESHOLDS: Record<string, AlertThreshold> = {
-    jobs_posted: { warningThreshold: 0.8, criticalThreshold: 0.95 },
-    applications_received: { warningThreshold: 0.8, criticalThreshold: 0.95 },
-    candidate_searches: { warningThreshold: 0.8, criticalThreshold: 0.95 },
-    api_calls: { warningThreshold: 0.8, criticalThreshold: 0.95 },
+    jobs_posted: { metric: 'jobs_posted', warningThreshold: 0.8, criticalThreshold: 0.95 },
+    applications_received: { metric: 'applications_received', warningThreshold: 0.8, criticalThreshold: 0.95 },
+    candidate_searches: { metric: 'candidate_searches', warningThreshold: 0.8, criticalThreshold: 0.95 },
+    api_calls: { metric: 'api_calls', warningThreshold: 0.8, criticalThreshold: 0.95 },
   };
 
   /**
@@ -121,7 +121,7 @@ export class UsageAlertsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return alerts.map(alert => ({
+    return alerts.map((alert: any) => ({
       id: alert.id,
       subscriptionId: alert.subscriptionId,
       metric: alert.metric,

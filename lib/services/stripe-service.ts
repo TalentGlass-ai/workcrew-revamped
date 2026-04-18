@@ -173,8 +173,8 @@ export class StripeService implements PaymentService {
       return {
         id: subscription.id,
         status: subscription.status,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         plan: {
           id: price.id,
           name: price.nickname || 'Unnamed Plan',
@@ -213,19 +213,19 @@ export class StripeService implements PaymentService {
 
       switch (event.type) {
         case 'invoice.payment_succeeded':
-          processedData.subscriptionId = event.data.object.subscription;
+          processedData.subscriptionId = (event.data.object as any).subscription;
           processedData.status = 'paid';
           processedData.amount = event.data.object.amount_due / 100;
           break;
         case 'invoice.payment_failed':
-          processedData.subscriptionId = event.data.object.subscription;
+          processedData.subscriptionId = (event.data.object as any).subscription;
           processedData.status = 'past_due';
           break;
         case 'customer.subscription.updated':
           processedData.subscriptionId = event.data.object.id;
           processedData.status = event.data.object.status;
-          processedData.currentPeriodStart = new Date(event.data.object.current_period_start * 1000);
-          processedData.currentPeriodEnd = new Date(event.data.object.current_period_end * 1000);
+          processedData.currentPeriodStart = new Date((event.data.object as any).current_period_start * 1000);
+          processedData.currentPeriodEnd = new Date((event.data.object as any).current_period_end * 1000);
           break;
         case 'customer.subscription.deleted':
           processedData.subscriptionId = event.data.object.id;

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { detectPaymentRegion, getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { PrismaClient } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
+import { auth } from '../../../../auth';
 
 const prisma = new PrismaClient();
 
 // GET /api/billing/payment-methods - List payment methods
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
 // POST /api/billing/payment-methods - Add payment method
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -52,8 +51,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine region and service
-    const region = 'global'; // TODO: detect based on user/org location
+    const region = detectPaymentRegion({
+      organizationRegion: organizationId ? undefined : undefined, // TODO: get from org profile
+      userRegion: undefined, // TODO: get from user profile
+      ipAddress: request.headers.get('x-forwarded-for') as string || request.headers.get('x-real-ip') as string
+    });
     const paymentService = getPaymentServiceForRegion(region);
+
+    // Determine gateway based on region
+    const gateway = region === 'india' ? 'razorpay' : 'stripe';
 
     // Add payment method
     const result = await paymentService.addPaymentMethod(
@@ -79,7 +85,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: organizationId ? undefined : session.user.id,
         organizationId,
-        gateway: region === 'india' ? 'razorpay' : 'stripe',
+        gateway,
         gatewayMethodId: paymentMethodId,
         type: result.type,
         last4: result.last4,
@@ -105,7 +111,7 @@ export async function POST(request: NextRequest) {
 // PUT /api/billing/payment-methods - Update payment method (set default)
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -165,7 +171,7 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/billing/payment-methods - Remove payment method
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

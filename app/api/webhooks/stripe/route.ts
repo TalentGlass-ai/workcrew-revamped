@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         {
           gateway: 'stripe',
           ipAddress: clientIP,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
         'high'
       );
@@ -154,8 +154,8 @@ export async function POST(request: NextRequest) {
       'webhook_processing_error',
       {
         gateway: 'stripe',
-        error: error.message,
-        stack: error.stack,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         processingTime: Date.now() - startTime,
         ipAddress: clientIP,
         userAgent,

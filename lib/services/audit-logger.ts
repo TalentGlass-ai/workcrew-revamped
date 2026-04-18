@@ -170,7 +170,7 @@ export class AuditLogger {
       skip: query.offset || 0,
     });
 
-    return logs.map(log => ({
+    return logs.map((log: any) => ({
       id: log.id,
       userId: log.userId || undefined,
       organizationId: log.organizationId || undefined,

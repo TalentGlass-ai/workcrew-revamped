@@ -100,7 +100,7 @@ export class UsageService {
     // Group by month and metric
     const analytics: any = {};
 
-    usages.forEach(usage => {
+    usages.forEach((usage: any) => {
       const monthKey = `${usage.periodStart.getFullYear()}-${String(usage.periodStart.getMonth() + 1).padStart(2, '0')}`;
       if (!analytics[monthKey]) {
         analytics[monthKey] = {};

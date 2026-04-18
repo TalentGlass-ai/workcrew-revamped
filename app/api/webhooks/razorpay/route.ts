@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         {
           gateway: 'razorpay',
           ipAddress: clientIP,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
         'high'
       );
@@ -154,8 +154,8 @@ export async function POST(request: NextRequest) {
       'webhook_processing_error',
       {
         gateway: 'razorpay',
-        error: error.message,
-        stack: error.stack,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         processingTime: Date.now() - startTime,
         ipAddress: clientIP,
         userAgent,
@@ -163,11 +163,6 @@ export async function POST(request: NextRequest) {
       'high'
     );
 
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
-  }
-}
-  } catch (error) {
-    console.error('Razorpay webhook error:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

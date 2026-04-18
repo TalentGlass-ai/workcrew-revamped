@@ -270,7 +270,7 @@ export class BillingIntelligenceService {
       include: { plan: true },
     });
 
-    const totalRevenue = subscriptions.reduce((sum, sub) => sum + sub.plan.price, 0);
+    const totalRevenue = subscriptions.reduce((sum: number, sub: any) => sum + sub.plan.price, 0);
     const averageRevenuePerUser = totalRevenue / subscriptions.length;
 
     return {

@@ -342,8 +342,8 @@ export default function GlobalPricingPage() {
                       className="mt-5 mb-3 inline-flex w-full items-center justify-center gap-3 rounded-[14px] bg-[#4D31EC] px-5 py-3 text-white hover:bg-[#4029c8] transition"
                       onClick={() => {
                         // Conversion tracking
-                        if (typeof window !== 'undefined' && window.gtag) {
-                          window.gtag('event', 'pricing_click', {
+                        if (typeof window !== 'undefined' && (window as any).gtag) {
+                          (window as any).gtag('event', 'pricing_click', {
                             plan_name: plan.name,
                             region: 'global',
                             billing: billing
@@ -483,8 +483,8 @@ export default function GlobalPricingPage() {
             }}
             onClick={() => {
               // Conversion tracking
-              if (typeof window !== 'undefined' && window.gtag) {
-                window.gtag('event', 'custom_plan_click', {
+              if (typeof window !== 'undefined' && (window as any).gtag) {
+                (window as any).gtag('event', 'custom_plan_click', {
                   region: 'global'
                 });
               }

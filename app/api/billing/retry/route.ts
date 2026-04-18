@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { PrismaClient } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
+import { auth } from '../../../../auth';
 
 const prisma = new PrismaClient();
 
@@ -16,7 +15,7 @@ function calculateDelay(attempt: number): number {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

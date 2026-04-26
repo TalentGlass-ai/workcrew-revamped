@@ -60,11 +60,11 @@ Requirements for initial assessment system release.
 
 ### API Endpoints
 
-- [ ] **API-01**: POST /api/assessment/start - Initialize new assessment
-- [ ] **API-02**: POST /api/assessment/submit - Submit code solution
-- [ ] **API-03**: GET /api/assessment/results - Retrieve assessment results
-- [ ] **API-04**: POST /api/assessment/proctoring - Record proctoring events
-- [ ] **API-05**: GET /api/assessment/candidate/:id - Get candidate assessment history
+- [x] **API-01**: POST /api/assessment/start - Initialize new assessment
+- [x] **API-02**: POST /api/assessment/submit - Submit code solution
+- [x] **API-03**: GET /api/assessment/results - Retrieve assessment results
+- [x] **API-04**: POST /api/assessment/proctoring - Record proctoring events
+- [x] **API-05**: GET /api/assessment/candidate/:id - Get candidate assessment history
 
 ### Recruiter Dashboard
 

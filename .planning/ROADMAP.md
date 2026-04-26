@@ -68,5 +68,5 @@
 **Plans:** 0 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Implement database schema and AI question generation
-- [ ] 02-02-PLAN.md — Build evaluation engine and assessment UI
+- [x] 02-01-PLAN.md — Implement database schema and AI question generation
+- [x] 02-02-PLAN.md — Build evaluation engine and assessment UI

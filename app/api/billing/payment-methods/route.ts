@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { detectPaymentRegion, getPaymentServiceForRegion } from '../../../../lib/utils/region';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../lib/prisma';
 import { auth } from '../../../../auth';
-
-const prisma = new PrismaClient();
 
 // GET /api/billing/payment-methods - List payment methods
 export async function GET(request: NextRequest) {
@@ -128,7 +126,7 @@ export async function PUT(request: NextRequest) {
         id: paymentMethodId,
         OR: [
           { userId: session.user.id },
-          { organizationId: { in: await prisma.organization.findMany({ where: { users: { some: { id: session.user.id } } }, select: { id: true } }).then(orgs => orgs.map(o => o.id)) } },
+          { organizationId: { in: await prisma.organization.findMany({ where: { users: { some: { id: session.user.id } } }, select: { id: true } }).then((orgs: { id: string }[]) => orgs.map(o => o.id)) } },
         ],
       },
     });
@@ -189,7 +187,7 @@ export async function DELETE(request: NextRequest) {
         id: paymentMethodId,
         OR: [
           { userId: session.user.id },
-          { organizationId: { in: await prisma.organization.findMany({ where: { users: { some: { id: session.user.id } } }, select: { id: true } }).then(orgs => orgs.map(o => o.id)) } },
+          { organizationId: { in: await prisma.organization.findMany({ where: { users: { some: { id: session.user.id } } }, select: { id: true } }).then((orgs: { id: string }[]) => orgs.map(o => o.id)) } },
         ],
       },
     });

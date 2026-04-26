@@ -1,7 +1,14 @@
-import { prisma } from '../lib/prisma'
+import 'dotenv/config'
+import { PrismaClient } from '@prisma/client'
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import { indexJob, indexCompany } from '../lib/typesense'
 
 async function main() {
+  const adapter = new PrismaBetterSqlite3({
+    fileName: process.env.DATABASE_URL!.replace('file:', ''),
+  })
+  
+  const prisma = new PrismaClient({ adapter })
   // Create categories
   const categories = await Promise.all([
     prisma.jobCategory.upsert({

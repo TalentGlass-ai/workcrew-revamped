@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../lib/prisma';
 import { SecurityUtils } from '../../../../lib/utils/security';
 import { AuditLogger } from '../../../../lib/services/audit-logger';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();

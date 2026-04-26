@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../../lib/prisma';
 import { auth } from '../../../../auth';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,0 +1,13 @@
+FROM ubuntu:20.04
+
+RUN apt-get update && apt-get install -y python3 nodejs openjdk-11-jdk
+
+RUN useradd -m sandbox
+
+USER sandbox
+
+WORKDIR /home/sandbox
+
+COPY run.sh /home/sandbox/run.sh
+
+RUN chmod +x /home/sandbox/run.sh

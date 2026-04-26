@@ -18,18 +18,9 @@ export async function executeCode(code: string, language: 'python' | 'javascript
 
   for (const testCase of testCases) {
     const start = Date.now();
-    let args: string[];
+    const args = ['run', '--rm', '--network', 'none', '--memory', '256m', '--cpus', '0.5', 'sandbox', '/bin/bash', '/home/sandbox/run.sh'];
 
-    if (language === 'python') {
-      args = ['run', '--rm', '--network', 'none', '--memory', '256m', '--cpus', '0.5', 'sandbox', 'python3', '-c', code];
-    } else if (language === 'javascript') {
-      args = ['run', '--rm', '--network', 'none', '--memory', '256m', '--cpus', '0.5', 'sandbox', 'node', '-e', code];
-    } else { // java
-      // Placeholder for Java
-      args = ['run', '--rm', '--network', 'none', '--memory', '256m', '--cpus', '0.5', 'sandbox', 'echo', 'Java not implemented'];
-    }
-
-    const proc = spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    const proc = spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LANGUAGE: language, CODE: code } });
 
     proc.stdin.write(testCase.input);
     proc.stdin.end();

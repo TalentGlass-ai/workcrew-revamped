@@ -36,8 +36,8 @@ Requirements for initial assessment system release.
 
 - [x] **PROCTOR-01**: Track tab switching events
 - [x] **PROCTOR-02**: Monitor window blur/focus events
-- [ ] **PROCTOR-03**: Detect copy-paste activity
-- [ ] **PROCTOR-04**: Calculate suspicion scores based on behavior patterns
+- [x] **PROCTOR-03**: Detect copy-paste activity
+- [x] **PROCTOR-04**: Calculate suspicion scores based on behavior patterns
 - [ ] **PROCTOR-05**: Optional video monitoring with consent (face detection, multiple faces)
 - [ ] **PROCTOR-06**: Optional audio monitoring for background conversation detection
 - [ ] **PROCTOR-07**: Provide clear consent and disclosure for monitoring features

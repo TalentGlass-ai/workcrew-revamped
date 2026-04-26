@@ -197,6 +197,9 @@ model CandidateSkill {
   confidenceScore  Float?    @map("confidence_score")
   source           String?   // e.g. "resume", "github", "assessment"
   lastVerifiedAt   DateTime? @map("last_verified_at")
+  isValidated      Boolean   @default(false) @map("is_validated")
+  validatedAt      DateTime? @map("validated_at")
+  validationSource String?   @map("validation_source")
 
   candidate        Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 

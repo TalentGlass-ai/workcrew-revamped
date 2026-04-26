@@ -178,6 +178,7 @@ model Candidate {
   applications     CandidateApplication[]
   assessments      AssessmentAttempt[]
   interviewSessions InterviewSession[]
+  jobMatches       JobCandidateMatch[]
 
   @@map("candidates")
 }
@@ -291,6 +292,7 @@ model Job {
   applications       CandidateApplication[]
   assessments        Assessment[]
   interviews         InterviewSession[]
+  candidateMatches   JobCandidateMatch[]
 
   @@map("jobs")
 }
@@ -679,4 +681,46 @@ model InferredSkill {
   @@index([candidateId])
   @@index([skillName])
   @@map("inferred_skills")
+}
+
+// -----------------------------------------------------------------------------
+// AI RANKING ENGINE
+// -----------------------------------------------------------------------------
+
+model JobCandidateMatch {
+  id            String   @id @default(uuid())
+  jobId         String   @map("job_id")
+  candidateId   String   @map("candidate_id")
+  score         Float    // Final ranking score (0-100)
+  recommendation String  // "STRONGLY_RECOMMENDED", "RECOMMENDED", "NOT_RECOMMENDED"
+
+  // Score breakdown for explainability
+  scoreBreakdown Json    @map("score_breakdown") // {
+  //   skillMatch: 0.85,
+  //   skillDepth: 0.72,
+  //   inferredSkillBoost: 0.15,
+  //   experienceFit: 0.90,
+  //   clusterMatch: 0.80,
+  //   stability: 0.75
+  // }
+
+  // Detailed analysis for UI
+  analysis      Json     @map("analysis") // {
+  //   strongSkills: ["Java", "Spring Boot"],
+  //   missingSkills: ["Kafka"],
+  //   inferredSkills: [{ name: "Kafka", confidence: 0.68 }],
+  //   skillGaps: ["Microservices"],
+  //   roleFit: "Backend Engineer"
+  // }
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  job           Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([candidateId])
+  @@index([score])
+  @@map("job_candidate_matches")
 }

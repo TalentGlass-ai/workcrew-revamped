@@ -10,6 +10,9 @@
     "seed:skills": "tsx scripts/seed-skills.ts",
     "seed:ontology": "tsx scripts/seed-ontology.ts",
     "seed:inferred": "tsx scripts/seed-inferred-skills.ts",
+    "rank:all": "tsx scripts/batch-rank-jobs.ts all",
+    "rank:job": "tsx scripts/batch-rank-jobs.ts job",
+    "test:ranking": "tsx scripts/test-ranking-engine.ts",
     "process:alerts": "tsx lib/jobAlerts.ts",
     "sync:typesense": "tsx scripts/sync-typesense.ts"
   },

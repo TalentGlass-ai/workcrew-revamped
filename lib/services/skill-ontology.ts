@@ -542,6 +542,23 @@ export class SkillOntologyService {
     return ontology?.weight || 0.5;
   }
 
+  // New methods for AI Ranking Engine
+
+  getChildSkills(skillName: string): string[] {
+    const ontology = this.getSkillOntology(skillName);
+    return ontology?.children || [];
+  }
+
+  getParentSkills(skillName: string): string[] {
+    const ontology = this.getSkillOntology(skillName);
+    return ontology?.parents || [];
+  }
+
+  getRelatedSkills(skillName: string): string[] {
+    const ontology = this.getSkillOntology(skillName);
+    return ontology?.related || [];
+  }
+
   async getOntologyStats(): Promise<{
     totalSkills: number;
     categories: Record<string, number>;

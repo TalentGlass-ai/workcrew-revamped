@@ -94,6 +94,7 @@ model User {
   createdJobs    Job[]         @relation("JobCreator")
   subscriptions  Subscription[]
   paymentMethods PaymentMethod[]
+  actions        CandidateAction[] // As recruiter
 
   @@map("users")
 }
@@ -179,6 +180,7 @@ model Candidate {
   assessments      AssessmentAttempt[]
   interviewSessions InterviewSession[]
   jobMatches       JobCandidateMatch[]
+  actions          CandidateAction[]
 
   @@map("candidates")
 }
@@ -293,6 +295,7 @@ model Job {
   assessments        Assessment[]
   interviews         InterviewSession[]
   candidateMatches   JobCandidateMatch[]
+  actions            CandidateAction[]
 
   @@map("jobs")
 }
@@ -723,4 +726,74 @@ model JobCandidateMatch {
   @@index([candidateId])
   @@index([score])
   @@map("job_candidate_matches")
+}
+
+// -----------------------------------------------------------------------------
+// AI FEEDBACK LOOP
+// -----------------------------------------------------------------------------
+
+enum ActionType {
+  VIEWED
+  SHORTLISTED
+  REJECTED
+  INTERVIEWED
+  HIRED
+  IGNORED
+}
+
+model CandidateAction {
+  id            String     @id @default(uuid())
+  candidateId   String     @map("candidate_id")
+  jobId         String     @map("job_id")
+  recruiterId   String     @map("recruiter_id") // User who performed the action
+
+  actionType    ActionType @map("action_type")
+  weight        Float      @default(1.0) // Action weight for learning
+
+  // Context for learning
+  jobTitle      String?    @map("job_title") // Cached for analysis
+  companyId     String?    @map("company_id") // Cached for company-specific learning
+
+  // Optional metadata
+  metadata      Json?      // Additional context (e.g., rejection reason, interview feedback)
+
+  createdAt     DateTime   @default(now()) @map("created_at")
+
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job           Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  recruiter     User       @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([recruiterId])
+  @@index([actionType])
+  @@index([createdAt])
+  @@map("candidate_actions")
+}
+
+// Learning weights and preferences per company/recruiter
+model LearningPreference {
+  id            String   @id @default(uuid())
+  entityType    String   @map("entity_type") // "company" or "recruiter"
+  entityId      String   @map("entity_id")   // organizationId or userId
+
+  // Skill weight adjustments
+  skillWeights  Json     @map("skill_weights") // { "Kafka": 0.2, "StartupExperience": 0.3 }
+
+  // Ranking model adjustments
+  rankingWeights Json    @map("ranking_weights") // { "skillMatch": 0.6, "experience": 0.15 }
+
+  // Inference confidence multipliers
+  inferenceMultipliers Json? @map("inference_multipliers") // { "CO_OCCURRENCE": 1.2 }
+
+  // Success metrics for validation
+  totalActions  Int      @default(0) @map("total_actions")
+  successfulHires Int   @default(0) @map("successful_hires")
+  accuracy      Float?   // Rolling accuracy metric
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([entityType, entityId])
+  @@map("learning_preferences")
 }

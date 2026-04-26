@@ -2,6 +2,7 @@ import { Job, Candidate, CandidateSkill, JobCandidateMatch, InferredSkill } from
 import { getPrisma } from '../prisma';
 import { getSkillOntologyService } from './skill-ontology';
 import { getSkillInferenceEngine } from './skill-inference-engine';
+import { feedbackLearningEngine } from './feedback-learning-engine';
 
 export interface JobAnalysis {
   requiredSkills: string[];
@@ -82,6 +83,10 @@ export class AIRankingEngine {
       throw new Error(`Job ${jobId} not found`);
     }
 
+    // Get personalized learning weights
+    const companyWeights = await feedbackLearningEngine.getPersonalizedWeights('company', job.organizationId);
+    const systemWeights = await feedbackLearningEngine.getPersonalizedWeights('system', 'global');
+
     const jobAnalysis = await this.analyzeJob(job);
 
     // Step 2: Fast candidate retrieval (performance critical)
@@ -89,7 +94,7 @@ export class AIRankingEngine {
 
     // Step 3: Deep scoring for each candidate
     const scoredCandidates = await Promise.all(
-      candidates.map(candidate => this.scoreCandidate(candidate, job, jobAnalysis))
+      candidates.map(candidate => this.scoreCandidate(candidate, job, jobAnalysis, companyWeights, systemWeights))
     );
 
     // Step 4: Sort by final score and limit results
@@ -171,7 +176,9 @@ export class AIRankingEngine {
   private async scoreCandidate(
     candidate: Candidate & { skills: CandidateSkill[]; inferredSkills: InferredSkill[] },
     job: Job,
-    jobAnalysis: JobAnalysis
+    jobAnalysis: JobAnalysis,
+    companyWeights: any,
+    systemWeights: any
   ): Promise<CandidateScoring> {
 
     // A. Skill Match Score (Ontology-aware)
@@ -192,14 +199,24 @@ export class AIRankingEngine {
     // F. Stability Score
     const stability = this.computeStabilityScore(candidate);
 
-    // Calculate final score
+    // Get personalized weights (fallback to defaults)
+    const weights = {
+      skillMatch: companyWeights?.rankingWeights?.skillMatch || systemWeights?.rankingWeights?.skillMatch || AIRankingEngine.WEIGHTS.skillMatch,
+      skillDepth: companyWeights?.rankingWeights?.skillDepth || systemWeights?.rankingWeights?.skillDepth || AIRankingEngine.WEIGHTS.skillDepth,
+      inferredSkillBoost: companyWeights?.rankingWeights?.inferredSkillBoost || systemWeights?.rankingWeights?.inferredSkillBoost || AIRankingEngine.WEIGHTS.inferredSkillBoost,
+      experienceFit: companyWeights?.rankingWeights?.experienceFit || systemWeights?.rankingWeights?.experienceFit || AIRankingEngine.WEIGHTS.experienceFit,
+      clusterMatch: companyWeights?.rankingWeights?.clusterMatch || systemWeights?.rankingWeights?.clusterMatch || AIRankingEngine.WEIGHTS.clusterMatch,
+      stability: companyWeights?.rankingWeights?.stability || systemWeights?.rankingWeights?.stability || AIRankingEngine.WEIGHTS.stability,
+    };
+
+    // Calculate final score with personalized weights
     const finalScore = Math.round(
-      skillMatchScore * AIRankingEngine.WEIGHTS.skillMatch +
-      skillDepthScore * AIRankingEngine.WEIGHTS.skillDepth +
-      inferredSkillBoost * AIRankingEngine.WEIGHTS.inferredSkillBoost +
-      experienceFit * AIRankingEngine.WEIGHTS.experienceFit +
-      clusterMatch * AIRankingEngine.WEIGHTS.clusterMatch +
-      stability * AIRankingEngine.WEIGHTS.stability
+      skillMatchScore * weights.skillMatch +
+      skillDepthScore * weights.skillDepth +
+      inferredSkillBoost * weights.inferredSkillBoost +
+      experienceFit * weights.experienceFit +
+      clusterMatch * weights.clusterMatch +
+      stability * weights.stability
     );
 
     // Generate recommendation

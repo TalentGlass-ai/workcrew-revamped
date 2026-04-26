@@ -7,6 +7,16 @@ datasource db {
 }
 
 // -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum RecommendationType {
+  STRONGLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+}
+
+// -----------------------------------------------------------------------------
 // TENANT / ORGANIZATION
 // -----------------------------------------------------------------------------
 
@@ -126,8 +136,8 @@ model VerificationToken {
 // -----------------------------------------------------------------------------
 
 model Candidate {
-  id               String   @id @default(uuid()) 
-  userId           String   @unique @map("user_id") 
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
   profileSummary   String?   @map("profile_summary")
   totalExperience  Float?   @map("total_experience")
   currentRole      String?  @map("current_role")
@@ -138,6 +148,19 @@ model Candidate {
   githubUrl        String?  @map("github_url")
   stackoverflowUrl String?  @map("stackoverflow_url")
   hackerrankUrl    String?  @map("hackerrank_url")
+
+  // Derived AI fields (from skill intelligence engine)
+  fitScore         Float?   @map("fit_score")
+  recommendation   RecommendationType?
+
+  // Fast filtering (important for recruiter UI)
+  primarySkills    String[] @map("primary_skills") // ["Java", "Python"]
+  skillClusters    String[] @map("skill_clusters") // ["Backend Engineer"]
+
+  // Store full AI output (source of truth)
+  skillIntelligence Json?   @map("skill_intelligence")
+  graphSnapshot    Json?    @map("graph_snapshot")
+
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -166,6 +189,21 @@ model CandidateSkill {
   @@map("candidate_skills")
 }
 
+// -----------------------------------------------------------------------------
+// SKILL NORMALIZATION
+// -----------------------------------------------------------------------------
+
+model Skill {
+  id        String   @id @default(uuid())
+  name      String   @unique // Normalized skill name (e.g., "JavaScript", "React")
+  category  String   // "Programming Languages", "Frameworks", "Cloud & DevOps", etc.
+  synonyms  String[] // ["js", "javascript", "es6", "es2015"]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("skills")
+}
+
 model CandidateCompetencyRadar {
   id                 String   @id @default(uuid()) 
   candidateId        String   @unique @map("candidate_id") 
@@ -189,8 +227,8 @@ model CandidateCompetencyRadar {
 // -----------------------------------------------------------------------------
 
 model Job {
-  id                 String   @id @default(uuid()) 
-  organizationId     String   @map("organization_id") 
+  id                 String   @id @default(uuid())
+  organizationId     String   @map("organization_id")
   title              String
   department         String?
   location           String?
@@ -200,13 +238,14 @@ model Job {
   salaryMin          Float?   @map("salary_min")
   salaryMax          Float?   @map("salary_max")
   currency           String?
-  description        String   
-  requiredSkills     Json?    @map("required_skills")
-  preferredSkills    Json?    @map("preferred_skills")
+  description        String
+  requiredSkills     String[] @map("required_skills") // Normalized skill names
+  preferredSkills    String[] @map("preferred_skills") // Normalized skill names
+  skillClusters      String[] @map("skill_clusters") // ["Frontend Developer"]
   seoSlug            String?  @map("seo_slug")
   publishedAt        DateTime? @map("published_at")
   status             String   @default("draft") // draft, published, closed, archived
-  createdBy          String   @map("created_by") 
+  createdBy          String   @map("created_by")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

@@ -35,19 +35,80 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Search Engine Setup (Typesense)
+## Candidate Evaluation Engine
 
-This project uses [Typesense](https://typesense.org/) for advanced job search functionality with full-text search, typo tolerance, and intelligent ranking.
+WorkCrew.ai includes a sophisticated AI-powered candidate evaluation engine that provides comprehensive fit analysis between candidates and job opportunities.
 
-### Local Development Setup
+### Features
 
-1. **Start Typesense Server:**
-   ```bash
-   docker-compose -f docker-compose.typesense.yml up -d
-   ```
+- **7-Dimensional Scoring**: Evaluates candidates across skills, experience, education, location, salary, culture, and growth potential
+- **Weighted Algorithm**: Uses strategic weighting (30% skills, 25% experience, 15% education, etc.) for accurate fit assessment
+- **Penalty System**: Applies penalties for critical gaps and red flags
+- **Structured Insights**: Provides actionable recommendations, strengths, gaps, and risks
+- **Graph Enrichment**: Generates data for enhancing candidate profiles with skill gaps, experience requirements, and growth areas
 
-2. **Verify Typesense is running:**
-   ```bash
+### API Usage
+
+#### Evaluate Candidate Fit
+
+```bash
+POST /api/evaluation/evaluate
+Content-Type: application/json
+
+{
+  "candidateId": "candidate-uuid",
+  "jobId": "job-uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "fitScore": 85,
+  "dimensions": {
+    "skillsMatch": 90,
+    "experienceLevel": 80,
+    "educationFit": 50,
+    "locationCompatibility": 95,
+    "salaryExpectations": 70,
+    "culturalFit": 75,
+    "growthPotential": 60
+  },
+  "recommendation": "STRONG_HIRE",
+  "insights": {
+    "strengths": ["Excellent skills match", "Strong experience level"],
+    "gaps": ["Education requirements"],
+    "risks": ["Salary expectations mismatch"],
+    "recommendations": ["Consider training programs"]
+  },
+  "graphEnrichment": {
+    "skillGaps": ["typescript", "react"],
+    "experienceGaps": ["3 years required"],
+    "educationGaps": ["Bachelor's degree"],
+    "locationPreferences": ["New York"],
+    "salaryRange": { "min": 80000, "max": 120000 },
+    "culturalIndicators": ["team player", "innovative"],
+    "growthAreas": ["leadership", "mentoring"]
+  }
+}
+```
+
+### Recommendation Levels
+
+- **STRONG_HIRE** (85+): Excellent fit, proceed with offer
+- **CONSIDER** (70-84): Good fit with minor concerns
+- **WEAK_FIT** (50-69): Moderate fit, requires careful consideration
+- **NO_HIRE** (<50): Significant gaps, not recommended
+
+### Testing
+
+Run the test script to verify the evaluation engine:
+
+```bash
+npx tsx test-evaluation.ts
+```
+
+This will test the API endpoint and display a sample evaluation result.
    curl http://localhost:8108/health
    ```
 

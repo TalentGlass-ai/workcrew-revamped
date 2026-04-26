@@ -42,6 +42,42 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const assessmentId = searchParams.get('assessmentId');
+
+    let flags;
+    if (assessmentId) {
+      flags = await prisma.proctoringFlag.findMany({
+        where: { assessmentId },
+        include: {
+          assessment: true,
+          candidate: {
+            select: { id: true, user: { select: { name: true, email: true } } }
+          }
+        },
+        orderBy: { flaggedAt: 'desc' }
+      });
+    } else {
+      flags = await prisma.proctoringFlag.findMany({
+        include: {
+          assessment: true,
+          candidate: {
+            select: { id: true, user: { select: { name: true, email: true } } }
+          }
+        },
+        orderBy: { flaggedAt: 'desc' }
+      });
+    }
+
+    return NextResponse.json({ flags });
+  } catch (error) {
+    console.error('Error fetching proctoring flags:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 function checkForSuspiciousActivity(eventType: string, details?: any): boolean {
   // Simple heuristics for flagging
   switch (eventType) {

@@ -22,10 +22,13 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
+  const [identityVerified, setIdentityVerified] = useState(false);
 
   const lastKeyTime = useRef<number>(0);
   const keyCount = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     fetch(`/api/assessments?id=${assessmentId}`)
@@ -35,6 +38,8 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
         setLoading(false);
         // Request fullscreen after assessment loads
         requestFullscreen();
+        // Request webcam for identity verification
+        requestWebcamAccess();
         setupProctoringListeners(data.candidateId);
       })
       .catch(error => {
@@ -52,6 +57,30 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
       }
     } catch (error) {
       console.error('Error requesting fullscreen:', error);
+    }
+  };
+
+  const requestWebcamAccess = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setWebcamStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      logProctoringEvent('webcam_access_granted');
+    } catch (error) {
+      console.error('Error accessing webcam:', error);
+      logProctoringEvent('webcam_access_denied');
+    }
+  };
+
+  const confirmIdentity = () => {
+    setIdentityVerified(true);
+    logProctoringEvent('identity_confirmed');
+    // Stop webcam stream after confirmation
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(track => track.stop());
+      setWebcamStream(null);
     }
   };
 
@@ -187,6 +216,40 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
   if (loading) return <div className="p-4">Loading assessment...</div>;
   if (!assessment) return <div className="p-4">Assessment not found</div>;
   if (submitted) return <div className="p-4">Assessment completed! Thank you for participating.</div>;
+
+  // Show identity verification first
+  if (!identityVerified) {
+    return (
+      <div ref={containerRef} className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Identity Verification</h1>
+          <p className="mb-4">Please allow camera access and confirm your identity to begin the assessment.</p>
+          
+          {webcamStream ? (
+            <div className="mb-4">
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                muted 
+                className="w-full max-w-md mx-auto border rounded-lg"
+              />
+              <p className="mt-2 text-sm text-gray-600">Make sure your face is clearly visible</p>
+              <button
+                onClick={confirmIdentity}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Confirm Identity & Start Assessment
+              </button>
+            </div>
+          ) : (
+            <div className="mb-4">
+              <p className="text-gray-600">Requesting camera access...</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const question = assessment.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / assessment.questions.length) * 100;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Question {
   id: string;
@@ -11,6 +11,7 @@ interface Question {
 
 interface Assessment {
   id: string;
+  candidateId: string;
   questions: Question[];
 }
 
@@ -20,6 +21,11 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const lastKeyTime = useRef<number>(0);
+  const keyCount = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/assessments?id=${assessmentId}`)
@@ -27,12 +33,120 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
       .then(data => {
         setAssessment(data);
         setLoading(false);
+        // Request fullscreen after assessment loads
+        requestFullscreen();
+        setupProctoringListeners(data.candidateId);
       })
       .catch(error => {
         console.error('Error fetching assessment:', error);
         setLoading(false);
       });
   }, [assessmentId]);
+
+  const requestFullscreen = async () => {
+    try {
+      if (containerRef.current && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+        logProctoringEvent('fullscreen_entered');
+      }
+    } catch (error) {
+      console.error('Error requesting fullscreen:', error);
+    }
+  };
+
+  const setupProctoringListeners = (candidateId: string) => {
+    // Prevent right-click context menu
+    const handleContextMenu = (e: Event) => {
+      e.preventDefault();
+      logProctoringEvent('right_click', { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY });
+    };
+
+    // Detect tab visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        logProctoringEvent('tab_switch', { hidden: true });
+      }
+    };
+
+    // Detect fullscreen exit attempts
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+        logProctoringEvent('fullscreen_exit');
+        // Re-request fullscreen
+        setTimeout(() => requestFullscreen(), 1000);
+      } else {
+        setIsFullscreen(true);
+      }
+    };
+
+    // Monitor keystrokes for rapid typing detection
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      keyCount.current++;
+
+      if (now - lastKeyTime.current < 100) { // Within 100ms
+        if (keyCount.current > 5) { // More than 5 keys rapidly
+          logProctoringEvent('rapid_keystrokes', { rate: keyCount.current / ((now - lastKeyTime.current) / 1000) });
+          keyCount.current = 0;
+        }
+      } else {
+        keyCount.current = 1;
+      }
+
+      lastKeyTime.current = now;
+
+      // Detect copy/paste attempts
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v')) {
+        logProctoringEvent(e.key === 'c' ? 'copy_attempt' : 'paste_attempt');
+      }
+    };
+
+    // Monitor mouse movements for unusual patterns
+    let lastMouseMove = 0;
+    const handleMouseMove = (e: MouseEvent) => {
+      const now = Date.now();
+      if (now - lastMouseMove < 10) { // Very rapid mouse movements
+        logProctoringEvent('rapid_mouse_movement', { x: e.clientX, y: e.clientY });
+      }
+      lastMouseMove = now;
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousemove', handleMouseMove);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  };
+
+  const logProctoringEvent = async (eventType: string, details?: any) => {
+    if (!assessment) return;
+
+    try {
+      await fetch('/api/proctoring/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assessmentId: assessment.id,
+          candidateId: assessment.candidateId,
+          eventType,
+          details,
+        }),
+      });
+    } catch (error) {
+      console.error('Error logging proctoring event:', error);
+    }
+  };
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
@@ -78,7 +192,7 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
   const progress = ((currentQuestionIndex + 1) / assessment.questions.length) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div ref={containerRef} className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-2xl font-bold">Assessment</h1>

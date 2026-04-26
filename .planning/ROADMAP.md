@@ -84,3 +84,15 @@ Plans:
 - POST /api/assessment/proctoring - Record proctoring events
 - GET /api/assessment/candidate/:id - Get candidate assessment history
 **Plans:** 1 plan
+
+## Phase 6: User Interfaces 📋
+**Status**: Planned
+**Goal**: Build recruiter dashboard and candidate assessment experience
+- Recruiter dashboard with assessment oversight
+- Candidate assessment discovery and taking experience
+- Assessment results viewing for both roles
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Build candidate assessment experience
+- [ ] 06-02-PLAN.md — Build recruiter dashboard

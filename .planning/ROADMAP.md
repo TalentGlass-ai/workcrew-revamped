@@ -94,5 +94,5 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Build candidate assessment experience
+- [x] 06-01-PLAN.md — Build candidate assessment experience
 - [ ] 06-02-PLAN.md — Build recruiter dashboard

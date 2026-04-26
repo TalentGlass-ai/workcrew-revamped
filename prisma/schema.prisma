@@ -203,6 +203,7 @@ model CandidateSkill {
 
   candidate        Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
+  @@unique([candidateId, skillName])
   @@map("candidate_skills")
 }
 

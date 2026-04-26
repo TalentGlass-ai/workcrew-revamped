@@ -15,7 +15,7 @@ interface Assessment {
   questions: Question[];
 }
 
-export default function Assessment({ assessmentId }: { assessmentId: string }) {
+export default function Assessment({ assessmentId, onComplete }: { assessmentId: string; onComplete?: () => void }) {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -206,6 +206,7 @@ export default function Assessment({ assessmentId }: { assessmentId: string }) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
         setSubmitted(true);
+        onComplete?.();
       }
     } catch (error) {
       console.error('Error submitting answer:', error);

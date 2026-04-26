@@ -73,3 +73,14 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Connect assessment results to skill graph database
+
+
+## Phase 5: API Layer 📋
+**Status**: Planned
+**Goal**: Implement backend APIs for assessment workflow
+- POST /api/assessment/start - Initialize new assessment
+- POST /api/assessment/submit - Submit code solution
+- GET /api/assessment/results - Retrieve assessment results
+- POST /api/assessment/proctoring - Record proctoring events
+- GET /api/assessment/candidate/:id - Get candidate assessment history
+**Plans:** 1 plan

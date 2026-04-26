@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { generateQuestion } from '../../../lib/questionGenerator';
-
-const prisma = new PrismaClient();
+import { auth } from '../../../auth';
+import { prisma } from '../../../lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,33 +48,85 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (!id) {
-      return NextResponse.json({ error: 'Assessment ID required' }, { status: 400 });
-    }
-
-    const assessment = await prisma.assessment.findUnique({
-      where: { id },
-      include: {
-        questions: true,
-        assessmentAttempts: {
-          include: {
-            answers: true
+    if (id) {
+      // Get single assessment
+      const assessment = await prisma.assessment.findUnique({
+        where: { id },
+        include: {
+          questions: true,
+          assessmentAttempts: {
+            include: {
+              answers: true
+            }
           }
         }
+      });
+
+      if (!assessment) {
+        return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
       }
-    });
 
-    if (!assessment) {
-      return NextResponse.json({ error: 'Assessment not found' }, { status: 404 });
+      return NextResponse.json(assessment);
+    } else {
+      // Get candidate
+      const candidate = await prisma.candidate.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!candidate) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 });
+      }
+
+      // Get assessments for this candidate
+      const assessments = await prisma.assessment.findMany({
+        where: { candidateId: candidate.id },
+        include: {
+          job: true,
+          questions: {
+            select: {
+              id: true,
+              questionType: true,
+            },
+          },
+          assessmentAttempts: {
+            select: {
+              id: true,
+              completedAt: true,
+              score: true,
+            },
+            orderBy: { startedAt: 'desc' },
+            take: 1, // Latest attempt
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Format for frontend
+      const formattedAssessments = assessments.map((assessment) => ({
+        id: assessment.id,
+        title: assessment.job ? `Assessment for ${assessment.job.title}` : `Coding Assessment`,
+        description: `Test your ${assessment.language} skills with ${assessment.questions.length} questions`,
+        difficulty: assessment.difficulty,
+        language: assessment.language,
+        createdAt: assessment.createdAt,
+        isCompleted: assessment.assessmentAttempts.length > 0 && assessment.assessmentAttempts[0].completedAt !== null,
+        score: assessment.assessmentAttempts[0]?.score || null,
+        questionCount: assessment.questions.length,
+      }));
+
+      return NextResponse.json({ assessments: formattedAssessments });
     }
-
-    return NextResponse.json(assessment);
   } catch (error) {
-    console.error('Error fetching assessment:', error);
-    return NextResponse.json({ error: 'Failed to fetch assessment' }, { status: 500 });
+    console.error('Error fetching assessments:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

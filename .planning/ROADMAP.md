@@ -43,13 +43,17 @@
 - Secure code execution sandbox with Docker
 **Plans:** 2 plans
 
-## Phase 4: Advanced Analytics & Reporting 📋
+## Phase 4: Skill Intelligence Integration 📋
 **Status**: Planned
-**Goal**: Business intelligence and insights
+**Goal**: Connect assessment results to skill graph database
 - Usage analytics dashboard
 - Revenue reporting
 - Performance metrics
-- ML model training data
+- Convert assessment results to validated skills in graph database
+- Update candidate skill strengths based on assessment performance
+- Integrate with existing skill radar and matching algorithms
+- Mark skills as "validated" vs "self-reported"
+- Push assessment data to Neo4j graph for enhanced matching
 
 ## Phase 3: Proctoring System 📋
 **Status**: Planned
@@ -65,3 +69,7 @@
 Plans:
 - [x] 03-01-PLAN.md — Implement database schema and basic proctoring monitoring
 - [x] 03-02-PLAN.md — Implement advanced monitoring and recruiter dashboard
+**Plans:** 1 plan
+
+Plans:
+- [ ] 04-01-PLAN.md — Connect assessment results to skill graph database

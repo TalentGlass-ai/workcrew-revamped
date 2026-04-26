@@ -34,8 +34,8 @@ Requirements for initial assessment system release.
 
 ### Proctoring Layer
 
-- [ ] **PROCTOR-01**: Track tab switching events
-- [ ] **PROCTOR-02**: Monitor window blur/focus events
+- [x] **PROCTOR-01**: Track tab switching events
+- [x] **PROCTOR-02**: Monitor window blur/focus events
 - [ ] **PROCTOR-03**: Detect copy-paste activity
 - [ ] **PROCTOR-04**: Calculate suspicion scores based on behavior patterns
 - [ ] **PROCTOR-05**: Optional video monitoring with consent (face detection, multiple faces)

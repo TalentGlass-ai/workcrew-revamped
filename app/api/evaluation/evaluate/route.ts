@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Perform evaluation
-    const result = evaluateCandidate(evaluationInput);
+    const result = await evaluateCandidate(evaluationInput);
 
     // Return only the JSON result as specified in the system prompt
     return NextResponse.json(result);

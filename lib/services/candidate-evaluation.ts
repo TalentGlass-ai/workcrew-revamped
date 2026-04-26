@@ -1,4 +1,8 @@
-import { Candidate, Job, CandidateSkill } from '@prisma/client';
+import { Candidate, Job, CandidateSkill, RecommendationType } from '@prisma/client';
+import { getPrisma } from '../prisma';
+import { getGraphSyncService } from './graph/graph-sync-service';
+import { getSkillOntologyService } from './skill-ontology';
+import { getSkillInferenceEngine } from './skill-inference-engine';
 
 export interface SkillIntelligence {
   name: string;
@@ -48,11 +52,12 @@ export interface GraphEnrichment {
 export interface EvaluationResult {
   candidate_id: string;
   fit_score: number;
-  recommendation: 'STRONGLY_RECOMMENDED' | 'RECOMMENDED' | 'NOT_RECOMMENDED';
+  recommendation: RecommendationType;
   skill_intelligence: {
     primary_skills: SkillIntelligence[];
     secondary_skills: SkillIntelligence[];
     emerging_skills: SkillIntelligence[];
+    inferred_skills: SkillIntelligence[];
   };
   skill_clusters: string[];
   skill_match_analysis: SkillMatchAnalysis;
@@ -73,15 +78,8 @@ export interface EvaluationResult {
 }
 
 export class SkillIntelligenceEngine {
-  // Skill normalization categories
-  private static readonly SKILL_CATEGORIES = {
-    'Programming Languages': ['java', 'python', 'javascript', 'typescript', 'go', 'rust', 'c++', 'c#', 'php', 'ruby', 'scala', 'kotlin'],
-    'Frameworks': ['react', 'angular', 'vue', 'spring boot', 'django', 'flask', 'express', 'fastapi', 'next.js', 'nuxt', 'svelte'],
-    'Data & AI': ['machine learning', 'deep learning', 'nlp', 'computer vision', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn', 'data science'],
-    'Cloud & DevOps': ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'jenkins', 'github actions', 'ci/cd'],
-    'Databases': ['mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'dynamodb', 'cassandra'],
-    'Tools': ['git', 'kafka', 'rabbitmq', 'nginx', 'apache', 'linux', 'bash', 'postman', 'swagger']
-  };
+  private ontologyService = getSkillOntologyService();
+  private inferenceEngine = getSkillInferenceEngine();
 
   // Scoring weights
   private static readonly WEIGHTS = {
@@ -91,24 +89,30 @@ export class SkillIntelligenceEngine {
     career_growth: 0.10
   };
 
-  evaluate(input: { candidate: Candidate & { skills: CandidateSkill[] }; job: Job }): EvaluationResult {
+  async evaluate(input: { candidate: Candidate & { skills: CandidateSkill[] }; job: Job }): Promise<EvaluationResult> {
     const { candidate, job } = input;
 
-    // Step 1: Extract and normalize skills
+    // Step 1: Extract and normalize skills using ontology
     const skillIntelligence = this.extractSkillIntelligence(candidate.skills);
 
-    // Step 2: Identify skill clusters
-    const skillClusters = this.identifySkillClusters(skillIntelligence.primary_skills);
+    // Step 2: Get inferred skills
+    const inferredSkills = await this.inferenceEngine.getInferredSkills(candidate.id);
 
-    // Step 3: Analyze job match
+    // Step 3: Merge inferred skills into intelligence (with lower confidence)
+    const enhancedSkillIntelligence = this.mergeInferredSkills(skillIntelligence, inferredSkills);
+
+    // Step 4: Identify skill clusters
+    const skillClusters = this.identifySkillClusters(enhancedSkillIntelligence.primary_skills);
+
+    // Step 5: Analyze job match using ontology
     const requiredSkills = this.parseJsonArray(job.requiredSkills);
     const preferredSkills = this.parseJsonArray(job.preferredSkills);
-    const skillMatchAnalysis = this.analyzeSkillMatch(skillIntelligence, requiredSkills, preferredSkills);
+    const skillMatchAnalysis = this.analyzeSkillMatch(enhancedSkillIntelligence, requiredSkills, preferredSkills);
 
-    // Step 4: Calculate scores
-    const scoreBreakdown = this.calculateScoreBreakdown(skillIntelligence, candidate, job, skillMatchAnalysis);
+    // Step 6: Calculate scores
+    const scoreBreakdown = this.calculateScoreBreakdown(enhancedSkillIntelligence, candidate, job, skillMatchAnalysis);
 
-    // Step 5: Calculate final fit score
+    // Step 7: Calculate final fit score
     const fitScore = Math.round(
       scoreBreakdown.skill_fit * SkillIntelligenceEngine.WEIGHTS.skill_fit +
       scoreBreakdown.experience_fit * SkillIntelligenceEngine.WEIGHTS.experience_fit +
@@ -116,23 +120,80 @@ export class SkillIntelligenceEngine {
       scoreBreakdown.career_growth * SkillIntelligenceEngine.WEIGHTS.career_growth
     );
 
-    // Step 6: Generate recommendation
+    // Step 8: Generate recommendation
     const recommendation = this.generateRecommendation(fitScore, skillMatchAnalysis);
 
-    // Step 7: Generate spider chart
+    // Step 9: Generate spider chart
     const spiderChart = this.generateSpiderChart(scoreBreakdown);
 
-    // Step 8: Generate insights
-    const insights = this.generateInsights(skillIntelligence, skillMatchAnalysis, candidate);
+    // Step 10: Generate insights
+    const insights = this.generateInsights(enhancedSkillIntelligence, skillMatchAnalysis, candidate);
 
-    // Step 9: Generate graph enrichment
-    const graphEnrichment = this.generateGraphEnrichment(skillIntelligence, skillClusters, skillMatchAnalysis);
+    // Step 11: Generate graph enrichment
+    const graphEnrichment = this.generateGraphEnrichment(enhancedSkillIntelligence, skillClusters, skillMatchAnalysis);
 
     return {
       candidate_id: candidate.id,
       fit_score: fitScore,
       recommendation,
-      skill_intelligence: skillIntelligence,
+      skill_intelligence: enhancedSkillIntelligence,
+      skill_clusters: skillClusters,
+      skill_match_analysis: skillMatchAnalysis,
+      score_breakdown: scoreBreakdown,
+      spider_chart: spiderChart,
+      insights,
+      graph_enrichment: graphEnrichment
+    };
+  }
+
+  async evaluateCandidate(input: { candidate: Candidate & { skills: CandidateSkill[] }; job: Job }): Promise<EvaluationResult> {
+    const { candidate, job } = input;
+
+    // Step 1: Extract and normalize skills
+    const skillIntelligence = this.extractSkillIntelligence(candidate.skills);
+
+    // Step 2: Get inferred skills
+    const inferredSkills = await this.inferenceEngine.getInferredSkills(candidate.id);
+
+    // Step 3: Merge inferred skills
+    const enhancedSkillIntelligence = this.mergeInferredSkills(skillIntelligence, inferredSkills);
+
+    // Step 4: Identify skill clusters
+    const skillClusters = this.identifySkillClusters(enhancedSkillIntelligence.primary_skills);
+
+    // Step 5: Analyze job match
+    const requiredSkills = this.parseJsonArray(job.requiredSkills);
+    const preferredSkills = this.parseJsonArray(job.preferredSkills);
+    const skillMatchAnalysis = this.analyzeSkillMatch(enhancedSkillIntelligence, requiredSkills, preferredSkills);
+
+    // Step 6: Calculate scores
+    const scoreBreakdown = this.calculateScoreBreakdown(enhancedSkillIntelligence, candidate, job, skillMatchAnalysis);
+
+    // Step 7: Calculate final fit score
+    const fitScore = Math.round(
+      scoreBreakdown.skill_fit * SkillIntelligenceEngine.WEIGHTS.skill_fit +
+      scoreBreakdown.experience_fit * SkillIntelligenceEngine.WEIGHTS.experience_fit +
+      scoreBreakdown.stability * SkillIntelligenceEngine.WEIGHTS.stability +
+      scoreBreakdown.career_growth * SkillIntelligenceEngine.WEIGHTS.career_growth
+    );
+
+    // Step 8: Generate recommendation
+    const recommendation = this.generateRecommendation(fitScore, skillMatchAnalysis);
+
+    // Step 9: Generate spider chart
+    const spiderChart = this.generateSpiderChart(scoreBreakdown);
+
+    // Step 10: Generate insights
+    const insights = this.generateInsights(enhancedSkillIntelligence, skillMatchAnalysis, candidate);
+
+    // Step 11: Generate graph enrichment
+    const graphEnrichment = this.generateGraphEnrichment(enhancedSkillIntelligence, skillClusters, skillMatchAnalysis);
+
+    return {
+      candidate_id: candidate.id,
+      fit_score: fitScore,
+      recommendation,
+      skill_intelligence: enhancedSkillIntelligence,
       skill_clusters: skillClusters,
       skill_match_analysis: skillMatchAnalysis,
       score_breakdown: scoreBreakdown,
@@ -147,13 +208,20 @@ export class SkillIntelligenceEngine {
     secondary_skills: SkillIntelligence[];
     emerging_skills: SkillIntelligence[];
   } {
-    const normalizedSkills = candidateSkills.map(skill => ({
-      name: this.normalizeSkillName(skill.skillName),
-      category: this.categorizeSkill(skill.skillName),
-      strength_score: Math.min(100, (skill.score || 0) + (skill.confidenceScore || 0)),
-      years_experience: this.estimateYearsExperience(skill),
-      usage_type: this.determineUsageType(skill) as 'PRIMARY' | 'SECONDARY' | 'EXPOSURE'
-    }));
+    const normalizedSkills = candidateSkills.map(skill => {
+      // Use ontology service for normalization
+      const match = this.ontologyService.normalizeSkill(skill.skillName);
+      const canonicalName = match?.canonicalName || skill.skillName;
+      const ontology = this.ontologyService.getSkillOntology(canonicalName);
+
+      return {
+        name: canonicalName,
+        category: ontology?.category || 'Other',
+        strength_score: Math.min(100, (skill.score || 0) + (skill.confidenceScore || 0)),
+        years_experience: this.estimateYearsExperience(skill),
+        usage_type: this.determineUsageType(skill) as 'PRIMARY' | 'SECONDARY' | 'EXPOSURE'
+      };
+    });
 
     // Sort by strength and categorize
     const sortedSkills = normalizedSkills.sort((a, b) => b.strength_score - a.strength_score);
@@ -165,34 +233,39 @@ export class SkillIntelligenceEngine {
     };
   }
 
-  private normalizeSkillName(skillName: string): string {
-    const normalized = skillName.toLowerCase().trim();
+  private mergeInferredSkills(
+    skillIntelligence: {
+      primary_skills: SkillIntelligence[];
+      secondary_skills: SkillIntelligence[];
+      emerging_skills: SkillIntelligence[];
+    },
+    inferredSkills: any[]
+  ): {
+    primary_skills: SkillIntelligence[];
+    secondary_skills: SkillIntelligence[];
+    emerging_skills: SkillIntelligence[];
+    inferred_skills: SkillIntelligence[];
+  } {
+    // Convert inferred skills to SkillIntelligence format
+    const inferredSkillIntelligence: SkillIntelligence[] = inferredSkills
+      .filter(inf => inf.confidence >= 0.6) // Only include high-confidence inferences
+      .map(inf => ({
+        name: inf.skillName,
+        category: this.categorizeSkill(inf.skillName),
+        strength_score: Math.round(inf.confidence * 60), // Scale confidence to 0-60 range (lower than explicit)
+        years_experience: 1, // Assume minimal experience for inferred skills
+        usage_type: 'EXPOSURE' as const
+      }));
 
-    // Common normalizations
-    const normalizations: Record<string, string> = {
-      'js': 'javascript',
-      'ts': 'typescript',
-      'py': 'python',
-      'ml': 'machine learning',
-      'ai': 'artificial intelligence',
-      'k8s': 'kubernetes',
-      'ci/cd': 'ci/cd',
-      'github actions': 'github actions'
+    return {
+      ...skillIntelligence,
+      inferred_skills: inferredSkillIntelligence
     };
-
-    return normalizations[normalized] || normalized;
   }
 
   private categorizeSkill(skillName: string): string {
-    const normalized = this.normalizeSkillName(skillName);
-
-    for (const [category, skills] of Object.entries(SkillIntelligenceEngine.SKILL_CATEGORIES)) {
-      if (skills.some(skill => normalized.includes(skill) || skill.includes(normalized))) {
-        return category;
-      }
-    }
-
-    return 'Other';
+    const ontology = this.ontologyService.getSkillOntology(skillName);
+    return ontology?.category || 'Other';
   }
 
   private estimateYearsExperience(skill: CandidateSkill): number {
@@ -257,33 +330,37 @@ export class SkillIntelligenceEngine {
     requiredSkills: string[],
     preferredSkills: string[]
   ): SkillMatchAnalysis {
-    const candidateSkills = [
+    const candidateSkillNames = [
       ...skillIntelligence.primary_skills,
-      ...skillIntelligence.secondary_skills
-    ].map(s => s.name.toLowerCase());
+      ...skillIntelligence.secondary_skills,
+      ...(skillIntelligence.inferred_skills || [])
+    ].map((s: any) => s.name);
 
     const matched: string[] = [];
     const missing: string[] = [];
     const partial: string[] = [];
 
-    // Check required skills
+    // Check required skills with ontology matching
     requiredSkills.forEach(skill => {
-      const normalizedSkill = this.normalizeSkillName(skill);
-      if (candidateSkills.includes(normalizedSkill)) {
+      const matchScore = this.ontologyService.calculateSkillMatch(skill, candidateSkillNames);
+      if (matchScore >= 0.8) {
         matched.push(skill);
+      } else if (matchScore >= 0.5) {
+        partial.push(skill);
       } else {
         missing.push(skill);
       }
     });
 
-    // Check preferred skills
+    // Check preferred skills with ontology matching
     preferredSkills.forEach(skill => {
-      const normalizedSkill = this.normalizeSkillName(skill);
-      if (candidateSkills.includes(normalizedSkill)) {
+      const matchScore = this.ontologyService.calculateSkillMatch(skill, candidateSkillNames);
+      if (matchScore >= 0.6) {
         matched.push(skill);
-      } else {
+      } else if (matchScore >= 0.3) {
         partial.push(skill);
       }
+      // Preferred skills don't count as missing
     });
 
     return {
@@ -499,7 +576,50 @@ export class SkillIntelligenceEngine {
   }
 }
 
-export function evaluateCandidate(input: { candidate: Candidate & { skills: CandidateSkill[] }; job: Job }): EvaluationResult {
+export async function evaluateCandidate(input: { candidate: Candidate & { skills: CandidateSkill[] }; job: Job }): Promise<EvaluationResult> {
   const engine = new SkillIntelligenceEngine();
-  return engine.evaluate(input);
+  const result = await engine.evaluate(input);
+
+  // Save evaluation results to database
+  await saveEvaluationToDatabase(input.candidate.id, input.job.id, result);
+
+  // Sync to graph database
+  const graphSync = getGraphSyncService();
+  await graphSync.syncCandidateEvaluation(input.candidate.id, result);
+  await graphSync.syncCandidateJobMatch(input.candidate.id, input.job.id, result);
+
+  return result;
+}
+
+async function saveEvaluationToDatabase(candidateId: string, jobId: string, result: EvaluationResult): Promise<void> {
+  const prisma = await getPrisma();
+  if (!prisma) {
+    console.warn('Database not available, skipping evaluation save');
+    return;
+  }
+
+  try {
+    // Extract primary skills for fast filtering
+    const primarySkills = result.skill_intelligence.primary_skills.map(s => s.name);
+
+    // Update candidate with evaluation results
+    await prisma.candidate.update({
+      where: { id: candidateId },
+      data: {
+        fitScore: result.fit_score,
+        recommendation: result.recommendation,
+        primarySkills: primarySkills,
+        skillClusters: result.skill_clusters,
+        skillIntelligence: JSON.stringify(result),
+        graphSnapshot: JSON.stringify(result.graph_enrichment),
+        updatedAt: new Date()
+      }
+    });
+
+    console.log(`Saved evaluation results for candidate ${candidateId}`);
+
+  } catch (error) {
+    console.error('Failed to save evaluation to database:', error);
+    throw error;
+  }
 }

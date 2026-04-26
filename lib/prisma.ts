@@ -4,8 +4,13 @@ let prismaInstance: any = null
 export const getPrisma = async () => {
   if (!prismaInstance) {
     const { PrismaClient } = await import('@prisma/client')
+    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3')
+    const Database = await import('better-sqlite3')
+
+    const adapter = new PrismaBetterSqlite3({ url: './dev.db' })
 
     prismaInstance = new PrismaClient({
+      adapter,
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       transactionOptions: {
         maxWait: 5000,

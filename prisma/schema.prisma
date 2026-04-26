@@ -16,6 +16,13 @@ enum RecommendationType {
   NOT_RECOMMENDED
 }
 
+enum RelationType {
+  PARENT
+  CHILD
+  RELATED
+  COMPLEMENTARY
+}
+
 // -----------------------------------------------------------------------------
 // TENANT / ORGANIZATION
 // -----------------------------------------------------------------------------
@@ -154,8 +161,8 @@ model Candidate {
   recommendation   RecommendationType?
 
   // Fast filtering (important for recruiter UI)
-  primarySkills    String[] @map("primary_skills") // ["Java", "Python"]
-  skillClusters    String[] @map("skill_clusters") // ["Backend Engineer"]
+  primarySkills    Json @map("primary_skills") // ["Java", "Python"]
+  skillClusters    Json @map("skill_clusters") // ["Backend Engineer"]
 
   // Store full AI output (source of truth)
   skillIntelligence Json?   @map("skill_intelligence")
@@ -166,6 +173,7 @@ model Candidate {
 
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   skills           CandidateSkill[]
+  inferredSkills   InferredSkill[]
   radar            CandidateCompetencyRadar?
   applications     CandidateApplication[]
   assessments      AssessmentAttempt[]
@@ -195,13 +203,41 @@ model CandidateSkill {
 
 model Skill {
   id        String   @id @default(uuid())
-  name      String   @unique // Normalized skill name (e.g., "JavaScript", "React")
+  name      String   @unique // Canonical skill name (e.g., "JavaScript", "React")
   category  String   // "Programming Languages", "Frameworks", "Cloud & DevOps", etc.
-  synonyms  String[] // ["js", "javascript", "es6", "es2015"]
+
+  weight    Float    @default(0.5) // Importance in hiring context (0.0-1.0)
+
+  aliases   Json     // Alternative names: ["js", "javascript", "es6"]
+
+  // Relationships
+  fromRelations SkillRelation[] @relation("FromSkill")
+  toRelations   SkillRelation[] @relation("ToSkill")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("skills")
+}
+
+model SkillRelation {
+  id          String   @id @default(uuid())
+
+  fromSkillId String   @map("from_skill_id")
+  toSkillId   String   @map("to_skill_id")
+
+  type        RelationType
+  weight      Float    @default(1.0) // Strength of relationship
+
+  fromSkill   Skill    @relation("FromSkill", fields: [fromSkillId], references: [id])
+  toSkill     Skill    @relation("ToSkill", fields: [toSkillId], references: [id])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([fromSkillId, toSkillId, type])
+  @@index([fromSkillId])
+  @@index([toSkillId])
+  @@map("skill_relations")
 }
 
 model CandidateCompetencyRadar {
@@ -239,9 +275,9 @@ model Job {
   salaryMax          Float?   @map("salary_max")
   currency           String?
   description        String
-  requiredSkills     String[] @map("required_skills") // Normalized skill names
-  preferredSkills    String[] @map("preferred_skills") // Normalized skill names
-  skillClusters      String[] @map("skill_clusters") // ["Frontend Developer"]
+  requiredSkills     Json @map("required_skills") // Normalized skill names
+  preferredSkills    Json @map("preferred_skills") // Normalized skill names
+  skillClusters      Json @map("skill_clusters") // ["Frontend Developer"]
   seoSlug            String?  @map("seo_slug")
   publishedAt        DateTime? @map("published_at")
   status             String   @default("draft") // draft, published, closed, archived
@@ -620,4 +656,27 @@ model OrganizationBilling {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_billings")
+}
+
+// -----------------------------------------------------------------------------
+// SKILL INFERENCE
+// -----------------------------------------------------------------------------
+
+model InferredSkill {
+  id          String   @id @default(uuid())
+  candidateId String   @map("candidate_id")
+
+  skillName   String   @map("skill_name")
+  confidence  Float    // 0.0 to 1.0
+  reason      String   // Explanation for the inference
+  inferenceType String @map("inference_type") // CO_OCCURRENCE, HIERARCHICAL, ROLE_BASED, GRAPH_BASED
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([skillName])
+  @@map("inferred_skills")
 }

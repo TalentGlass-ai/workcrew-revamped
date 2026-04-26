@@ -44,11 +44,11 @@ Requirements for initial assessment system release.
 
 ### Skill Intelligence Integration
 
-- [ ] **SKILL-01**: Convert assessment results to validated skills in graph database
-- [ ] **SKILL-02**: Update candidate skill strengths based on assessment performance
-- [ ] **SKILL-03**: Integrate with existing skill radar and matching algorithms
-- [ ] **SKILL-04**: Mark skills as "validated" vs "self-reported"
-- [ ] **SKILL-05**: Push assessment data to Neo4j graph for enhanced matching
+- [x] **SKILL-01**: Convert assessment results to validated skills in graph database
+- [x] **SKILL-02**: Update candidate skill strengths based on assessment performance
+- [x] **SKILL-03**: Integrate with existing skill radar and matching algorithms
+- [x] **SKILL-04**: Mark skills as "validated" vs "self-reported"
+- [x] **SKILL-05**: Push assessment data to Neo4j graph for enhanced matching
 
 ### Database Schema
 

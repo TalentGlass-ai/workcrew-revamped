@@ -182,6 +182,8 @@ model Candidate {
   interviewSessions InterviewSession[]
   jobMatches       JobCandidateMatch[]
   actions          CandidateAction[]
+  proctoringEvents ProctoringEvent[]
+  proctoringFlags  ProctoringFlag[]
 
   @@map("candidates")
 }
@@ -356,6 +358,8 @@ model Assessment {
   questions         AssessmentQuestion[]
   assessmentAttempts AssessmentAttempt[]
   proctoringLogs     ProctoringLog[]
+  proctoringEvents   ProctoringEvent[]
+  proctoringFlags    ProctoringFlag[]
 
   @@index([candidateId])
   @@index([jobId])
@@ -373,6 +377,39 @@ model ProctoringLog {
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   @@map("proctoring_logs")
+}
+
+model ProctoringEvent {
+  id            String   @id @default(cuid())
+  assessmentId  String   @map("assessment_id")
+  candidateId   String   @map("candidate_id")
+  eventType     String   @map("event_type") // tab_switch, right_click, copy_attempt, etc.
+  timestamp     DateTime @default(now())
+  details       Json?
+
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@index([candidateId])
+  @@map("proctoring_events")
+}
+
+model ProctoringFlag {
+  id            String   @id @default(cuid())
+  assessmentId  String   @map("assessment_id")
+  candidateId   String   @map("candidate_id")
+  reason        String
+  severity      String   // low, medium, high
+  flaggedAt     DateTime @default(now()) @map("flagged_at")
+  reviewed      Boolean  @default(false)
+
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@index([candidateId])
+  @@map("proctoring_flags")
 }
 
 model AssessmentQuestion {
@@ -410,6 +447,7 @@ model AssessmentAttempt {
   candidateId    String   @map("candidate_id") 
   assessmentId   String   @map("assessment_id") 
   score          Float?
+  startedAt      DateTime @default(now()) @map("started_at")
   fraudRiskScore Float?   @map("fraud_risk_score")
   submittedAt    DateTime @default(now()) @map("submitted_at")
 

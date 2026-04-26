@@ -177,7 +177,8 @@ model Candidate {
   inferredSkills   InferredSkill[]
   radar            CandidateCompetencyRadar?
   applications     CandidateApplication[]
-  assessments      AssessmentAttempt[]
+  assessments      Assessment[]
+  assessmentAttempts AssessmentAttempt[]
   interviewSessions InterviewSession[]
   jobMatches       JobCandidateMatch[]
   actions          CandidateAction[]
@@ -337,6 +338,7 @@ model CandidateApplication {
 
 model Assessment {
   id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
   candidateId     String   @map("candidate_id")
   jobId           String?  @map("job_id")
   score           Float?
@@ -348,9 +350,12 @@ model Assessment {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   candidate       Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   job             Job?     @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  proctoringLogs  ProctoringLog[]
+  questions         AssessmentQuestion[]
+  assessmentAttempts AssessmentAttempt[]
+  proctoringLogs     ProctoringLog[]
 
   @@index([candidateId])
   @@index([jobId])
@@ -380,8 +385,24 @@ model AssessmentQuestion {
   weightage      Float   @default(1.0)
 
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  answers        Answer[]
 
   @@map("assessment_questions")
+}
+
+model Answer {
+  id             String  @id @default(uuid()) 
+  attemptId      String  @map("attempt_id") 
+  questionId     String  @map("question_id") 
+  answerText     String  @map("answer_text")
+  isCorrect      Boolean?
+  score          Float?
+  submittedAt    DateTime @default(now()) @map("submitted_at")
+
+  attempt        AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
 }
 
 model AssessmentAttempt {
@@ -395,6 +416,7 @@ model AssessmentAttempt {
   candidate      Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   fraudSignals   FraudSignal[]
+  answers        Answer[]
 
   @@map("assessment_attempts")
 }

@@ -22,13 +22,18 @@ WorkCrew.ai is a modern SaaS job marketplace platform that connects companies wi
 - **AI**: OpenAI/Claude integration
 - **Deployment**: Docker, Vercel
 
-## Current Status
+## Current Milestone: v1.1 Assessment System
 
-- ✅ AI Matching Dashboard with skill radar visualization
-- ✅ Conversational AI Assistant integration
-- ✅ Multi-tenant Prisma schema
-- ✅ Typesense search integration
-- 🚧 **Billing & Subscription System** (Current Phase)
+**Goal:** Build a cheating-resistant assessment platform with adaptive AI questions, secure sandbox, proctoring signals, and skill intelligence integration
+
+**Target features:**
+- Adaptive coding assessment engine with dynamic difficulty
+- Secure code execution sandbox (Docker/Firecracker)
+- Multi-signal evaluation (correctness, efficiency, behavior)
+- Proctoring layer with behavior tracking and risk signals
+- Skill intelligence integration with graph database
+- Recruiter dashboard with validated skills and risk insights
+- Candidate experience with clear monitoring disclosure
 
 ## Roadmap
 

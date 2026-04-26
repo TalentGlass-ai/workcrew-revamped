@@ -336,21 +336,38 @@ model CandidateApplication {
 // -----------------------------------------------------------------------------
 
 model Assessment {
-  id              String   @id @default(uuid()) 
-  organizationId  String   @map("organization_id") 
-  jobId           String?  @map("job_id") 
-  type            String   // e.g. mcq, coding, communication, scenario
-  difficulty      String?
-  durationMinutes Int?     @map("duration_minutes")
-  generatedByAi   Boolean  @default(false) @map("generated_by_ai")
+  id              String   @id @default(cuid())
+  candidateId     String   @map("candidate_id")
+  jobId           String?  @map("job_id")
+  score           Float?
+  difficulty      String
+  report          Json
+  language        String
+  timeTaken       Int      @map("time_taken")
+  attempts        Int      @default(1)
   createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  job             Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  questions       AssessmentQuestion[]
-  attempts        AssessmentAttempt[]
+  candidate       Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job             Job?     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  proctoringLogs  ProctoringLog[]
 
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([createdAt])
   @@map("assessments")
+}
+
+model ProctoringLog {
+  id             String    @id @default(cuid())
+  assessmentId   String    @map("assessment_id")
+  eventType      String    @map("event_type")
+  timestamp      DateTime  @default(now())
+  details        Json?
+
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("proctoring_logs")
 }
 
 model AssessmentQuestion {

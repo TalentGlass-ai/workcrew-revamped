@@ -51,7 +51,7 @@
 - Performance metrics
 - ML model training data
 
-## Phase 6: Assessment System 📋
+## Phase 3: Assessment System 📋
 **Status**: Planned
 **Goal**: Build cheating-resistant assessment platform
 - Adaptive AI question generation
@@ -60,3 +60,13 @@
 - Proctoring with behavior tracking
 - Skill intelligence integration
 - Recruiter risk assessment dashboard
+### Phase 2: Assessment Engine
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Implement database schema and AI question generation
+- [ ] 02-02-PLAN.md — Build evaluation engine and assessment UI

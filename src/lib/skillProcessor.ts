@@ -1,10 +1,13 @@
 import { PrismaClient } from '@prisma/client'
+import { SkillGraphService } from './skillGraphService'
 
 export class SkillProcessor {
   private prisma: PrismaClient
+  private skillGraphService: SkillGraphService
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma
+    this.skillGraphService = new SkillGraphService()
   }
 
   async updateSkillsFromAssessment(assessmentId: string): Promise<void> {
@@ -73,7 +76,7 @@ export class SkillProcessor {
 
     await Promise.all(skillUpdates)
 
-    // TODO: Push data to skill graph service
-    // await skillGraphService.pushAssessmentData(assessmentId)
+    // Push data to skill graph service
+    await this.skillGraphService.pushAssessmentData(assessmentId)
   }
 }

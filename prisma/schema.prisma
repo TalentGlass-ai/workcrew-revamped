@@ -184,6 +184,8 @@ model Candidate {
   actions          CandidateAction[]
   proctoringEvents ProctoringEvent[]
   proctoringFlags  ProctoringFlag[]
+  submissions      Submission[]
+  skillAssessments SkillAssessment[]
 
   @@map("candidates")
 }
@@ -877,4 +879,48 @@ model LearningPreference {
 
   @@unique([entityType, entityId])
   @@map("learning_preferences")
+}
+
+// -----------------------------------------------------------------------------
+// AUTO-GRADING SYSTEM
+// -----------------------------------------------------------------------------
+
+model Submission {
+  id             String   @id @default(uuid())
+  candidateId    String   @map("candidate_id")
+  questionId     String   @map("question_id")
+  language       String
+  code           String
+  score          Float
+  breakdown      Json     // { correctness, efficiency, codeQuality, edgeCases }
+  feedback       Json     // AI review: { score, issues, strengths, suggestions }
+  metrics        Json     // { totalTests, passedTests, failedTests, avgTime, maxMemory }
+  testResults    Json     // Array of test case results
+  behaviorSignals Json?   // Proctoring data: { suspicionScore, riskLevel, signals }
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([questionId])
+  @@index([createdAt])
+  @@map("submissions")
+}
+
+model SkillAssessment {
+  id             String   @id @default(uuid())
+  candidateId    String   @map("candidate_id")
+  skillName      String   @map("skill_name")
+  score          Float    // 0-100
+  confidence     Float    // 0-1, how confident we are in this assessment
+  source         String   // "auto-grading", "manual-review", "behavioral"
+  context        Json?    // Additional context about the assessment
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, skillName, source])
+  @@index([candidateId])
+  @@index([skillName])
+  @@map("skill_assessments")
 }

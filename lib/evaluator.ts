@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { ASSESSMENT_PACKS, getPackByRole, calculateWeightedScore, EvaluationResult } from './assessmentPacks';
+import { autoGradingEngine, Submission } from './autoGradingEngine';
 
 export interface AssessmentResult {
   score: number;
@@ -67,7 +68,7 @@ export async function evaluateAssessment(
       const answer = answers.find(a => a.questionId === question.id);
       if (answer) {
         // Enhanced evaluation based on role and question type
-        const evaluation = evaluateAnswer(answer, question, pack);
+        const evaluation = await evaluateAnswer(answer, question, pack);
         totalScore += evaluation.score;
 
         if (evaluation.correct) correctAnswers++;
@@ -179,15 +180,53 @@ export async function evaluateAssessment(
   }
 }
 
-function evaluateAnswer(
+async function evaluateAnswer(
   answer: { questionId: string; answerText: string; codeExecution?: any },
   question: any,
   pack?: any
-): { score: number; correct: boolean; criteria: Record<string, number> } {
+): Promise<{ score: number; correct: boolean; criteria: Record<string, number> }> {
   // Enhanced evaluation logic based on question type and role
   const criteria: Record<string, number> = {};
 
-  // Basic correctness check
+  // Check if this is a coding question with test cases
+  if (question.questionType === 'coding' && question.testCases) {
+    try {
+      // Use auto-grading engine for code evaluation
+      const testCases = JSON.parse(question.testCases);
+      const language = question.language || 'javascript';
+
+      const submission: Submission = {
+        candidateId: 'temp', // Will be set by caller
+        questionId: question.id,
+        language,
+        code: answer.answerText,
+        testCases,
+        context: {
+          question: question.questionText,
+          expectedApproach: question.expectedAnswer,
+          difficulty: question.difficulty || 'medium'
+        }
+      };
+
+      const gradingResult = await autoGradingEngine.gradeSubmission(submission);
+
+      return {
+        score: gradingResult.score,
+        correct: gradingResult.score >= 60, // Passing threshold
+        criteria: {
+          correctness: gradingResult.breakdown.correctness,
+          efficiency: gradingResult.breakdown.efficiency,
+          codeQuality: gradingResult.breakdown.codeQuality,
+          edgeCases: gradingResult.breakdown.edgeCases
+        }
+      };
+    } catch (error) {
+      console.error('Auto-grading failed, falling back to basic evaluation:', error);
+      // Fall back to basic evaluation
+    }
+  }
+
+  // Basic evaluation for non-coding questions or fallback
   let correct = false;
   let score = 0;
 

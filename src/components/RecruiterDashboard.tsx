@@ -46,6 +46,8 @@ export default function RecruiterDashboard() {
   const [flags, setFlags] = useState<ProctoringFlag[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedAssessment, setExpandedAssessment] = useState<string | null>(null);
+  const [assessmentDetails, setAssessmentDetails] = useState<any>(null);
 
   useEffect(() => {
     fetchFlags();
@@ -71,6 +73,26 @@ export default function RecruiterDashboard() {
       console.error('Error fetching assessments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAssessmentDetails = async (assessmentId: string) => {
+    try {
+      const response = await fetch(`/api/assessment/results?assessmentId=${assessmentId}`);
+      const data = await response.json();
+      setAssessmentDetails(data);
+    } catch (error) {
+      console.error('Error fetching assessment details:', error);
+    }
+  };
+
+  const toggleAssessmentDetails = (assessmentId: string) => {
+    if (expandedAssessment === assessmentId) {
+      setExpandedAssessment(null);
+      setAssessmentDetails(null);
+    } else {
+      setExpandedAssessment(assessmentId);
+      fetchAssessmentDetails(assessmentId);
     }
   };
 
@@ -104,33 +126,77 @@ export default function RecruiterDashboard() {
                   <th className="px-4 py-2 border-b text-left">Status</th>
                   <th className="px-4 py-2 border-b text-left">Difficulty</th>
                   <th className="px-4 py-2 border-b text-left">Created</th>
+                  <th className="px-4 py-2 border-b text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {assessments.map((assessment) => (
-                  <tr key={assessment.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 border-b">
-                      <div>
-                        <div className="font-medium">{assessment.candidate.name || 'Unknown'}</div>
-                        <div className="text-sm text-gray-600">{assessment.candidate.email}</div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 border-b">{assessment.job.title}</td>
-                    <td className="px-4 py-2 border-b">
-                      {assessment.score !== null ? `${assessment.score}%` : 'N/A'}
-                    </td>
-                    <td className="px-4 py-2 border-b">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        assessment.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {assessment.completed ? 'Completed' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 border-b capitalize">{assessment.difficulty}</td>
-                    <td className="px-4 py-2 border-b">
-                      {new Date(assessment.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={assessment.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 border-b">
+                        <div>
+                          <div className="font-medium">{assessment.candidate.name || 'Unknown'}</div>
+                          <div className="text-sm text-gray-600">{assessment.candidate.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2 border-b">{assessment.job.title}</td>
+                      <td className="px-4 py-2 border-b">
+                        {assessment.score !== null ? `${assessment.score}%` : 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 border-b">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          assessment.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {assessment.completed ? 'Completed' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 border-b capitalize">{assessment.difficulty}</td>
+                      <td className="px-4 py-2 border-b">
+                        {new Date(assessment.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 border-b">
+                        <button
+                          onClick={() => toggleAssessmentDetails(assessment.id)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                        >
+                          {expandedAssessment === assessment.id ? 'Collapse' : 'View Details'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedAssessment === assessment.id && assessmentDetails && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-4 border-b bg-gray-50">
+                          <div className="space-y-4">
+                            <h3 className="font-semibold">Assessment Details</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <strong>Score:</strong> {assessmentDetails.score}%
+                              </div>
+                              <div>
+                                <strong>Report:</strong> {assessmentDetails.report || 'No report available'}
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-medium mb-2">Questions & Answers</h4>
+                              <div className="space-y-2">
+                                {assessmentDetails.questions?.map((question: any, index: number) => (
+                                  <div key={question.id} className="border rounded p-3">
+                                    <div className="font-medium">Q{index + 1}: {question.questionText}</div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                      <strong>Your Answer:</strong> {question.answer || 'Not answered'}
+                                    </div>
+                                    <div className="text-sm text-green-600 mt-1">
+                                      <strong>Correct Answer:</strong> {question.expectedAnswer}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>

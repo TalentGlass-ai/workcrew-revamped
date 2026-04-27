@@ -6,11 +6,38 @@ import Button from '@/workcrew-ui/components/primitives/Button';
 import { Textarea } from '@/workcrew-ui/components/primitives/Textarea';
 import Badge from '@/workcrew-ui/components/primitives/Badge';
 import { Progress } from '@/workcrew-ui/components/primitives/Progress';
-import { CheckCircleIcon, XCircleIcon, ClockIcon, MicrophoneIcon, SpeakerWaveIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, ClockIcon, MicrophoneIcon, SpeakerWaveIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import { useRealtimeInterview } from './useRealtimeInterview';
+import VideoCapture from './VideoCapture';
+import PrivacyConsent from './PrivacyConsent';
+import BehavioralInsights from './BehavioralInsights';
+
+interface BehavioralSignals {
+  faceVisible: boolean;
+  faceVisiblePercentage: number;
+  lookingAway: boolean;
+  lookingAwayPercentage: number;
+  multipleFaces: boolean;
+  frameStability: number;
+  lastFaceDetected: number;
+}
 
 export default function RealtimeInterviewer() {
   const [currentAnswer, setCurrentAnswer] = useState('');
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [privacyConsentGiven, setPrivacyConsentGiven] = useState(false);
+  const [showPrivacyConsent, setShowPrivacyConsent] = useState(false);
+  const [behavioralSignals, setBehavioralSignals] = useState<BehavioralSignals>({
+    faceVisible: false,
+    faceVisiblePercentage: 0,
+    lookingAway: false,
+    lookingAwayPercentage: 0,
+    multipleFaces: false,
+    frameStability: 0,
+    lastFaceDetected: 0
+  });
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [interviewStartTime, setInterviewStartTime] = useState<number | null>(null);
 
   const {
     messages,
@@ -22,8 +49,46 @@ export default function RealtimeInterviewer() {
     submitAnswer,
     startRecording,
     stopRecording,
+    sendBehavioralSignals,
     endInterview
   } = useRealtimeInterview();
+
+  const handleEnableVideo = () => {
+    if (!privacyConsentGiven) {
+      setShowPrivacyConsent(true);
+    } else {
+      setVideoEnabled(true);
+    }
+  };
+
+  const handlePrivacyConsent = (consented: boolean) => {
+    setPrivacyConsentGiven(consented);
+    if (consented) {
+      setVideoEnabled(true);
+    }
+  };
+
+  const handleBehavioralSignals = (signals: BehavioralSignals) => {
+    setBehavioralSignals(signals);
+    // Send behavioral signals to backend for processing
+    sendBehavioralSignals(signals);
+  };
+
+  const handleVideoStream = (stream: MediaStream | null) => {
+    setVideoStream(stream);
+  };
+
+  // Track interview start time
+  React.useEffect(() => {
+    if (interviewState?.isActive && !interviewStartTime) {
+      setInterviewStartTime(Date.now());
+    } else if (!interviewState?.isActive && interviewStartTime) {
+      setInterviewStartTime(null);
+    }
+  }, [interviewState?.isActive, interviewStartTime]);
+
+  const interviewDuration = interviewStartTime ?
+    Math.floor((Date.now() - interviewStartTime) / 1000) : 0;
 
   const handleSubmitAnswer = async () => {
     if (!currentAnswer.trim()) return;
@@ -58,24 +123,55 @@ export default function RealtimeInterviewer() {
                 <CardTitle className="flex items-center justify-center gap-2">
                   <MicrophoneIcon className="w-5 h-5" />
                   Interview Session
+                  {videoEnabled && <VideoCameraIcon className="w-5 h-5 text-blue-600" />}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {!interviewState?.isActive ? (
                   <div className="text-center py-8">
-                    <Button
-                      onClick={startInterview}
-                      disabled={isLoading}
-                      className="px-8 py-3"
-                    >
-                      {isLoading ? 'Starting Interview...' : 'Start Voice Interview'}
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Click to begin your real-time AI interview
-                    </p>
+                    <div className="space-y-4">
+                      <Button
+                        onClick={startInterview}
+                        disabled={isLoading}
+                        className="px-8 py-3"
+                      >
+                        {isLoading ? 'Starting Interview...' : 'Start Voice Interview'}
+                      </Button>
+
+                      {!videoEnabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-500">
+                            Want to add video analysis for behavioral insights?
+                          </p>
+                          <Button
+                            onClick={handleEnableVideo}
+                            tone="secondary"
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <VideoCameraIcon className="w-4 h-4" />
+                            Enable Video Analysis
+                          </Button>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-gray-500">
+                        Click to begin your real-time AI interview
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <>
+                    {/* Video Capture */}
+                    {videoEnabled && (
+                      <VideoCapture
+                        onBehavioralSignals={handleBehavioralSignals}
+                        onVideoStream={handleVideoStream}
+                        isRecording={isRecording}
+                        className="mb-4"
+                      />
+                    )}
+
                     {/* Audio Controls */}
                     <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg">
                       <Button
@@ -186,6 +282,14 @@ export default function RealtimeInterviewer() {
 
           {/* Sidebar - Interview Stats */}
           <div className="space-y-6">
+            {/* Behavioral Insights */}
+            {videoEnabled && interviewState?.isActive && (
+              <BehavioralInsights
+                signals={behavioralSignals}
+                interviewDuration={interviewDuration}
+              />
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Interview Progress</CardTitle>
@@ -268,6 +372,12 @@ export default function RealtimeInterviewer() {
                   <span className="text-sm font-medium">{interviewState?.depthLevel || 1}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Video:</span>
+                  <Badge tone={videoEnabled ? "success" : "neutral"}>
+                    {videoEnabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Status:</span>
                   <Badge tone={interviewState?.isActive ? "success" : "neutral"}>
                     {interviewState?.isActive ? 'Active' : 'Inactive'}
@@ -277,6 +387,13 @@ export default function RealtimeInterviewer() {
             </Card>
           </div>
         </div>
+
+        {/* Privacy Consent Modal */}
+        <PrivacyConsent
+          isOpen={showPrivacyConsent}
+          onConsent={handlePrivacyConsent}
+          onClose={() => setShowPrivacyConsent(false)}
+        />
       </div>
     </div>
   );

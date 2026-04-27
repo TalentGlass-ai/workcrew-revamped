@@ -33,6 +33,16 @@ interface InterviewState {
   isSpeaking: boolean;
 }
 
+interface BehavioralSignals {
+  faceVisible: boolean;
+  faceVisiblePercentage: number;
+  lookingAway: boolean;
+  lookingAwayPercentage: number;
+  multipleFaces: boolean;
+  frameStability: number;
+  lastFaceDetected: number;
+}
+
 interface UseRealtimeInterviewReturn {
   messages: InterviewMessage[];
   interviewState: InterviewState | null;
@@ -44,6 +54,7 @@ interface UseRealtimeInterviewReturn {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   sendAudioData: (audioBlob: Blob) => Promise<void>;
+  sendBehavioralSignals: (signals: BehavioralSignals) => void;
   endInterview: () => void;
 }
 
@@ -355,6 +366,20 @@ export function useRealtimeInterview(): UseRealtimeInterviewReturn {
     }
   }, [interviewState]);
 
+  const sendBehavioralSignals = useCallback((signals: BehavioralSignals) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && interviewState) {
+      try {
+        wsRef.current.send(JSON.stringify({
+          type: 'behavioral_signals',
+          sessionId: interviewState.sessionId,
+          signals
+        }));
+      } catch (error) {
+        console.error('Failed to send behavioral signals:', error);
+      }
+    }
+  }, [interviewState]);
+
   const endInterview = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN && interviewState) {
       wsRef.current.send(JSON.stringify({
@@ -377,6 +402,7 @@ export function useRealtimeInterview(): UseRealtimeInterviewReturn {
     startRecording,
     stopRecording,
     sendAudioData,
+    sendBehavioralSignals,
     endInterview
   };
 }

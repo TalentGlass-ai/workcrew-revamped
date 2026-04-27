@@ -1,5 +1,15 @@
 import OpenAI from 'openai';
 
+export interface BehavioralSignals {
+  faceVisible: boolean;
+  faceVisiblePercentage: number;
+  lookingAway: boolean;
+  lookingAwayPercentage: number;
+  multipleFaces: boolean;
+  frameStability: number;
+  lastFaceDetected: number;
+}
+
 export interface InterviewSession {
   sessionId: string;
   mode: 'text' | 'voice';
@@ -7,6 +17,12 @@ export interface InterviewSession {
   state: InterviewState;
   startTime: Date;
   messages: InterviewMessage[];
+  behavioralData?: {
+    signals: BehavioralSignals[];
+    engagementScore: number;
+    communicationSignalsScore: number;
+    lastUpdated: Date;
+  };
 }
 
 export interface InterviewState {
@@ -474,6 +490,71 @@ Provide final evaluation as JSON with:
     if (evaluation.score > 8 && state.questionCount > 5) return true; // End early for strong candidates
 
     return false;
+  }
+
+  async processBehavioralSignals(sessionId: string, signals: BehavioralSignals): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      console.warn(`Session ${sessionId} not found for behavioral signals`);
+      return;
+    }
+
+    // Initialize behavioral data if not exists
+    if (!session.behavioralData) {
+      session.behavioralData = {
+        signals: [],
+        engagementScore: 0,
+        communicationSignalsScore: 0,
+        lastUpdated: new Date()
+      };
+    }
+
+    // Add new signals
+    session.behavioralData.signals.push(signals);
+    session.behavioralData.lastUpdated = new Date();
+
+    // Keep only last 100 signals to prevent memory issues
+    if (session.behavioralData.signals.length > 100) {
+      session.behavioralData.signals = session.behavioralData.signals.slice(-100);
+    }
+
+    // Calculate engagement score
+    const recentSignals = session.behavioralData.signals.slice(-10); // Last 10 signals
+    const avgFaceVisible = recentSignals.reduce((sum, s) => sum + s.faceVisiblePercentage, 0) / recentSignals.length;
+    const avgLookingAway = recentSignals.reduce((sum, s) => sum + s.lookingAwayPercentage, 0) / recentSignals.length;
+    const avgStability = recentSignals.reduce((sum, s) => sum + s.frameStability, 0) / recentSignals.length;
+
+    session.behavioralData.engagementScore = Math.round(
+      (avgFaceVisible * 0.4) +
+      ((100 - avgLookingAway) * 0.4) +
+      (avgStability * 20 * 0.2)
+    );
+
+    // Calculate communication signals score
+    session.behavioralData.communicationSignalsScore = Math.round(
+      avgFaceVisible * 0.6 + (100 - avgLookingAway) * 0.4
+    );
+
+    // Update interview state scores with behavioral insights
+    this.updateScoresWithBehavioralData(session.state, session.behavioralData);
+  }
+
+  private updateScoresWithBehavioralData(state: InterviewState, behavioralData: any) {
+    // Adjust communication score based on behavioral signals
+    // Face visibility and attention correlate with communication effectiveness
+    const behavioralWeight = 0.2; // How much behavioral data affects scores
+
+    // Communication score gets a boost/penalty based on engagement
+    const behavioralCommunicationBonus = (behavioralData.communicationSignalsScore - 50) / 10; // -5 to +5
+    state.scores.communication = Math.max(0, Math.min(10,
+      state.scores.communication + (behavioralCommunicationBonus * behavioralWeight)
+    ));
+
+    // Confidence score can be influenced by engagement
+    const behavioralConfidenceBonus = (behavioralData.engagementScore - 50) / 20; // -2.5 to +2.5
+    state.scores.confidence = Math.max(0, Math.min(10,
+      state.scores.confidence + (behavioralConfidenceBonus * behavioralWeight)
+    ));
   }
 
   getSession(sessionId: string): InterviewSession | undefined {

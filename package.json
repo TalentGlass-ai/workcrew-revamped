@@ -23,8 +23,11 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
+    "@mediapipe/face_detection": "^0.4.1646425229",
     "@prisma/adapter-better-sqlite3": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "@tensorflow-models/face-detection": "^1.0.3",
+    "@tensorflow/tfjs": "^4.22.0",
     "@types/ws": "^8.18.1",
     "better-sqlite3": "^12.9.0",
     "date-fns": "^4.1.0",

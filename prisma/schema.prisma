@@ -491,16 +491,24 @@ model InterviewSession {
 }
 
 model InterviewInsight {
-  id                 String  @id @default(uuid()) 
-  interviewSessionId String  @map("interview_session_id") 
-  confidenceScore    Float?  @map("confidence_score")
-  communicationScore Float?  @map("communication_score")
-  technicalScore     Float?  @map("technical_score")
-  behavioralScore    Float?  @map("behavioral_score")
-  riskScore          Float?  @map("risk_score")
-  recommendation     String? 
+  id                      String   @id @default(uuid())
+  interviewSessionId      String   @map("interview_session_id")
+  confidenceScore         Float?   @map("confidence_score")
+  communicationScore      Float?   @map("communication_score")
+  technicalScore          Float?   @map("technical_score")
+  behavioralScore         Float?   @map("behavioral_score")
+  riskScore               Float?   @map("risk_score")
+  recommendation          String?
 
-  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  // Video behavioral signals
+  faceVisiblePercentage   Float?   @map("face_visible_percentage")
+  lookingAwayPercentage   Float?   @map("looking_away_percentage")
+  frameStability          Float?   @map("frame_stability")
+  multipleFacesDetected   Boolean? @map("multiple_faces_detected")
+  engagementScore         Float?   @map("engagement_score")
+  behavioralSignalsData   Json?    @map("behavioral_signals_data") // Store full behavioral signals history
+
+  interviewSession        InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
 
   @@map("interview_insights")
 }

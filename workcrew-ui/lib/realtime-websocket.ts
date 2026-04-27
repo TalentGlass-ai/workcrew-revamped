@@ -72,6 +72,9 @@ export class RealtimeInterviewWebSocketServer {
       case 'text_answer':
         await this.handleTextAnswer(ws, message);
         break;
+      case 'behavioral_signals':
+        await this.handleBehavioralSignals(ws, message);
+        break;
       case 'end_interview':
         await this.handleEndInterview(ws, message);
         break;
@@ -183,6 +186,20 @@ export class RealtimeInterviewWebSocketServer {
     } catch (error) {
       console.error('Failed to process answer:', error);
       this.sendError(ws, 'Failed to process answer');
+    }
+  }
+
+  private async handleBehavioralSignals(ws: ExtendedWebSocket, message: any) {
+    if (!ws.sessionId) {
+      return; // Silently ignore if no session (non-critical)
+    }
+
+    try {
+      const { signals } = message;
+      await this.orchestrator.processBehavioralSignals(ws.sessionId, signals);
+    } catch (error) {
+      console.error('Failed to process behavioral signals:', error);
+      // Don't send error to client as this is non-critical
     }
   }
 

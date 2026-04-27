@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '../../../../auth';
-import { prisma } from '../../../../lib/prisma';
+import { auth } from '../../../../../auth';
+import { prisma } from '../../../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is recruiter (employer)
-    if (session.user.role !== 'employer') {
+    if ((session.user as any).role !== 'employer') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

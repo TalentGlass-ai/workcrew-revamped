@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     // Get all active jobs
     const jobs = await prisma.job.findMany({
-      where: { isActive: true },
+      where: { status: 'published' },
       select: {
         id: true,
         title: true,
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // Get popular locations (cities with jobs)
     const locations = await prisma.job.findMany({
-      where: { isActive: true, location: { not: null } },
+      where: { status: 'published', location: { not: null } },
       select: { location: true },
       distinct: ['location']
     })

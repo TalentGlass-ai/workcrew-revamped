@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import RecruiterDashboard from '@/components/RecruiterDashboard';
+import RecruiterDashboard from '../../../components/RecruiterDashboard';
 
 export default function RecruiterDashboardPage() {
   const { data: session, status } = useSession();
@@ -18,7 +18,7 @@ export default function RecruiterDashboardPage() {
     }
 
     // Assume recruiter role check - in real app, check session.user.role === 'employer'
-    if (session.user?.role !== 'employer') {
+    if ((session.user as any)?.role !== 'employer') {
       router.push('/unauthorized');
       return;
     }
@@ -35,7 +35,7 @@ export default function RecruiterDashboardPage() {
     );
   }
 
-  if (!session || session.user?.role !== 'employer') {
+  if (!session || (session.user as any)?.role !== 'employer') {
     return null; // Will redirect
   }
 

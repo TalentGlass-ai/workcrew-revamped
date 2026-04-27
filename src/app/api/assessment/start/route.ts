@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       assessmentId: assessment.id,
       attemptId: attempt.id,
-      questions: assessment.questions.map(q => ({
+      questions: assessment.questions.map((q: { id: string; questionType: string; questionText: string; weightage: number }) => ({
         id: q.id,
         questionType: q.questionType,
         questionText: q.questionText,

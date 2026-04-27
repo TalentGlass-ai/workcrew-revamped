@@ -61,17 +61,20 @@ export async function POST(request: NextRequest) {
     );
 
     // Evaluate assessment
-    const evaluation = await evaluateAssessment(attempt.assessment, answers);
+    const evaluation = await evaluateAssessment(attemptId, answers, attempt.assessment.role || undefined);
 
     // Update assessment with score and report
     await prisma.assessment.update({
       where: { id: attempt.assessment.id },
       data: {
-        score: evaluation.totalScore,
+        score: evaluation.score,
         report: {
-          totalScore: evaluation.totalScore,
+          totalScore: evaluation.score,
           maxScore: evaluation.maxScore,
-          results: evaluation.results,
+          percentage: evaluation.percentage,
+          passed: evaluation.passed,
+          feedback: evaluation.feedback,
+          behavioralAnalysis: evaluation.behavioralAnalysis,
         },
       },
     });
@@ -81,15 +84,20 @@ export async function POST(request: NextRequest) {
       where: { id: attemptId },
       data: {
         submittedAt: new Date(),
-        score: evaluation.totalScore,
+        score: evaluation.score,
       },
     });
 
     return NextResponse.json({
       success: true,
-      score: evaluation.totalScore,
+      score: evaluation.score,
       maxScore: evaluation.maxScore,
-      results: evaluation.results,
+      percentage: evaluation.percentage,
+      passed: evaluation.passed,
+      feedback: evaluation.feedback,
+      behavioralAnalysis: evaluation.behavioralAnalysis,
+      skillScores: evaluation.skillScores,
+      evaluationBreakdown: evaluation.evaluationBreakdown,
     });
   } catch (error) {
     console.error('Assessment submit error:', error);

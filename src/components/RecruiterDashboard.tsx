@@ -257,7 +257,7 @@ export default function RecruiterDashboard() {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
     </div>
   );
 }

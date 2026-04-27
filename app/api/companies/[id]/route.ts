@@ -21,7 +21,7 @@ export async function GET(
       where: { id },
       include: {
         jobs: {
-          where: { isActive: true },
+          where: { status: 'published' },
           include: {
             category: true,
             _count: {
@@ -38,7 +38,7 @@ export async function GET(
         _count: {
           select: {
             jobs: {
-              where: { isActive: true }
+              where: { status: 'published' }
             }
           }
         }

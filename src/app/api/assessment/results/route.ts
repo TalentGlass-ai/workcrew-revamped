@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
       assessmentId: assessment.id,
       score: assessment.score,
       report: assessment.report,
-      questions: assessment.questions.map(question => {
-        const answer = attempt.answers.find(a => a.questionId === question.id);
+      questions: assessment.questions.map((question: any) => {
+        const answer = attempt.answers.find((a: any) => a.questionId === question.id);
         return {
           id: question.id,
           questionType: question.questionType,

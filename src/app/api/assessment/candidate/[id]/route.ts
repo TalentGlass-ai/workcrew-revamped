@@ -62,7 +62,7 @@ export async function GET(
 
     // Format response
     const response = {
-      assessments: assessments.map(assessment => ({
+      assessments: assessments.map((assessment: any) => ({
         id: assessment.id,
         score: assessment.score,
         difficulty: assessment.difficulty,

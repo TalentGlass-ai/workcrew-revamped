@@ -75,7 +75,7 @@ export async function GET(
     const similarJobs = await prisma.job.findMany({
       where: {
         id: { not: job.id },
-        isActive: true,
+        status: 'published',
         OR: [
           { categoryId: job.categoryId },
           { location: { contains: job.location?.split(',')[0] || '' } },

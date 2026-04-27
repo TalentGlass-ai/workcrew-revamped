@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
 
     if (type === 'jobs') {
       const jobs = await prisma.job.findMany({
-        where: { isActive: true },
+        where: { status: 'published' },
         include: {
           company: true,
           category: true,
@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: true, message: `Synced ${jobs.length} jobs` })
     } else if (type === 'companies') {
       const companies = await prisma.company.findMany({
-        where: { isActive: true },
+        where: { status: 'active' },
       })
 
       for (const company of companies) {

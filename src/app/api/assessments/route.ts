@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateQuestion } from '../../../lib/questionGenerator';
-import { auth } from '../../../auth';
-import { prisma } from '../../../lib/prisma';
+import { generateAssessmentQuestions, getPackDetails } from '../../../../lib/questionGenerator';
+import { auth } from '../../../../auth';
+import { prisma } from '../../../../lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobId, candidateId, skill = 'JavaScript' } = await request.json();
+    const { jobId, candidateId, skill = 'JavaScript', role } = await request.json();
 
-    // Generate 5 questions for the assessment
-    const questions = [];
-    for (let i = 0; i < 5; i++) {
-      const q = await generateQuestion(skill);
-      questions.push({
-        questionType: 'multiple-choice',
-        questionText: q.question,
-        expectedAnswer: q.correctAnswer,
-        options: q.options ? JSON.stringify(q.options) : null,
-        weightage: 1.0
-      });
-    }
+    // Get assessment pack if role is specified
+    const pack = role ? getPackDetails(role) : null;
+
+    // Generate questions using assessment pack or fallback to skill-based
+    const generatedQuestions = await generateAssessmentQuestions(skill, 5, role);
+
+    // Convert to database format
+    const questions = generatedQuestions.map(q => ({
+      questionType: q.questionType,
+      questionText: q.question,
+      expectedAnswer: q.correctAnswer,
+      options: q.options ? JSON.stringify(q.options) : null,
+      weightage: q.weightage,
+      skills: q.skills,
+      codeTemplate: q.codeTemplate,
+      testCases: q.testCases ? JSON.stringify(q.testCases) : null
+    }));
 
     // Create assessment with questions
     const assessment = await prisma.assessment.create({
@@ -26,9 +31,10 @@ export async function POST(request: NextRequest) {
         organizationId: 'default-org', // TODO: get from session
         candidateId,
         jobId,
-        difficulty: 'medium',
+        difficulty: pack ? 'adaptive' : 'medium',
+        language: skill,
+        role: role || null,
         report: {},
-        language: 'en',
         timeTaken: 0,
         questions: {
           create: questions
@@ -110,7 +116,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Format for frontend
-      const formattedAssessments = assessments.map((assessment) => ({
+      const formattedAssessments = assessments.map((assessment: any) => ({
         id: assessment.id,
         title: assessment.job ? `Assessment for ${assessment.job.title}` : `Coding Assessment`,
         description: `Test your ${assessment.language} skills with ${assessment.questions.length} questions`,

@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+import { InlineComment } from './aiCodeEvaluator';
 
 const execAsync = promisify(exec);
 
@@ -44,6 +45,7 @@ export interface GradingResult {
     issues: string[];
     strengths: string[];
     suggestions: string[];
+    inlineComments: InlineComment[];
   };
   metrics: {
     totalTests: number;

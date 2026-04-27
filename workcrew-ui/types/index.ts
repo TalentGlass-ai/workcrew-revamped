@@ -166,3 +166,58 @@ export interface JobDetails {
   experience: string;
   location?: string;
 }
+
+// Assessment and Auto-Grading Types
+export interface InlineComment {
+  line: number;
+  severity: 'info' | 'warning' | 'critical';
+  comment: string;
+  suggestion?: string;
+}
+
+export interface CodeReview {
+  score: number;
+  issues: string[];
+  strengths: string[];
+  suggestions: string[];
+  inlineComments: InlineComment[];
+  code?: string;
+  language?: string;
+}
+
+export interface SkillBreakdown {
+  skill: string;
+  score: number; // 0-100
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  description: string;
+}
+
+export interface BehaviorSignal {
+  type: 'tab_switch' | 'copy_paste' | 'typing_pattern' | 'time_spent' | 'focus_loss';
+  count: number;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+}
+
+export interface ProctoringResult {
+  suspicionScore: number; // 0-1
+  riskLevel: 'low' | 'medium' | 'high';
+  signals: BehaviorSignal[];
+  summary: string;
+}
+
+export interface AssessmentReport {
+  candidateId: string;
+  candidateName: string;
+  role: string;
+  overallScore: number; // 0-100
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
+  recommendation: 'recommended' | 'conditional' | 'not_recommended';
+  summary: string;
+  skillBreakdown: SkillBreakdown[];
+  codeReview: CodeReview;
+  proctoringResult: ProctoringResult;
+  confidence: 'low' | 'medium' | 'high';
+  suggestedLevel: string;
+  timestamp: Date;
+}

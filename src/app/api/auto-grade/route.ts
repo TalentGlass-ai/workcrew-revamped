@@ -118,25 +118,53 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Return comprehensive result
-    return NextResponse.json({
-      success: true,
-      score: gradingResult.score,
-      breakdown: gradingResult.breakdown,
-      metrics: gradingResult.metrics,
-      aiReview: gradingResult.aiReview,
-      testResults: gradingResult.testResults,
-      behaviorAnalysis: behaviorResult ? {
+    // Generate skill breakdown for UI
+    const skillBreakdown = skillMapping.map(skill => ({
+      skill: skill.name,
+      score: skill.score,
+      level: getSkillLevel(skill.score),
+      description: generateSkillDescription(skill.name, skill.score)
+    }));
+
+    // Generate comprehensive assessment report
+    const assessmentReport = {
+      candidateId: candidate.id,
+      candidateName: candidate.name || 'Anonymous Candidate',
+      role: question.assessment?.title || 'Software Engineer',
+      overallScore: gradingResult.score,
+      difficulty: question.assessment?.difficulty || 'medium',
+      recommendation: getRecommendation(gradingResult.score, behaviorResult),
+      summary: generateOverallFeedback(gradingResult, behaviorResult),
+      skillBreakdown,
+      codeReview: {
+        score: gradingResult.aiReview.score,
+        issues: gradingResult.aiReview.issues,
+        strengths: gradingResult.aiReview.strengths,
+        suggestions: gradingResult.aiReview.suggestions,
+        inlineComments: gradingResult.aiReview.inlineComments || [],
+        code: code,
+        language: language
+      },
+      proctoringResult: behaviorResult ? {
         suspicionScore: behaviorResult.suspicionScore,
         riskLevel: behaviorResult.riskLevel,
-        signals: behaviorResult.signals
-      } : null,
-      skillMapping,
-      feedback: {
-        overall: generateOverallFeedback(gradingResult, behaviorResult),
-        strengths: gradingResult.aiReview.strengths,
-        improvements: gradingResult.aiReview.issues.concat(gradingResult.aiReview.suggestions)
-      }
+        signals: behaviorResult.signals,
+        summary: generateBehaviorSummary(behaviorResult)
+      } : {
+        suspicionScore: 0,
+        riskLevel: 'low' as const,
+        signals: [],
+        summary: 'No behavior signals recorded'
+      },
+      confidence: calculateConfidence(gradingResult, behaviorResult),
+      suggestedLevel: getSuggestedLevel(gradingResult.score),
+      timestamp: new Date()
+    };
+
+    // Return comprehensive assessment report
+    return NextResponse.json({
+      success: true,
+      assessmentReport
     });
 
   } catch (error) {
@@ -173,4 +201,54 @@ function generateOverallFeedback(
   }
 
   return feedback;
+}
+
+function getSkillLevel(score: number): 'beginner' | 'intermediate' | 'advanced' | 'expert' {
+  if (score >= 85) return 'expert';
+  if (score >= 70) return 'advanced';
+  if (score >= 55) return 'intermediate';
+  return 'beginner';
+}
+
+function generateSkillDescription(skillName: string, score: number): string {
+  const level = getSkillLevel(score);
+  const descriptions = {
+    beginner: `Basic understanding of ${skillName} concepts`,
+    intermediate: `Solid grasp of ${skillName} with practical application`,
+    advanced: `Strong proficiency in ${skillName} with complex problem-solving`,
+    expert: `Exceptional mastery of ${skillName} with innovative solutions`
+  };
+  return descriptions[level];
+}
+
+function getRecommendation(score: number, behaviorResult?: any): 'recommended' | 'conditional' | 'not_recommended' {
+  if (score >= 80) return 'recommended';
+  if (score >= 60) return 'conditional';
+  return 'not_recommended';
+}
+
+function generateBehaviorSummary(behaviorResult: any): string {
+  if (behaviorResult.riskLevel === 'low') {
+    return 'Normal assessment behavior observed';
+  } else if (behaviorResult.riskLevel === 'medium') {
+    return 'Some unusual patterns detected - monitor closely';
+  } else {
+    return 'High-risk behavior patterns identified';
+  }
+}
+
+function calculateConfidence(gradingResult: any, behaviorResult?: any): 'low' | 'medium' | 'high' {
+  const score = gradingResult.score;
+  const hasBehavior = behaviorResult && behaviorResult.signals.length > 0;
+
+  if (score >= 80 && !hasBehavior) return 'high';
+  if (score >= 60) return 'medium';
+  return 'low';
+}
+
+function getSuggestedLevel(score: number): string {
+  if (score >= 85) return 'Senior Engineer';
+  if (score >= 70) return 'Mid-Level Engineer';
+  if (score >= 55) return 'Junior Engineer';
+  return 'Entry-Level Developer';
 }

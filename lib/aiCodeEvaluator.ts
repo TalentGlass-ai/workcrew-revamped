@@ -5,6 +5,14 @@ export interface CodeReview {
   issues: string[];
   strengths: string[];
   suggestions: string[];
+  inlineComments: InlineComment[];
+}
+
+export interface InlineComment {
+  line: number;
+  severity: 'info' | 'warning' | 'critical';
+  comment: string;
+  suggestion?: string;
 }
 
 export interface AICodeEvaluatorConfig {
@@ -104,7 +112,8 @@ Return your evaluation in the following JSON format:
   "score": <number 0-100>,
   "issues": [<array of specific issues found>],
   "strengths": [<array of positive aspects>],
-  "suggestions": [<array of improvement suggestions>]
+  "suggestions": [<array of improvement suggestions>],
+  "inlineComments": [<array of inline comments with line numbers and feedback>]
 }
 
 Be constructive and specific in your feedback. Consider the context and difficulty level when scoring.
@@ -116,7 +125,8 @@ Be constructive and specific in your feedback. Consider the context and difficul
       score: Math.max(0, Math.min(100, evaluation.score || 50)),
       issues: Array.isArray(evaluation.issues) ? evaluation.issues : [],
       strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
-      suggestions: Array.isArray(evaluation.suggestions) ? evaluation.suggestions : []
+      suggestions: Array.isArray(evaluation.suggestions) ? evaluation.suggestions : [],
+      inlineComments: Array.isArray(evaluation.inlineComments) ? evaluation.inlineComments : []
     };
   }
 
@@ -145,49 +155,71 @@ Be constructive and specific in your feedback. Consider the context and difficul
       suggestions.push('Remove debug statements before submission');
     }
 
-    if (code.includes('try') || code.includes('catch')) {
+    if (code.includes('function ') && language === 'javascript') {
+      score += 5;
+      strengths.push('Using named functions');
+    }
+
+    if (code.includes('try') && code.includes('catch')) {
       score += 10;
-      strengths.push('Includes error handling');
+      strengths.push('Proper error handling implemented');
     }
 
-    if (code.includes('function') || code.includes('def ') || code.includes('class')) {
-      score += 5;
-      strengths.push('Uses functions/classes for organization');
+    if (code.includes('if __name__ == "__main__":') && language === 'python') {
+      score += 10;
+      strengths.push('Proper script structure with main guard');
     }
 
-    if (code.includes('//') || code.includes('#') || code.includes('/*')) {
-      score += 5;
-      strengths.push('Includes comments for clarity');
-    }
+    // Generate mock inline comments based on code analysis
+    const inlineComments: InlineComment[] = [];
+    const lines = code.split('\n');
 
-    // Language-specific checks
-    if (language === 'javascript') {
-      if (code.includes('async') || code.includes('await')) {
-        score += 10;
-        strengths.push('Properly handles asynchronous operations');
-      }
-      if (code.includes('=>')) {
-        score += 5;
-        strengths.push('Uses modern arrow function syntax');
-      }
-    }
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
 
-    if (language === 'python') {
-      if (code.includes('def ')) {
-        score += 5;
-        strengths.push('Proper function definitions');
+      // Check for potential issues
+      if (line.includes('var ') && language === 'javascript') {
+        inlineComments.push({
+          line: lineNumber,
+          severity: 'warning',
+          comment: 'Consider using let or const instead of var for better scoping',
+          suggestion: 'Replace var with let or const'
+        });
       }
-      if (code.includes('if __name__')) {
-        score += 10;
-        strengths.push('Proper script structure with main guard');
+
+      if (line.includes('console.log') && !line.includes('//')) {
+        inlineComments.push({
+          line: lineNumber,
+          severity: 'info',
+          comment: 'Debug statement found - consider removing for production code',
+          suggestion: 'Remove or comment out console.log statements'
+        });
       }
-    }
+
+      if (line.includes('TODO') || line.includes('FIXME')) {
+        inlineComments.push({
+          line: lineNumber,
+          severity: 'info',
+          comment: 'TODO/FIXME comment found - ensure this is addressed',
+          suggestion: 'Complete the TODO item or remove the comment'
+        });
+      }
+
+      if (line.includes('for') && line.includes('length') && !line.includes('i <')) {
+        inlineComments.push({
+          line: lineNumber,
+          severity: 'warning',
+          comment: 'Potential infinite loop if length is not checked properly'
+        });
+      }
+    });
 
     return {
       score: Math.max(0, Math.min(100, score)),
       issues,
       strengths,
-      suggestions
+      suggestions,
+      inlineComments
     };
   }
 }

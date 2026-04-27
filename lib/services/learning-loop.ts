@@ -358,6 +358,41 @@ export class LearningLoopService {
         return ActionType.VIEWED;
     }
   }
+
+  /**
+   * Record a decision for learning (called automatically by decision engine)
+   */
+  async recordDecision(decision: {
+    candidateId: string;
+    jobId: string;
+    score: number;
+    recommendation: string;
+    confidence: string;
+    signals: any;
+    jobRole: string;
+    timestamp: Date;
+  }): Promise<void> {
+    // Store decision data for future learning
+    // This creates a baseline for when recruiter feedback comes in
+    const prisma = await this.prisma;
+
+    await prisma.candidateScore.updateMany({
+      where: {
+        candidateId: decision.candidateId,
+        jobId: decision.jobId
+      },
+      data: {
+        decisionMetadata: {
+          score: decision.score,
+          recommendation: decision.recommendation,
+          confidence: decision.confidence,
+          signals: decision.signals,
+          jobRole: decision.jobRole,
+          timestamp: decision.timestamp
+        }
+      }
+    });
+  }
 }
 
 // Export singleton instance

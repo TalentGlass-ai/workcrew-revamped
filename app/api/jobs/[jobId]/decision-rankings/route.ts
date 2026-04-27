@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAIRankingEngine } from '@/lib/services/ai-ranking-engine';
+import { decisionEngine } from '@/lib/services/decision-engine';
 
 export async function GET(
   request: NextRequest
@@ -10,17 +10,24 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    // Use the new decision engine ranking method
-    const rankingEngine = getAIRankingEngine();
-    const result = await rankingEngine.rankCandidatesWithDecisionEngine(jobId, limit);
+    const startTime = Date.now();
+
+    // Use the new sophisticated decision engine ranking
+    const rankings = await decisionEngine.getJobRanking(jobId);
+
+    // Apply limit if specified
+    const limitedRankings = limit > 0 ? rankings.slice(0, limit) : rankings;
+
+    const processingTime = Date.now() - startTime;
 
     return NextResponse.json({
       success: true,
       jobId,
-      candidates: result.candidates,
-      totalCandidates: result.totalCandidates,
-      processingTime: result.processingTime,
-      rankingMethod: 'decision-engine'
+      candidates: limitedRankings,
+      totalCandidates: rankings.length,
+      returnedCount: limitedRankings.length,
+      processingTime,
+      rankingMethod: 'confidence-weighted-decision-engine'
     });
 
   } catch (error) {

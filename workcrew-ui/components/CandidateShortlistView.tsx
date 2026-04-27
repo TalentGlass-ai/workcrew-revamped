@@ -28,6 +28,7 @@ interface DecisionResult {
   fitScore: number;
   recommendation: 'STRONGLY_RECOMMENDED' | 'RECOMMENDED' | 'NOT_RECOMMENDED';
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  rank?: number; // New field for ranking position
   breakdown: {
     profileSignals: number;
     assessmentSignals: number;
@@ -193,7 +194,7 @@ export function CandidateShortlistView({ jobId, onCandidateAction }: CandidateSh
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-gray-900">
-                      #{index + 1} Candidate
+                      #{candidate.rank || index + 1} Candidate {candidate.candidateId.slice(-8)}
                     </span>
                     <Badge className={getRecommendationColor(candidate.recommendation)}>
                       {getRecommendationIcon(candidate.recommendation)}
@@ -235,9 +236,10 @@ export function CandidateShortlistView({ jobId, onCandidateAction }: CandidateSh
         <div className="lg:col-span-2">
           {selectedCandidate ? (
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="signals">Signals</TabsTrigger>
+                <TabsTrigger value="confidence">Confidence</TabsTrigger>
                 <TabsTrigger value="analysis">Analysis</TabsTrigger>
                 <TabsTrigger value="actions">Actions</TabsTrigger>
               </TabsList>
@@ -347,6 +349,115 @@ export function CandidateShortlistView({ jobId, onCandidateAction }: CandidateSh
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="confidence" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2" />
+                      Confidence-Weighted Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-4">Signal Confidence Multipliers</h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <span className="text-sm font-medium text-green-800">Assessment</span>
+                            <span className="text-sm font-bold text-green-600">1.0x (Highest)</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <span className="text-sm font-medium text-blue-800">Code Quality</span>
+                            <span className="text-sm font-bold text-blue-600">0.9x (High)</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                            <span className="text-sm font-medium text-yellow-800">Interview</span>
+                            <span className="text-sm font-bold text-yellow-600">0.85x (Medium)</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                            <span className="text-sm font-medium text-orange-800">Skills</span>
+                            <span className="text-sm font-bold text-orange-600">0.7x (Resume)</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                            <span className="text-sm font-medium text-red-800">Experience</span>
+                            <span className="text-sm font-bold text-red-600">0.6x (Resume)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-4">Role-Based Weighting</h4>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-purple-50 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-purple-800">Backend Role</span>
+                              <span className="text-xs text-purple-600">Detected</span>
+                            </div>
+                            <div className="text-xs text-purple-700">
+                              Assessment: 35% | Skills: 25% | Interview: 20% | Code: 15% | Experience: 5%
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-800">Frontend Role</span>
+                              <span className="text-xs text-gray-600">Alternative</span>
+                            </div>
+                            <div className="text-xs text-gray-700">
+                              Skills: 30% | Interview: 25% | Assessment: 25% | Experience: 10% | Code: 10%
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-800">Data Role</span>
+                              <span className="text-xs text-gray-600">Alternative</span>
+                            </div>
+                            <div className="text-xs text-gray-700">
+                              Assessment: 30% | Skills: 30% | Experience: 15% | Interview: 15% | Code: 10%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Why confidence weighting matters:</strong> Resume claims get lower trust (0.7x) while
+                        validated assessments get highest trust (1.0x). This prevents over-reliance on potentially
+                        inflated resume data and emphasizes proven skills.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">Hard Filters Applied</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-blue-700">Min Assessment:</span>
+                          <span className="font-medium ml-1">50/100</span>
+                        </div>
+                        <div>
+                          <span className="text-blue-700">Min Interview:</span>
+                          <span className="font-medium ml-1">40/100</span>
+                        </div>
+                        <div>
+                          <span className="text-blue-700">Min Skills:</span>
+                          <span className="font-medium ml-1">30/100</span>
+                        </div>
+                        <div>
+                          <span className="text-blue-700">Max Behavior Risk:</span>
+                          <span className="font-medium ml-1">70%</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-700 mt-2">
+                        Candidates failing these filters are automatically rejected before ranking.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

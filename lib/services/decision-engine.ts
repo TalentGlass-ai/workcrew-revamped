@@ -2,6 +2,16 @@ import { Job, Candidate, AssessmentAttempt, InterviewInsight } from '@prisma/cli
 import { getPrisma } from '../prisma';
 import { getSkillOntologyService } from './skill-ontology';
 import { feedbackLearningEngine } from './feedback-learning-engine';
+import { learningLoopService } from './learning-loop';
+
+export interface CandidateSignals {
+  skills: number;        // 0–100 (graph match)
+  assessment: number;    // 0–100
+  interview: number;     // 0–100
+  codeQuality: number;   // 0–100
+  experience: number;    // 0–100
+  behaviorRisk: number;  // 0–1 (higher = worse)
+}
 
 export interface SignalData {
   // Profile signals
@@ -27,6 +37,55 @@ export interface SignalData {
   // Behavior signals
   suspicionScore: number; // 0-100 (lower is better)
   attentionConsistency: number; // 0-100
+}
+
+export interface ConfidenceMultipliers {
+  skills: number;        // Resume-based: 0.7
+  assessment: number;    // Validated: 1.0
+  interview: number;     // Medium-high: 0.85
+  codeQuality: number;   // From review: 0.9
+  experience: number;    // Resume-based: 0.6
+  behaviorRisk: number;  // Behavioral: 0.8
+}
+
+export interface RoleWeights {
+  backend: {
+    skills: number;
+    assessment: number;
+    interview: number;
+    codeQuality: number;
+    experience: number;
+  };
+  frontend: {
+    skills: number;
+    assessment: number;
+    interview: number;
+    codeQuality: number;
+    experience: number;
+  };
+  data: {
+    skills: number;
+    assessment: number;
+    interview: number;
+    codeQuality: number;
+    experience: number;
+  };
+  fullstack: {
+    skills: number;
+    assessment: number;
+    interview: number;
+    codeQuality: number;
+    experience: number;
+  };
+}
+
+export interface HardFilters {
+  minAssessmentScore: number;
+  minInterviewScore: number;
+  minSkillsMatch: number;
+  maxBehaviorRisk: number;
+  requireAssessment: boolean;
+  requireInterview: boolean;
 }
 
 export interface FitScoreBreakdown {
@@ -78,6 +137,10 @@ export interface DecisionEngineConfig {
     recentExperience: number;
     multipleSignals: number;
   };
+  // New sophisticated features
+  confidenceMultipliers: ConfidenceMultipliers;
+  roleWeights: RoleWeights;
+  hardFilters: HardFilters;
 }
 
 export class DecisionEngine {
@@ -103,8 +166,242 @@ export class DecisionEngine {
       skillValidated: 1.2,      // 20% boost for validated skills
       recentExperience: 1.1,     // 10% boost for recent experience
       multipleSignals: 1.05      // 5% boost for complete signal set
+    },
+    // New confidence-weighted scoring
+    confidenceMultipliers: {
+      skills: 0.7,        // Resume-based skills get lower confidence
+      assessment: 1.0,    // Assessment = highest trust
+      interview: 0.85,    // Interview = medium-high trust
+      codeQuality: 0.9,   // Code review = high trust
+      experience: 0.6,    // Experience claims = lower trust
+      behaviorRisk: 0.8   // Behavioral signals = good trust
+    },
+    // Role-specific weight adjustments
+    roleWeights: {
+      backend: {
+        skills: 0.25,
+        assessment: 0.35,
+        interview: 0.20,
+        codeQuality: 0.15,
+        experience: 0.05
+      },
+      frontend: {
+        skills: 0.30,
+        assessment: 0.25,
+        interview: 0.25,
+        codeQuality: 0.10,
+        experience: 0.10
+      },
+      data: {
+        skills: 0.30,
+        assessment: 0.30,
+        interview: 0.15,
+        codeQuality: 0.10,
+        experience: 0.15
+      },
+      fullstack: {
+        skills: 0.25,
+        assessment: 0.30,
+        interview: 0.20,
+        codeQuality: 0.15,
+        experience: 0.10
+      }
+    },
+    // Hard filters before ranking
+    hardFilters: {
+      minAssessmentScore: 50,
+      minInterviewScore: 40,
+      minSkillsMatch: 30,
+      maxBehaviorRisk: 0.7, // 70% risk threshold
+      requireAssessment: true,
+      requireInterview: false
     }
   };
+
+  /**
+   * Normalize all signals to CandidateSignals format (0-100 scale)
+   */
+  private normalizeSignals(signals: SignalData): CandidateSignals {
+    return {
+      skills: signals.skillsMatch,
+      assessment: signals.codingScore,
+      interview: (signals.communication + signals.depth + signals.problemSolving) / 3,
+      codeQuality: signals.codeQuality,
+      experience: signals.experienceRelevance,
+      behaviorRisk: signals.suspicionScore / 100 // Convert to 0-1 scale
+    };
+  }
+
+  /**
+   * Apply confidence-weighted scoring
+   */
+  private applyConfidenceWeighting(signals: CandidateSignals, multipliers: ConfidenceMultipliers): CandidateSignals {
+    return {
+      skills: Math.min(100, signals.skills * multipliers.skills),
+      assessment: Math.min(100, signals.assessment * multipliers.assessment),
+      interview: Math.min(100, signals.interview * multipliers.interview),
+      codeQuality: Math.min(100, signals.codeQuality * multipliers.codeQuality),
+      experience: Math.min(100, signals.experience * multipliers.experience),
+      behaviorRisk: Math.min(1, signals.behaviorRisk * multipliers.behaviorRisk)
+    };
+  }
+
+  /**
+   * Get role-specific weights based on job title/description
+   */
+  private getRoleWeights(job: any): RoleWeights['backend'] {
+    const title = job.title?.toLowerCase() || '';
+    const description = job.description?.toLowerCase() || '';
+
+    if (title.includes('backend') || title.includes('server') || description.includes('api')) {
+      return DecisionEngine.DEFAULT_CONFIG.roleWeights.backend;
+    } else if (title.includes('frontend') || title.includes('ui') || description.includes('react')) {
+      return DecisionEngine.DEFAULT_CONFIG.roleWeights.frontend;
+    } else if (title.includes('data') || title.includes('ml') || description.includes('python')) {
+      return DecisionEngine.DEFAULT_CONFIG.roleWeights.data;
+    } else if (title.includes('fullstack') || title.includes('full-stack')) {
+      return DecisionEngine.DEFAULT_CONFIG.roleWeights.fullstack;
+    }
+
+    // Default to backend weights
+    return DecisionEngine.DEFAULT_CONFIG.roleWeights.backend;
+  }
+
+  /**
+   * Apply hard filters - reject candidates who don't meet minimum thresholds
+   */
+  private passesHardFilters(signals: CandidateSignals, config: DecisionEngineConfig): boolean {
+    const filters = config.hardFilters;
+
+    // Required signals check
+    if (filters.requireAssessment && signals.assessment === 0) return false;
+    if (filters.requireInterview && signals.interview === 0) return false;
+
+    // Minimum score checks
+    if (signals.assessment < filters.minAssessmentScore) return false;
+    if (signals.interview < filters.minInterviewScore) return false;
+    if (signals.skills < filters.minSkillsMatch) return false;
+
+    // Behavior risk check
+    if (signals.behaviorRisk > filters.maxBehaviorRisk) return false;
+
+    return true;
+  }
+
+  /**
+   * Compute final score with confidence weighting and role-specific adjustments
+   */
+  private computeScore(signals: CandidateSignals, roleWeights: RoleWeights['backend'], behaviorPenalty: number = 0.2): number {
+    const score =
+      roleWeights.skills * signals.skills +
+      roleWeights.assessment * signals.assessment +
+      roleWeights.interview * signals.interview +
+      roleWeights.codeQuality * signals.codeQuality +
+      roleWeights.experience * signals.experience;
+
+    // Apply behavior penalty (soft - affects confidence, not core skill score)
+    const penalty = 1 - (signals.behaviorRisk * behaviorPenalty);
+
+    return Math.round(score * penalty);
+  }
+
+  /**
+   * Generate recommendation based on score
+   */
+  private getRecommendation(score: number): 'STRONGLY_RECOMMENDED' | 'RECOMMENDED' | 'NOT_RECOMMENDED' {
+    if (score >= 80) return 'STRONGLY_RECOMMENDED';
+    if (score >= 65) return 'RECOMMENDED';
+    return 'NOT_RECOMMENDED';
+  }
+
+  /**
+   * Enhanced explanation generation with confidence factors
+   */
+  private generateDetailedExplanation(
+    originalSignals: SignalData,
+    normalizedSignals: CandidateSignals,
+    confidenceMultipliers: ConfidenceMultipliers,
+    score: number
+  ): DecisionResult['explanation'] {
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+    const riskFactors: string[] = [];
+
+    // Analyze strengths with confidence context
+    if (normalizedSignals.skills > 70) {
+      const confidence = confidenceMultipliers.skills;
+      strengths.push(`Strong skills match (${confidence === 1.0 ? 'validated' : 'resume-based'})`);
+    }
+    if (normalizedSignals.assessment > 70) {
+      strengths.push('Excellent coding assessment performance (high confidence)');
+    }
+    if (normalizedSignals.interview > 70) {
+      strengths.push('Clear and effective communication in interviews');
+    }
+    if (normalizedSignals.codeQuality > 70) {
+      strengths.push('High-quality code with good engineering practices');
+    }
+    if (normalizedSignals.experience > 70) {
+      strengths.push('Strong relevant experience background');
+    }
+
+    // Analyze weaknesses
+    if (normalizedSignals.skills < 50) {
+      weaknesses.push('Skills gap with job requirements');
+    }
+    if (normalizedSignals.assessment < 50) {
+      weaknesses.push('Below-average coding assessment performance');
+    }
+    if (normalizedSignals.interview < 50) {
+      weaknesses.push('Communication needs improvement');
+    }
+    if (normalizedSignals.behaviorRisk > 0.6) {
+      weaknesses.push('Some behavioral concerns noted');
+    }
+
+    // Risk factors with confidence penalties
+    if (normalizedSignals.behaviorRisk > 0.7) {
+      riskFactors.push('High behavioral risk indicators');
+    }
+    if (originalSignals.attentionConsistency < 40) {
+      riskFactors.push('Low attention consistency during interviews');
+    }
+    if (confidenceMultipliers.skills < 0.8) {
+      riskFactors.push('Skills based primarily on resume claims (not validated)');
+    }
+
+    // Generate summary with confidence context
+    let summary = '';
+    const confidenceLevel = this.calculateConfidenceLevel(normalizedSignals, confidenceMultipliers);
+
+    if (score >= 80 && confidenceLevel === 'HIGH') {
+      summary = 'Strong candidate with excellent fit and high-confidence signals.';
+    } else if (score >= 80) {
+      summary = 'Strong technical fit, but some signals have lower confidence.';
+    } else if (score >= 65) {
+      summary = 'Good candidate with solid qualifications and minor gaps.';
+    } else {
+      summary = 'Candidate may need additional development or experience.';
+    }
+
+    return { strengths, weaknesses, summary, riskFactors };
+  }
+
+  /**
+   * Calculate overall confidence level
+   */
+  private calculateConfidenceLevel(signals: CandidateSignals, multipliers: ConfidenceMultipliers): 'HIGH' | 'MEDIUM' | 'LOW' {
+    const weightedConfidence =
+      (signals.assessment > 0 ? multipliers.assessment : 0) * 0.3 +
+      (signals.interview > 0 ? multipliers.interview : 0) * 0.25 +
+      (signals.skills > 0 ? multipliers.skills : 0) * 0.2 +
+      (signals.codeQuality > 0 ? multipliers.codeQuality : 0) * 0.15 +
+      (signals.experience > 0 ? multipliers.experience : 0) * 0.1;
+
+    if (weightedConfidence > 0.85) return 'HIGH';
+    if (weightedConfidence > 0.7) return 'MEDIUM';
+    return 'LOW';
+  }
 
   /**
    * Main decision function - combines all signals into final recommendation
@@ -117,59 +414,188 @@ export class DecisionEngine {
     const finalConfig = { ...DecisionEngine.DEFAULT_CONFIG, ...config };
 
     // Gather all signal data
-    const signals = await this.gatherSignals(candidateId, jobId);
+    const rawSignals = await this.gatherSignals(candidateId, jobId);
 
-    // Calculate signal completeness
-    const signalCompleteness = this.calculateSignalCompleteness(signals);
+    // Get job for role-specific weighting
+    const prisma = await this.prisma;
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new Error('Job not found');
 
-    // Apply confidence boosts
-    const boostedSignals = this.applyConfidenceBoosts(signals, signalCompleteness);
+    // Normalize signals to standard format
+    const normalizedSignals = this.normalizeSignals(rawSignals);
 
-    // Calculate component scores
-    const breakdown = this.calculateComponentScores(boostedSignals, finalConfig.weights);
+    // Apply hard filters first
+    if (!this.passesHardFilters(normalizedSignals, finalConfig)) {
+      return this.createRejectedResult(candidateId, jobId, normalizedSignals, rawSignals, 'Failed hard filters');
+    }
 
-    // Calculate final fit score
-    const fitScore = this.calculateFinalScore(breakdown, finalConfig.weights);
+    // Apply confidence-weighted scoring
+    const confidenceWeightedSignals = this.applyConfidenceWeighting(
+      normalizedSignals,
+      finalConfig.confidenceMultipliers
+    );
 
-    // Generate recommendation and confidence
-    const recommendation = this.generateRecommendation(fitScore, finalConfig.thresholds);
-    const confidence = this.calculateConfidence(fitScore, signalCompleteness, finalConfig.thresholds);
+    // Get role-specific weights
+    const roleWeights = this.getRoleWeights(job);
 
-    // Generate explanation
-    const explanation = await this.generateExplanation(signals, breakdown, fitScore);
+    // Calculate final score
+    const fitScore = this.computeScore(confidenceWeightedSignals, roleWeights);
+
+    // Generate recommendation
+    const recommendation = this.getRecommendation(fitScore);
+
+    // Calculate confidence level
+    const confidence = this.calculateConfidenceLevel(confidenceWeightedSignals, finalConfig.confidenceMultipliers);
+
+    // Generate detailed explanation
+    const explanation = this.generateDetailedExplanation(
+      rawSignals,
+      confidenceWeightedSignals,
+      finalConfig.confidenceMultipliers,
+      fitScore
+    );
+
+    // Create breakdown for backward compatibility
+    const breakdown = this.calculateComponentScores(rawSignals, finalConfig.weights);
 
     // Store result for learning
-    await this.storeDecisionResult({
+    const result: DecisionResult = {
       candidateId,
       jobId,
       fitScore,
       recommendation,
       confidence,
       breakdown,
-      signals,
+      signals: rawSignals,
       explanation,
       metadata: {
         processedAt: new Date(),
-        signalCompleteness,
-        confidenceFactors: this.getConfidenceFactors(signals, signalCompleteness)
+        signalCompleteness: this.calculateSignalCompleteness(rawSignals),
+        confidenceFactors: this.getConfidenceFactors(rawSignals, this.calculateSignalCompleteness(rawSignals))
       }
+    };
+
+    await this.storeDecisionResult(result);
+
+    // Update learning loop with this decision
+    await this.updateLearningLoop(result, job);
+
+    return result;
+  }
+
+  /**
+   * Full pipeline: shortlist candidates with hard filters, confidence weighting, and ranking
+   */
+  async shortlistCandidates(
+    candidateIds: string[],
+    jobId: string,
+    config?: Partial<DecisionEngineConfig>
+  ): Promise<Array<DecisionResult & { rank: number }>> {
+    const results: Array<DecisionResult & { rank: number }> = [];
+
+    // Evaluate each candidate
+    for (const candidateId of candidateIds) {
+      try {
+        const result = await this.evaluateCandidate(candidateId, jobId, config);
+        results.push({ ...result, rank: 0 }); // rank will be set after sorting
+      } catch (error) {
+        console.warn(`Failed to evaluate candidate ${candidateId}:`, error);
+        // Continue with other candidates
+      }
+    }
+
+    // Sort by score (highest first) and assign ranks
+    results.sort((a, b) => b.fitScore - a.fitScore);
+    results.forEach((result, index) => {
+      result.rank = index + 1;
     });
+
+    return results;
+  }
+
+  /**
+   * Get ranking for a specific job with all candidates
+   */
+  async getJobRanking(jobId: string, config?: Partial<DecisionEngineConfig>): Promise<Array<DecisionResult & { rank: number }>> {
+    const prisma = await this.prisma;
+
+    // Get all candidates who applied to this job
+    const applications = await prisma.jobApplication.findMany({
+      where: { jobId },
+      select: { candidateId: true }
+    });
+
+    const candidateIds = applications.map((app: any) => app.candidateId);
+
+    return this.shortlistCandidates(candidateIds, jobId, config);
+  }
+
+  /**
+   * Create a rejected result for candidates who fail hard filters
+   */
+  private createRejectedResult(
+    candidateId: string,
+    jobId: string,
+    normalizedSignals: CandidateSignals,
+    rawSignals: SignalData,
+    reason: string
+  ): DecisionResult {
+    const breakdown = this.calculateComponentScores(rawSignals, DecisionEngine.DEFAULT_CONFIG.weights);
 
     return {
       candidateId,
       jobId,
-      fitScore,
-      recommendation,
-      confidence,
+      fitScore: 0,
+      recommendation: 'NOT_RECOMMENDED',
+      confidence: 'LOW',
       breakdown,
-      signals,
-      explanation,
+      signals: rawSignals,
+      explanation: {
+        strengths: [],
+        weaknesses: [reason],
+        summary: `Candidate rejected: ${reason}`,
+        riskFactors: [reason]
+      },
       metadata: {
         processedAt: new Date(),
-        signalCompleteness,
-        confidenceFactors: this.getConfidenceFactors(signals, signalCompleteness)
+        signalCompleteness: this.calculateSignalCompleteness(rawSignals),
+        confidenceFactors: ['Failed hard filters']
       }
     };
+  }
+
+  /**
+   * Update learning loop with decision outcomes
+   */
+  private async updateLearningLoop(result: DecisionResult, job: any): Promise<void> {
+    try {
+      // Record this decision for learning
+      await learningLoopService.recordDecision({
+        candidateId: result.candidateId,
+        jobId: result.jobId,
+        score: result.fitScore,
+        recommendation: result.recommendation,
+        confidence: result.confidence,
+        signals: result.signals,
+        jobRole: this.inferJobRole(job),
+        timestamp: new Date()
+      });
+    } catch (error) {
+      // Log but don't fail the decision process
+      console.warn('Failed to update learning loop:', error);
+    }
+  }
+
+  /**
+   * Infer job role from job data
+   */
+  private inferJobRole(job: any): string {
+    const title = job.title?.toLowerCase() || '';
+    if (title.includes('backend')) return 'backend';
+    if (title.includes('frontend')) return 'frontend';
+    if (title.includes('data') || title.includes('ml')) return 'data';
+    if (title.includes('fullstack')) return 'fullstack';
+    return 'backend'; // default
   }
 
   /**

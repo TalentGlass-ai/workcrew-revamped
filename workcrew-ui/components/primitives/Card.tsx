@@ -39,4 +39,50 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 );
 
 Card.displayName = "Card";
+
+const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+  children,
+  className = '',
+  ...props
+}) => (
+  <div className={`card-header ${className}`} {...props}>
+    {children}
+    <style jsx>{`
+      .card-header {
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+    `}</style>
+  </div>
+);
+
+const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
+  children,
+  className = '',
+  ...props
+}) => (
+  <h3 className={`card-title ${className}`} {...props}>
+    {children}
+    <style jsx>{`
+      .card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
+      }
+    `}</style>
+  </h3>
+);
+
+const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+  children,
+  className = '',
+  ...props
+}) => (
+  <div className={`card-content ${className}`} {...props}>
+    {children}
+  </div>
+);
+
+export { CardHeader, CardTitle, CardContent };
 export default Card;

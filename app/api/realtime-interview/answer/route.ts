@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RealtimeInterviewOrchestrator } from '@/lib/orchestrator';
+import { RealtimeInterviewOrchestrator } from '@/workcrew-ui/lib/orchestrator';
 
 // Global orchestrator instance (in production, use proper dependency injection)
 const orchestrator = new RealtimeInterviewOrchestrator();

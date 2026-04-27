@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
 
 /* Config */
-import { config } from '@/lib/config';
+import { config } from '@/workcrew-ui/lib/config';
 
 /* Navbar & Footer */
 import NewNavbar from "@/components/landing/NewNavbar";
@@ -22,7 +22,7 @@ import bg from "@/public/bg.png";
 import type { Job, JobsEnvelope, Option } from '@/types/index';
 
 /* Utils */
-import { getCompanyName, formatSalary, extractCity, normalizeSkills, getSalaryBucket, inferExperience, inferCategory, normalizeCompanySize } from '@/lib/utils/jobUtils';
+import { getCompanyName, formatSalary, extractCity, normalizeSkills, getSalaryBucket, inferExperience, inferCategory, normalizeCompanySize } from '@/workcrew-ui/lib/utils/jobUtils';
 
 /*  Category Chip (multi-select)  */
 const Chip: React.FC<

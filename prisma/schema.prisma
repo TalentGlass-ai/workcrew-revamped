@@ -186,6 +186,7 @@ model Candidate {
   proctoringFlags  ProctoringFlag[]
   submissions      Submission[]
   skillAssessments SkillAssessment[]
+  candidateScores  CandidateScore[]
 
   @@map("candidates")
 }
@@ -305,6 +306,7 @@ model Job {
   interviews         InterviewSession[]
   candidateMatches   JobCandidateMatch[]
   actions            CandidateAction[]
+  scores             CandidateScore[]
 
   @@map("jobs")
 }
@@ -931,4 +933,59 @@ model SkillAssessment {
   @@index([candidateId])
   @@index([skillName])
   @@map("skill_assessments")
+}
+
+// -----------------------------------------------------------------------------
+// DECISION ENGINE
+// -----------------------------------------------------------------------------
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model CandidateScore {
+  id                String           @id @default(uuid())
+  candidateId       String           @map("candidate_id")
+  jobId             String           @map("job_id")
+  fitScore          Float            // 0-100 overall fit score
+  recommendation    RecommendationType
+  confidence        ConfidenceLevel
+
+  // Score breakdown by signal type
+  profileSignals    Float            @map("profile_signals")    // Skills, experience, tech stack
+  assessmentSignals Float            @map("assessment_signals") // Coding tests, skill validation
+  codeIntelligence  Float            @map("code_intelligence")  // Code quality, engineering thinking
+  interviewSignals  Float            @map("interview_signals")  // Communication, problem solving
+  behaviorSignals   Float            @map("behavior_signals")   // Attention, suspicion (negative weight)
+
+  // Raw signal data (for explainability and debugging)
+  signals           Json             // Complete SignalData object
+
+  // Human-readable explanation
+  explanation       Json             // { strengths, weaknesses, summary, riskFactors }
+
+  // Metadata
+  signalCompleteness Float           @map("signal_completeness") // 0-100, percentage of signals available
+  confidenceFactors  Json            @map("confidence_factors")  // Array of factors contributing to confidence
+  processedAt       DateTime         @default(now())             @map("processed_at")
+
+  // Learning loop data
+  recruiterFeedback Json?            @map("recruiter_feedback")  // { accepted, rejected, notes, adjustments }
+  feedbackApplied   Boolean          @default(false)             @map("feedback_applied")
+
+  createdAt         DateTime         @default(now())             @map("created_at")
+  updatedAt         DateTime         @updatedAt                  @map("updated_at")
+
+  candidate         Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job               Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([fitScore])
+  @@index([recommendation])
+  @@index([processedAt])
+  @@map("candidate_scores")
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { config } from '@/lib/config';
+import { config } from '@/workcrew-ui/lib/config';
 import type { Job } from '@/types/index';
-import { getCompanyName } from '@/lib/utils/jobUtils';
+import { getCompanyName } from '@/workcrew-ui/lib/utils/jobUtils';
 import GlassPill from "@/components/primitives/tags/GlassPill";
 import LayeredPill, { ArrowNortheastIcon } from "@/components/primitives/buttons/LayeredPill"; // ✅ new reusable pill
 

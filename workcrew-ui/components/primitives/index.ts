@@ -10,3 +10,5 @@ export { default as Badge } from "./Badge";
 export { default as Icon } from "./Icon";
 export { Textarea } from "./Textarea";
 export { Progress } from "./Progress";
+export { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
+export { Alert, AlertDescription } from "./Alert";

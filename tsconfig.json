@@ -18,7 +18,7 @@
         "workcrew-ui/styles/*"
       ],
       "@/lib/*": [
-        "workcrew-ui/lib/*"
+        "lib/*"
       ],
       "@/types/*": [
         "workcrew-ui/types/*"

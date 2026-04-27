@@ -15,7 +15,7 @@ import {
 import JobRoles from "@/components/landing/JobRoles";
 import { Section } from "@/components/primitives";
 
-import { config } from "@/lib/config";
+import { config } from "@/workcrew-ui/lib/config";
 
 function DevBuildBadge() {
   if (config.env.nodeEnv !== "development") return null;

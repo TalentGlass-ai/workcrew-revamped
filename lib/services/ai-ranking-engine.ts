@@ -603,6 +603,103 @@ export class AIRankingEngine {
 
     return flags;
   }
+
+  /**
+   * NEW: Multi-signal decision engine ranking (replaces traditional ranking)
+   * Uses comprehensive signal aggregation with explainability
+   */
+  async rankCandidatesWithDecisionEngine(jobId: string, limit: number = 100): Promise<RankingResult> {
+    const startTime = Date.now();
+
+    // Import decision engine dynamically to avoid circular dependencies
+    const { decisionEngine } = await import('./decision-engine');
+
+    const prisma = await this.prisma;
+
+    // Get all candidates who have applied or been considered for this job
+    let candidateIds: string[] = await prisma.candidateApplication.findMany({
+      where: { jobId },
+      select: { candidateId: true }
+    }).then((applications: { candidateId: string }[]) => applications.map(app => app.candidateId));
+
+    // If no applications, get candidates with relevant skills (fallback)
+    if (candidateIds.length === 0) {
+      const job = await prisma.job.findUnique({
+        where: { id: jobId },
+        select: { requiredSkills: true, preferredSkills: true }
+      });
+
+      if (job) {
+        const jobSkills = [
+          ...this.parseJsonArray(job.requiredSkills),
+          ...this.parseJsonArray(job.preferredSkills)
+        ].slice(0, 3); // Top 3 skills for broad matching
+
+        const candidatesWithSkills = await prisma.candidateSkill.findMany({
+          where: {
+            skillName: { in: jobSkills }
+          },
+          select: { candidateId: true },
+          distinct: ['candidateId']
+        });
+
+        candidateIds.push(...candidatesWithSkills.map((c: { candidateId: string }) => c.candidateId));
+      }
+    }
+
+    // Remove duplicates and limit initial pool
+    const uniqueCandidateIds = [...new Set(candidateIds)].slice(0, limit * 3);
+
+    // Evaluate each candidate using decision engine
+    const decisionResults = await Promise.all(
+      uniqueCandidateIds.map(async (candidateId) => {
+        try {
+          return await decisionEngine.evaluateCandidate(candidateId, jobId);
+        } catch (error) {
+          console.warn(`Failed to evaluate candidate ${candidateId} for job ${jobId}:`, error);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed evaluations and sort by fit score
+    const validResults = decisionResults.filter((result): result is NonNullable<typeof result> => result !== null);
+    const rankedResults = validResults
+      .sort((a, b) => b.fitScore - a.fitScore)
+      .slice(0, limit);
+
+    // Convert decision results to CandidateScoring format for backward compatibility
+    const scoredCandidates: CandidateScoring[] = rankedResults.map(result => ({
+      candidateId: result.candidateId,
+      finalScore: result.fitScore,
+      scoreBreakdown: {
+        skillMatch: result.breakdown.profileSignals,
+        skillDepth: result.breakdown.assessmentSignals,
+        inferredSkillBoost: result.breakdown.codeIntelligence,
+        experienceFit: result.breakdown.interviewSignals,
+        clusterMatch: result.breakdown.behaviorSignals,
+        stability: result.metadata.signalCompleteness
+      },
+      analysis: {
+        strongSkills: result.explanation.strengths,
+        missingSkills: result.explanation.weaknesses,
+        inferredSkills: [], // Would need to populate from signals
+        skillGaps: result.explanation.riskFactors,
+        roleFit: result.explanation.summary,
+        riskFlags: result.explanation.riskFactors
+      },
+      recommendation: result.recommendation
+    }));
+
+    const processingTime = Date.now() - startTime;
+
+    return {
+      jobId,
+      candidates: scoredCandidates,
+      totalCandidates: uniqueCandidateIds.length,
+      processingTime
+    };
+  }
 }
 
 // Singleton instance

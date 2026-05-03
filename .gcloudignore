@@ -1,0 +1,48 @@
+# Exclude files from Cloud Build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node modules (will be reinstalled)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Next.js build output (will be rebuilt)
+.next
+out
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+
+# Build artifacts
+dist
+build
+
+# Documentation
+*.md
+!GCP_DEPLOYMENT.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Other
+node_modules
+.turbo

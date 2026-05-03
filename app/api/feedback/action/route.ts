@@ -2,7 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { feedbackLearningEngine } from '../../../../lib/services/feedback-learning-engine';
-import { ActionType } from '@prisma/client';
+
+// ActionType enum values
+const VALID_ACTION_TYPES = ['VIEWED', 'SHORTLISTED', 'REJECTED', 'INTERVIEWED', 'HIRED', 'IGNORED'] as const;
+type ActionType = typeof VALID_ACTION_TYPES[number];
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate action type
-    if (!Object.values(ActionType).includes(actionType)) {
+    if (!VALID_ACTION_TYPES.includes(actionType)) {
       return NextResponse.json(
         { error: 'Invalid action type' },
         { status: 400 }

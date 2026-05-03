@@ -39,16 +39,16 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:8080/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Set environment
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=8080
 
-EXPOSE 3000
+EXPOSE 8080
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["/sbin/dumb-init", "--"]
 
-# Start Next.js server
-CMD ["node_modules/.bin/next", "start"]
+# Start Next.js server on the Cloud Run port
+CMD ["sh", "-c", "node_modules/.bin/next start -p ${PORT:-8080}"]

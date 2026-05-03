@@ -59,8 +59,8 @@ gcloud run deploy $SERVICE_NAME \
     --timeout 3600 \
     --max-instances 10 \
     --min-instances 1 \
-    --port 3000 \
-    --set-env-vars "NODE_ENV=production,NEXT_TELEMETRY_DISABLED=1" \
+    --port 8080 \
+    --set-env-vars "PORT=8080,NODE_ENV=production,NEXTAUTH_TELEMETRY_DISABLED=1" \
     --update-secrets "NEXTAUTH_SECRET=nextauth-secret:latest,NEXTAUTH_URL=nextauth-url:latest" \
     || echo "⚠️  Secrets not found. Make sure to set them in Cloud Secret Manager."
 

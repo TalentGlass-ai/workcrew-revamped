@@ -6,7 +6,7 @@ export async function GET(
 ) {
   try {
     const url = new URL(request.url);
-    const jobId = url.pathname.split('/')[3]; // Extract jobId from path
+    const jobId = url.pathname.split('/')[3]; // Extract id from path /api/job-management/[id]/decision-rankings
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
 
@@ -49,7 +49,7 @@ export async function POST(
 ) {
   try {
     const url = new URL(request.url);
-    const jobId = url.pathname.split('/')[3]; // Extract jobId from path
+    const jobId = url.pathname.split('/')[3]; // Extract id from path /api/job-management/[id]/decision-rankings
     const body = await request.json();
     const { candidateIds, forceRefresh = false } = body;
 

@@ -7,8 +7,8 @@ export async function POST(
   try {
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
-    const jobId = segments[3]; // /api/jobs/[jobId]/candidates/[candidateId]/feedback
-    const candidateId = segments[5]; // /api/jobs/[jobId]/candidates/[candidateId]/feedback
+    const jobId = segments[3]; // /api/job-management/[id]/candidates/[candidateId]/feedback
+    const candidateId = segments[5]; // /api/job-management/[id]/candidates/[candidateId]/feedback
     const body = await request.json();
 
     const feedback = {
@@ -71,7 +71,7 @@ export async function GET(
 ) {
   try {
     const url = new URL(request.url);
-    const jobId = url.pathname.split('/')[3]; // Extract jobId from path /api/jobs/[jobId]/...
+    const jobId = url.pathname.split('/')[3]; // Extract id from path /api/job-management/[id]/...
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'job'; // 'job' or 'organization'
 

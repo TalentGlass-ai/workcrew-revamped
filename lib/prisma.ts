@@ -1,15 +1,11 @@
 // Dynamic Prisma client to avoid initialization during build
 import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
 let prismaInstance: any = null
 
 export const getPrisma = async () => {
   if (!prismaInstance) {
-    const adapter = new PrismaBetterSqlite3({ url: './dev.db' })
-
     prismaInstance = new PrismaClient({
-      adapter,
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       transactionOptions: {
         maxWait: 5000,

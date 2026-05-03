@@ -45,7 +45,7 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Use dumb-init to handle signals properly
-ENTRYPOINT ["/sbin/dumb-init", "--"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
 # Start Next.js server on the Cloud Run port
 CMD ["sh", "-c", "node_modules/.bin/next start -p ${PORT:-8080}"]

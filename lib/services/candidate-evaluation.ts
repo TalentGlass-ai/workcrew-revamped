@@ -1,4 +1,4 @@
-import { Candidate, Job, CandidateSkill, RecommendationType } from '@prisma/client';
+import type { Candidate, Job, CandidateSkill, RecommendationType } from '@/lib/types/prisma';
 import { getPrisma } from '../prisma';
 import { getGraphSyncService } from './graph/graph-sync-service';
 import { getSkillOntologyService } from './skill-ontology';

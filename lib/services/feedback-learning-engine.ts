@@ -1,17 +1,9 @@
 // lib/services/feedback-learning-engine.ts
 import { getPrisma } from '../prisma';
-import { ActionType, CandidateAction, Prisma } from '@prisma/client';
+import { ActionType } from '@/lib/types/prisma';
+import type { CandidateAction, Prisma } from '@/lib/types/prisma';
 
-type CandidateActionWithCandidate = Prisma.CandidateActionGetPayload<{
-  include: {
-    candidate: {
-      include: {
-        skills: true;
-        inferredSkills: true;
-      };
-    };
-  };
-}>;
+type CandidateActionWithCandidate = any;
 
 /**
  * Action weights for the feedback learning system

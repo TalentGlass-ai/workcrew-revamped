@@ -1,17 +1,29 @@
-// Dynamic Prisma client to avoid initialization during build
-import { PrismaClient } from '@prisma/client'
-
+// Mock Prisma client for first draft - no database
 let prismaInstance: any = null
 
 export const getPrisma = async () => {
   if (!prismaInstance) {
-    prismaInstance = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-      transactionOptions: {
-        maxWait: 5000,
-        timeout: 10000,
+    // Mock client that returns empty results
+    prismaInstance = {
+      $connect: async () => {},
+      $disconnect: async () => {},
+      // Add mock methods as needed
+      user: {
+        findMany: async () => [],
+        findUnique: async () => null,
+        create: async () => ({}),
+        update: async () => ({}),
+        delete: async () => ({}),
       },
-    })
+      job: {
+        findMany: async () => [],
+        findUnique: async () => null,
+        create: async () => ({}),
+        update: async () => ({}),
+        delete: async () => ({}),
+      },
+      // Add other models as needed
+    }
   }
   return prismaInstance
 }

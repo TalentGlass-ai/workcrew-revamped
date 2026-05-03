@@ -7,10 +7,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
-# Copy Prisma schema and generate client
-COPY prisma ./prisma
-RUN npx prisma generate
-
 # Copy source code
 COPY . .
 
@@ -30,13 +26,7 @@ RUN apk add --no-cache dumb-init
 COPY package.json package-lock.json* ./
 
 # Install production dependencies only
-# Copy Prisma schema and run migrations
-COPY --from=builder /app/prisma ./prisma
-RUN npx prisma migrate deploy
 RUN npm ci --omit=dev --legacy-peer-deps
-
-
-
 
 # Copy built Next.js app from builder
 COPY --from=builder /app/.next ./.next

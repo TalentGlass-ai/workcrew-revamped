@@ -1,4 +1,4 @@
-import { Job, Candidate, CandidateSkill, JobCandidateMatch, InferredSkill } from '@prisma/client';
+import type { Job, Candidate, CandidateSkill, JobCandidateMatch, InferredSkill } from '@/lib/types/prisma';
 import { getPrisma } from '../prisma';
 import { getSkillOntologyService } from './skill-ontology';
 import { getSkillInferenceEngine } from './skill-inference-engine';
@@ -441,7 +441,7 @@ export class AIRankingEngine {
       .map(inf => ({
         name: inf.skillName,
         confidence: inf.confidence,
-        reason: inf.reason
+        reason: inf.reason ?? ''
       }));
 
     // Skill gaps (missing important skills)

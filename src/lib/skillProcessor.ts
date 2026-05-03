@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@/lib/types/prisma'
 import { SkillGraphService } from './skillGraphService'
 
 export class SkillProcessor {
@@ -37,8 +37,8 @@ export class SkillProcessor {
     }
 
     // Calculate average score from all answers
-    const answers = assessment.questions.flatMap(q => q.answers)
-    const validScores = answers.map(a => a.score).filter(score => score !== null && score !== undefined) as number[]
+    const answers = assessment.questions.flatMap((q: any) => q.answers)
+    const validScores = answers.map((a: any) => a.score).filter((score: any) => score !== null && score !== undefined) as number[]
 
     if (validScores.length === 0) {
       return // No scores to calculate from

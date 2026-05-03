@@ -1,6 +1,6 @@
 import { getPrisma } from '../prisma';
 import { getGraphSyncService } from './graph/graph-sync-service';
-import { Skill, Prisma } from '@prisma/client';
+import type { Skill } from '@/lib/types/prisma';
 
 // Core skill ontology data
 const SKILL_ONTOLOGY = {
@@ -262,7 +262,7 @@ export class SkillOntologyService {
       }
     });
 
-    skills.forEach((skill: Prisma.SkillGetPayload<{ include: { fromRelations: { include: { toSkill: true } }; toRelations: { include: { fromSkill: true } } } }>) => {
+    skills.forEach((skill: Skill) => {
       const ontology: SkillOntology = {
         name: skill.name,
         category: skill.category,
@@ -274,30 +274,42 @@ export class SkillOntologyService {
       };
 
       // Build relationships from database
-      skill.fromRelations.forEach(rel => {
+      skill.fromRelations?.forEach(rel => {
         switch (rel.type) {
           case 'PARENT':
-            ontology.children.push(rel.toSkill.name);
+            if (rel.toSkill?.name) {
+              ontology.children.push(rel.toSkill.name)
+            }
             break;
           case 'CHILD':
-            ontology.parents.push(rel.toSkill.name);
+            if (rel.toSkill?.name) {
+              ontology.parents.push(rel.toSkill.name)
+            }
             break;
           case 'RELATED':
-            ontology.related.push(rel.toSkill.name);
+            if (rel.toSkill?.name) {
+              ontology.related.push(rel.toSkill.name)
+            }
             break;
         }
       });
 
-      skill.toRelations.forEach(rel => {
+      skill.toRelations?.forEach(rel => {
         switch (rel.type) {
           case 'PARENT':
-            ontology.parents.push(rel.fromSkill.name);
+            if (rel.fromSkill?.name) {
+              ontology.parents.push(rel.fromSkill.name)
+            }
             break;
           case 'CHILD':
-            ontology.children.push(rel.fromSkill.name);
+            if (rel.fromSkill?.name) {
+              ontology.children.push(rel.fromSkill.name)
+            }
             break;
           case 'RELATED':
-            ontology.related.push(rel.fromSkill.name);
+            if (rel.fromSkill?.name) {
+              ontology.related.push(rel.fromSkill.name)
+            }
             break;
         }
       });
@@ -574,7 +586,7 @@ export class SkillOntologyService {
     const categories: Record<string, number> = {};
     let totalWeight = 0;
 
-    skills.forEach((skill: Prisma.SkillGetPayload<{ include: { fromRelations: { include: { toSkill: true } }; toRelations: { include: { fromSkill: true } } } }>) => {
+    skills.forEach((skill: Skill) => {
       categories[skill.category] = (categories[skill.category] || 0) + 1;
       totalWeight += skill.weight;
     });
@@ -609,7 +621,8 @@ export class SkillOntologyService {
       });
 
       // Sync relationships
-      for (const relation of skill.fromRelations) {
+      for (const relation of skill.fromRelations ?? []) {
+        if (!relation.toSkill?.name) continue
         await graphSync.syncSkillRelation(
           skill.name,
           relation.toSkill.name,

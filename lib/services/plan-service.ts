@@ -1,6 +1,6 @@
 // lib/services/plan-service.ts
 import { prisma } from '../prisma';
-import { Plan } from '@prisma/client';
+import type { Plan } from '@/lib/types/prisma';
 
 export interface CreatePlanParams {
   name: string;

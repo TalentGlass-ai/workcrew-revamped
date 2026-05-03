@@ -1,7 +1,7 @@
 // scripts/test-feedback-loop.ts
 import { getPrisma } from '../lib/prisma';
 import { feedbackLearningEngine } from '../lib/services/feedback-learning-engine';
-import { ActionType } from '@prisma/client';
+import { ActionType } from '@/lib/types/prisma';
 
 async function testFeedbackLoop() {
   console.log('🧠 Testing AI Feedback Loop...\n');

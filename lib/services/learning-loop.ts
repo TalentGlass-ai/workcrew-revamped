@@ -1,6 +1,6 @@
 import { getPrisma } from '../prisma';
 import { feedbackLearningEngine } from './feedback-learning-engine';
-import { ActionType } from '@prisma/client';
+import { ActionType } from '@/lib/types/prisma';
 
 export interface RecruiterFeedback {
   candidateId: string;

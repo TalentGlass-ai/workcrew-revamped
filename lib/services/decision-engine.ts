@@ -1,4 +1,4 @@
-import { Job, Candidate, AssessmentAttempt, InterviewInsight } from '@prisma/client';
+import type { Job, Candidate, AssessmentAttempt, InterviewInsight } from '@/lib/types/prisma';
 import { getPrisma } from '../prisma';
 import { getSkillOntologyService } from './skill-ontology';
 import { feedbackLearningEngine } from './feedback-learning-engine';

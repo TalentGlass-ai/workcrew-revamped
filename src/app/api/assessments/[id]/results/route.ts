@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/lib/types/prisma';
 import { SkillProcessor } from '../../../../../lib/skillProcessor';
 
 const prisma = new PrismaClient();
@@ -36,9 +36,9 @@ export async function GET(
 
     // Calculate results
     const totalQuestions = assessment.questions.length;
-    const answeredQuestions = assessment.questions.filter(q => q.answers.length > 0).length;
-    const correctAnswers = assessment.questions.filter(q =>
-      q.answers.some(a => a.isCorrect === true)
+    const answeredQuestions = assessment.questions.filter((q: any) => q.answers.length > 0).length;
+    const correctAnswers = assessment.questions.filter((q: any) =>
+      q.answers.some((a: any) => a.isCorrect === true)
     ).length;
 
     const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
@@ -52,10 +52,10 @@ export async function GET(
       answeredQuestions,
       correctAnswers,
       skills_updated: true,
-      questions: assessment.questions.map(q => ({
+      questions: assessment.questions.map((q: any) => ({
         id: q.id,
         questionText: q.questionText,
-        answers: q.answers.map(a => ({
+        answers: q.answers.map((a: any) => ({
           id: a.id,
           answerText: a.answerText,
           isCorrect: a.isCorrect,

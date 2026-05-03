@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/lib/types/prisma'
 import { SkillProcessor } from './skillProcessor'
 
 describe('SkillProcessor', () => {

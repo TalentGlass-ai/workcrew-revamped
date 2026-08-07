@@ -28,11 +28,6 @@ export interface ABTest {
   };
 }
 
-export interface DynamicPricingRule {
-  condition: string; // e.g., "usage > 80%"
-  adjustment: number; // percentage adjustment
-  reason: string;
-}
 
 export class BillingIntelligenceService {
   /**
@@ -175,43 +170,6 @@ export class BillingIntelligenceService {
   }
 
   /**
-   * Assign user to A/B test group
-   */
-  static async assignToABTest(userId: string): Promise<{
-    testId: string;
-    group: 'A' | 'B';
-    strategy: PricingStrategy;
-  } | null> {
-    const activeTests = await prisma.aBTest.findMany({
-      where: {
-        endDate: { gt: new Date() },
-        currentParticipants: { lt: prisma.aBTest.fields.targetUsers },
-      },
-    });
-
-    if (activeTests.length === 0) {
-      return null;
-    }
-
-    // Simple random assignment (could be more sophisticated)
-    const test = activeTests[0];
-    const group = Math.random() < 0.5 ? 'A' : 'B';
-    const strategy = group === 'A' ? test.strategyA : test.strategyB;
-
-    // Record participation
-    await prisma.aBTest.update({
-      where: { id: test.id },
-      data: { currentParticipants: { increment: 1 } },
-    });
-
-    return {
-      testId: test.id,
-      group,
-      strategy: strategy as PricingStrategy,
-    };
-  }
-
-  /**
    * Record conversion in A/B test
    */
   static async recordConversion(testId: string, group: 'A' | 'B', revenue: number): Promise<void> {
@@ -232,26 +190,6 @@ export class BillingIntelligenceService {
       where: { id: test.id },
       data: { results },
     });
-  }
-
-  /**
-   * Get A/B test results
-   */
-  static async getABTestResults(testId: string): Promise<ABTest | null> {
-    const test = await prisma.aBTest.findUnique({ where: { id: testId } });
-    if (!test) return null;
-
-    return {
-      id: test.id,
-      name: test.name,
-      strategyA: test.strategyA as PricingStrategy,
-      strategyB: test.strategyB as PricingStrategy,
-      startDate: test.startDate,
-      endDate: test.endDate,
-      targetUsers: test.targetUsers,
-      currentParticipants: test.currentParticipants,
-      results: test.results as any,
-    };
   }
 
   /**

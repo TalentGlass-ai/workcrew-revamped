@@ -1,6 +1,5 @@
 import type { Candidate, Job, CandidateSkill, RecommendationType } from '@/lib/types/prisma';
 import { getPrisma } from '../prisma';
-import { getGraphSyncService } from './graph/graph-sync-service';
 import { getSkillOntologyService } from './skill-ontology';
 import { getSkillInferenceEngine } from './skill-inference-engine';
 
@@ -582,11 +581,6 @@ export async function evaluateCandidate(input: { candidate: Candidate & { skills
 
   // Save evaluation results to database
   await saveEvaluationToDatabase(input.candidate.id, input.job.id, result);
-
-  // Sync to graph database
-  const graphSync = getGraphSyncService();
-  await graphSync.syncCandidateEvaluation(input.candidate.id, result);
-  await graphSync.syncCandidateJobMatch(input.candidate.id, input.job.id, result);
 
   return result;
 }

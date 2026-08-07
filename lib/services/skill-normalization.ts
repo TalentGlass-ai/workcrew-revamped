@@ -206,12 +206,3 @@ export function getSkillService(): SkillNormalizationService {
   }
   return skillServiceInstance;
 }
-
-// Utility functions
-export function normalizeSkillName(skillName: string): string {
-  return getSkillService().normalizeSkill(skillName).name;
-}
-
-export function getSkillCategory(skillName: string): string {
-  return getSkillService().normalizeSkill(skillName).category;
-}

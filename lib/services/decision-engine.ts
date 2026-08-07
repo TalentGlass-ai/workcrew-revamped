@@ -1,8 +1,7 @@
 import type { Job, Candidate, AssessmentAttempt, InterviewInsight } from '@/lib/types/prisma';
 import { getPrisma } from '../prisma';
 import { getSkillOntologyService } from './skill-ontology';
-import { feedbackLearningEngine } from './feedback-learning-engine';
-import { learningLoopService } from './learning-loop';
+import { feedbackLearningEngine, learningLoopService } from './feedback-learning-engine';
 
 export interface CandidateSignals {
   skills: number;        // 0–100 (graph match)

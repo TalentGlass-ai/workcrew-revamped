@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InterviewSession } from '@/workcrew-ui/lib/aiInterviewer';
-import { interviewSessions } from '@/workcrew-ui/lib/interviewStorage';
+import { InterviewSession, interviewSessions } from '@/workcrew-ui/lib/aiInterviewer';
 
 export async function GET(request: NextRequest) {
   try {

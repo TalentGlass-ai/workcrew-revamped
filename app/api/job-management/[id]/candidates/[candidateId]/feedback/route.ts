@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { learningLoopService } from '@/lib/services/learning-loop';
+import { learningLoopService } from '@/lib/services/feedback-learning-engine';
 
 export async function POST(
   request: NextRequest

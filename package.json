@@ -14,9 +14,7 @@
     "seed:inferred": "tsx scripts/seed-inferred-skills.ts",
     "rank:all": "tsx scripts/batch-rank-jobs.ts all",
     "rank:job": "tsx scripts/batch-rank-jobs.ts job",
-    "test:ranking": "tsx scripts/test-ranking-engine.ts",
-    "test:feedback": "tsx scripts/test-feedback-loop.ts",
-    "process:feedback": "tsx scripts/process-feedback-learning.ts",
+"process:feedback": "tsx scripts/process-feedback-learning.ts",
     "process:alerts": "tsx lib/jobAlerts.ts",
     "sync:typesense": "tsx scripts/sync-typesense.ts"
   },

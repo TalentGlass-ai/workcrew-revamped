@@ -702,12 +702,7 @@ export class AIRankingEngine {
   }
 }
 
-// Singleton instance
-let aiRankingEngine: AIRankingEngine;
+export const aiRankingEngine = new AIRankingEngine();
 
-export function getAIRankingEngine(): AIRankingEngine {
-  if (!aiRankingEngine) {
-    aiRankingEngine = new AIRankingEngine();
-  }
-  return aiRankingEngine;
-}
+// ponytail: backward-compat alias; callers can import aiRankingEngine directly
+export const getAIRankingEngine = () => aiRankingEngine;

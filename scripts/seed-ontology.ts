@@ -11,9 +11,6 @@ async function seedOntology() {
   console.log('Seeding skill ontology...');
   await ontologyService.seedOntology();
 
-  console.log('Syncing to graph database...');
-  await ontologyService.syncToGraph();
-
   console.log('Getting ontology stats...');
   const stats = await ontologyService.getOntologyStats();
   console.log('Ontology seeding complete:', stats);

@@ -1,5 +1,4 @@
 import { getPrisma } from '../prisma';
-import { getGraphSyncService } from './graph/graph-sync-service';
 import type { Skill } from '@/lib/types/prisma';
 
 // Core skill ontology data
@@ -598,40 +597,6 @@ export class SkillOntologyService {
     };
   }
 
-  async syncToGraph(): Promise<void> {
-    const graphSync = getGraphSyncService();
-    if (!graphSync) return;
-
-    const prisma = await getPrisma();
-    if (!prisma) return;
-
-    const skills = await prisma.skill.findMany({
-      include: {
-        fromRelations: {
-          include: { toSkill: true }
-        }
-      }
-    });
-
-    for (const skill of skills) {
-      await graphSync.syncSkill(skill.name, {
-        category: skill.category,
-        weight: skill.weight,
-        aliases: skill.aliases as string[]
-      });
-
-      // Sync relationships
-      for (const relation of skill.fromRelations ?? []) {
-        if (!relation.toSkill?.name) continue
-        await graphSync.syncSkillRelation(
-          skill.name,
-          relation.toSkill.name,
-          relation.type,
-          relation.weight
-        );
-      }
-    }
-  }
 }
 
 // Singleton instance

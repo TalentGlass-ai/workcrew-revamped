@@ -361,3 +361,284 @@ export class FeedbackLearningEngine {
 
 // Singleton instance
 export const feedbackLearningEngine = new FeedbackLearningEngine();
+
+export interface RecruiterFeedback {
+  candidateId: string;
+  jobId: string;
+  action: 'accepted' | 'rejected' | 'shortlisted' | 'interviewed';
+  confidence: 'high' | 'medium' | 'low';
+  notes?: string;
+  signalAdjustments?: {
+    profileSignals?: number;
+    assessmentSignals?: number;
+    codeIntelligence?: number;
+    interviewSignals?: number;
+    behaviorSignals?: number;
+  };
+  timestamp: Date;
+}
+
+export interface LearningMetrics {
+  totalFeedback: number;
+  accuracy: number;
+  signalWeights: {
+    profileSignals: number;
+    assessmentSignals: number;
+    codeIntelligence: number;
+    interviewSignals: number;
+    behaviorSignals: number;
+  };
+  lastUpdated: Date;
+}
+
+export class LearningLoopService {
+  private prisma = getPrisma();
+
+  async recordFeedback(feedback: RecruiterFeedback): Promise<void> {
+    const prisma = await this.prisma;
+
+    await prisma.candidateScore.updateMany({
+      where: { candidateId: feedback.candidateId, jobId: feedback.jobId },
+      data: {
+        recruiterFeedback: {
+          action: feedback.action,
+          confidence: feedback.confidence,
+          notes: feedback.notes,
+          signalAdjustments: feedback.signalAdjustments,
+          timestamp: feedback.timestamp
+        },
+        feedbackApplied: false
+      }
+    });
+
+    this.processFeedbackForLearning(feedback).catch(error => {
+      console.error('Failed to process feedback for learning:', error);
+    });
+  }
+
+  private async processFeedbackForLearning(feedback: RecruiterFeedback): Promise<void> {
+    const prisma = await this.prisma;
+
+    const originalScore = await prisma.candidateScore.findFirst({
+      where: { candidateId: feedback.candidateId, jobId: feedback.jobId }
+    });
+
+    if (!originalScore) {
+      console.warn(`No original score found for candidate ${feedback.candidateId} and job ${feedback.jobId}`);
+      return;
+    }
+
+    const wasCorrect = this.evaluateRecommendationAccuracy(
+      originalScore.recommendation,
+      feedback.action,
+      originalScore.confidence
+    );
+
+    await this.updateWeightsFromFeedback(feedback, originalScore, wasCorrect);
+
+    await prisma.candidateScore.updateMany({
+      where: { candidateId: feedback.candidateId, jobId: feedback.jobId },
+      data: { feedbackApplied: true }
+    });
+  }
+
+  private evaluateRecommendationAccuracy(
+    recommendation: string,
+    actualAction: string,
+    confidence: string
+  ): boolean {
+    const positiveActions = ['accepted', 'shortlisted', 'interviewed'];
+    const isPositiveRecommendation = recommendation === 'STRONGLY_RECOMMENDED' || recommendation === 'RECOMMENDED';
+    const isPositiveAction = positiveActions.includes(actualAction);
+
+    if (isPositiveRecommendation === isPositiveAction) return true;
+
+    if (confidence !== 'HIGH' && (
+      (recommendation === 'RECOMMENDED' && actualAction === 'rejected') ||
+      (recommendation === 'NOT_RECOMMENDED' && actualAction === 'shortlisted')
+    )) return true;
+
+    return false;
+  }
+
+  private async updateWeightsFromFeedback(
+    feedback: RecruiterFeedback,
+    originalScore: any,
+    wasCorrect: boolean
+  ): Promise<void> {
+    const prisma = await this.prisma;
+    const job = await prisma.job.findUnique({
+      where: { id: feedback.jobId },
+      select: { organizationId: true }
+    });
+
+    if (!job) return;
+
+    const adjustments = this.calculateWeightAdjustments(feedback, originalScore, wasCorrect);
+    const actionType = this.mapFeedbackActionToActionType(feedback.action);
+
+    await feedbackLearningEngine.recordAction({
+      candidateId: feedback.candidateId,
+      jobId: feedback.jobId,
+      recruiterId: 'system',
+      actionType,
+      metadata: { wasCorrect, adjustments, confidence: feedback.confidence, originalScore }
+    });
+  }
+
+  private calculateWeightAdjustments(
+    feedback: RecruiterFeedback,
+    originalScore: any,
+    wasCorrect: boolean
+  ): Record<string, number> {
+    const adjustments: Record<string, number> = {};
+
+    if (!wasCorrect) {
+      const signalBreakdown = {
+        profileSignals: originalScore.profileSignals,
+        assessmentSignals: originalScore.assessmentSignals,
+        codeIntelligence: originalScore.codeIntelligence,
+        interviewSignals: originalScore.interviewSignals,
+        behaviorSignals: originalScore.behaviorSignals
+      };
+
+      const sortedSignals = Object.entries(signalBreakdown).sort(([, a], [, b]) => (b as number) - (a as number));
+      adjustments[sortedSignals[0][0]] = -0.05;
+      sortedSignals.slice(-2).forEach(([signalName]) => {
+        adjustments[signalName] = (adjustments[signalName] || 0) + 0.03;
+      });
+    }
+
+    if (feedback.signalAdjustments) {
+      Object.entries(feedback.signalAdjustments).forEach(([signal, adjustment]) => {
+        adjustments[signal] = (adjustments[signal] || 0) + (adjustment as number) * 0.1;
+      });
+    }
+
+    return adjustments;
+  }
+
+  async getLearningMetrics(organizationId: string): Promise<LearningMetrics> {
+    const prisma = await this.prisma;
+
+    const feedbackData = await prisma.candidateScore.findMany({
+      where: { job: { organizationId }, recruiterFeedback: { not: null } },
+      select: { recruiterFeedback: true, recommendation: true, confidence: true }
+    });
+
+    const totalFeedback = feedbackData.length;
+    let correctPredictions = 0;
+
+    feedbackData.forEach((score: any) => {
+      if (score.recruiterFeedback) {
+        const wasCorrect = this.evaluateRecommendationAccuracy(
+          score.recommendation, score.recruiterFeedback.action, score.confidence
+        );
+        if (wasCorrect) correctPredictions++;
+      }
+    });
+
+    const accuracy = totalFeedback > 0 ? (correctPredictions / totalFeedback) * 100 : 0;
+    const currentWeights = await feedbackLearningEngine.getPersonalizedWeights('company', organizationId);
+
+    return {
+      totalFeedback,
+      accuracy,
+      signalWeights: {
+        profileSignals: currentWeights.rankingWeights?.profileSignals || 0.30,
+        assessmentSignals: currentWeights.rankingWeights?.assessmentSignals || 0.25,
+        codeIntelligence: currentWeights.rankingWeights?.codeIntelligence || 0.15,
+        interviewSignals: currentWeights.rankingWeights?.interviewSignals || 0.15,
+        behaviorSignals: currentWeights.rankingWeights?.behaviorSignals || 0.15
+      },
+      lastUpdated: new Date()
+    };
+  }
+
+  async getJobFeedbackSummary(jobId: string): Promise<{
+    totalCandidates: number;
+    acceptedCount: number;
+    rejectedCount: number;
+    accuracy: number;
+    commonAdjustments: Record<string, number>;
+  }> {
+    const prisma = await this.prisma;
+
+    const scores = await prisma.candidateScore.findMany({
+      where: { jobId },
+      select: { recruiterFeedback: true, recommendation: true, confidence: true }
+    });
+
+    let acceptedCount = 0, rejectedCount = 0, correctCount = 0;
+    const adjustments: Record<string, number[]> = {};
+
+    scores.forEach((score: any) => {
+      if (score.recruiterFeedback) {
+        const action = score.recruiterFeedback.action;
+        if (action === 'accepted' || action === 'shortlisted') acceptedCount++;
+        if (action === 'rejected') rejectedCount++;
+
+        if (this.evaluateRecommendationAccuracy(score.recommendation, action, score.confidence)) correctCount++;
+
+        if (score.recruiterFeedback.signalAdjustments) {
+          Object.entries(score.recruiterFeedback.signalAdjustments).forEach(([signal, adj]) => {
+            if (!adjustments[signal]) adjustments[signal] = [];
+            adjustments[signal].push(adj as number);
+          });
+        }
+      }
+    });
+
+    const commonAdjustments: Record<string, number> = {};
+    Object.entries(adjustments).forEach(([signal, values]) => {
+      commonAdjustments[signal] = values.reduce((sum, val) => sum + val, 0) / values.length;
+    });
+
+    return {
+      totalCandidates: scores.length,
+      acceptedCount,
+      rejectedCount,
+      accuracy: scores.length > 0 ? (correctCount / scores.length) * 100 : 0,
+      commonAdjustments
+    };
+  }
+
+  async recordDecision(decision: {
+    candidateId: string;
+    jobId: string;
+    score: number;
+    recommendation: string;
+    confidence: string;
+    signals: any;
+    jobRole: string;
+    timestamp: Date;
+  }): Promise<void> {
+    const prisma = await this.prisma;
+
+    await prisma.candidateScore.updateMany({
+      where: { candidateId: decision.candidateId, jobId: decision.jobId },
+      data: {
+        decisionMetadata: {
+          score: decision.score,
+          recommendation: decision.recommendation,
+          confidence: decision.confidence,
+          signals: decision.signals,
+          jobRole: decision.jobRole,
+          timestamp: decision.timestamp
+        }
+      }
+    });
+  }
+
+  private mapFeedbackActionToActionType(action: string): ActionType {
+    switch (action) {
+      case 'accepted': return ActionType.HIRED;
+      case 'shortlisted': return ActionType.SHORTLISTED;
+      case 'interviewed': return ActionType.INTERVIEWED;
+      case 'rejected': return ActionType.REJECTED;
+      default: return ActionType.VIEWED;
+    }
+  }
+}
+
+export const learningLoopService = new LearningLoopService();

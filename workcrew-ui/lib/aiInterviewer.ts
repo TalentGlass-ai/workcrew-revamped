@@ -446,3 +446,5 @@ Be comprehensive and provide actionable insights.
 
 // Singleton instance
 export const aiInterviewer = new AIInterviewer();
+
+export const interviewSessions = new Map<string, InterviewSession>();

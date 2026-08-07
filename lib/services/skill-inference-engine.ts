@@ -1,5 +1,4 @@
 import { getPrisma } from '../prisma';
-import { getGraphSyncService } from './graph/graph-sync-service';
 import { getSkillOntologyService } from './skill-ontology';
 
 export interface InferredSkill {
@@ -17,7 +16,6 @@ export interface SkillInferenceResult {
 
 export class SkillInferenceEngine {
   private ontologyService = getSkillOntologyService();
-  private graphService = getGraphSyncService();
 
   /**
    * Main inference method - combines all inference types

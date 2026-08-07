@@ -1,16 +1,14 @@
-import { generateQuestion } from '../src/lib/questionGenerator';
+import { generateQuestion } from '../lib/questionGenerator';
 
 async function testQuestionGen() {
   try {
     console.log('Testing question generation...');
 
-    // Test basic question
     const question1 = await generateQuestion('JavaScript');
     console.log('Generated question:', question1);
 
-    // Test with performance
-    const question2 = await generateQuestion('React', { correct: 8, total: 10 });
-    console.log('Adaptive question:', question2);
+    const question2 = await generateQuestion('React', 2);
+    console.log('Harder question:', question2);
 
     console.log('Question generation test passed!');
   } catch (error) {

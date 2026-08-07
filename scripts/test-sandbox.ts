@@ -1,16 +1,16 @@
-import { executeCode } from '../src/lib/sandbox';
+import { sandboxExecutor } from '../lib/sandbox';
 
 async function test() {
   // Test Python
   const pythonCode = 'print(input())';
-  const pythonTests = [{ input: 'hello', expectedOutput: 'hello' }];
-  const pythonResults = await executeCode(pythonCode, 'python', pythonTests);
+  const pythonTests = [{ input: 'hello', expected: 'hello' }];
+  const pythonResults = await sandboxExecutor.runTestCases(pythonCode, 'python', pythonTests);
   console.log('Python results:', pythonResults);
 
   // Test JavaScript
   const jsCode = 'console.log(require("fs").readFileSync(0, "utf-8").trim())';
-  const jsTests = [{ input: 'world', expectedOutput: 'world' }];
-  const jsResults = await executeCode(jsCode, 'javascript', jsTests);
+  const jsTests = [{ input: 'world', expected: 'world' }];
+  const jsResults = await sandboxExecutor.runTestCases(jsCode, 'javascript', jsTests);
   console.log('JS results:', jsResults);
 
   // Test Java
@@ -21,8 +21,8 @@ public class Main {
     System.out.println(s.nextLine());
   }
 }`;
-  const javaTests = [{ input: 'test', expectedOutput: 'test' }];
-  const javaResults = await executeCode(javaCode, 'java', javaTests);
+  const javaTests = [{ input: 'test', expected: 'test' }];
+  const javaResults = await sandboxExecutor.runTestCases(javaCode, 'java', javaTests);
   console.log('Java results:', javaResults);
 }
 

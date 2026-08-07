@@ -1,39 +1,3 @@
-import NodeGeocoder from 'node-geocoder'
-
-const geocoder = NodeGeocoder({
-  provider: 'openstreetmap', // Free alternative to Google Maps
-  // You can also use 'google' with API key for better accuracy
-  // apiKey: process.env.GOOGLE_MAPS_API_KEY,
-})
-
-export interface GeocodeResult {
-  latitude: number
-  longitude: number
-  formattedAddress: string
-}
-
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  try {
-    const results = await geocoder.geocode(address)
-
-    if (results && results.length > 0) {
-      const result = results[0]
-      if (result.latitude && result.longitude) {
-        return {
-          latitude: result.latitude,
-          longitude: result.longitude,
-          formattedAddress: result.formattedAddress || address,
-        }
-      }
-    }
-
-    return null
-  } catch (error) {
-    console.error('Geocoding error:', error)
-    return null
-  }
-}
-
 export function calculateDistance(
   lat1: number,
   lon1: number,

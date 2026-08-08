@@ -41,16 +41,24 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(password);
-  await prisma.user.create({
-    data: {
-      firstName,
-      lastName,
-      name: `${firstName} ${lastName}`,
-      email,
-      passwordHash,
-      role: "candidate",
-    },
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`,
+        email,
+        passwordHash,
+        role: "candidate",
+      },
+    });
+  } catch (err: any) {
+    // P2002 = unique constraint violation (race condition: concurrent signup with same email)
+    if (err?.code === "P2002") {
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

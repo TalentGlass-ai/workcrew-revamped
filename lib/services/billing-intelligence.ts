@@ -160,10 +160,10 @@ export class BillingIntelligenceService {
     return {
       id: test.id,
       name: test.name,
-      strategyA: test.strategyA as PricingStrategy,
-      strategyB: test.strategyB as PricingStrategy,
+      strategyA: test.strategyA as unknown as PricingStrategy,
+      strategyB: test.strategyB as unknown as PricingStrategy,
       startDate: test.startDate,
-      endDate: test.endDate,
+      endDate: test.endDate ?? undefined,
       targetUsers: test.targetUsers,
       currentParticipants: test.currentParticipants,
     };
@@ -176,7 +176,7 @@ export class BillingIntelligenceService {
     const test = await prisma.aBTest.findUnique({ where: { id: testId } });
     if (!test) return;
 
-    const results = test.results || { strategyA: { conversions: 0, revenue: 0 }, strategyB: { conversions: 0, revenue: 0 } };
+    const results: any = test.results || { strategyA: { conversions: 0, revenue: 0 }, strategyB: { conversions: 0, revenue: 0 } };
 
     if (group === 'A') {
       results.strategyA.conversions += 1;

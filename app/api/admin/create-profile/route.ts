@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
         portfolioUrl: profileData.portfolioUrl || null,
         linkedinUrl: profileData.linkedinUrl || null,
         githubUrl: profileData.githubUrl || null,
+        primarySkills: [],
+        skillClusters: [],
         createdAt: new Date(),
         updatedAt: new Date()
       }

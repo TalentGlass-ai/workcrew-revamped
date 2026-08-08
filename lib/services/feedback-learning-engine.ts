@@ -522,7 +522,7 @@ export class LearningLoopService {
     const prisma = await this.prisma;
 
     const feedbackData = await prisma.candidateScore.findMany({
-      where: { job: { organizationId }, recruiterFeedback: { not: null } },
+      where: { job: { organizationId }, recruiterFeedback: { not: null as any } },
       select: { recruiterFeedback: true, recommendation: true, confidence: true }
     });
 
@@ -545,11 +545,11 @@ export class LearningLoopService {
       totalFeedback,
       accuracy,
       signalWeights: {
-        profileSignals: currentWeights.rankingWeights?.profileSignals || 0.30,
-        assessmentSignals: currentWeights.rankingWeights?.assessmentSignals || 0.25,
-        codeIntelligence: currentWeights.rankingWeights?.codeIntelligence || 0.15,
-        interviewSignals: currentWeights.rankingWeights?.interviewSignals || 0.15,
-        behaviorSignals: currentWeights.rankingWeights?.behaviorSignals || 0.15
+        profileSignals: (currentWeights.rankingWeights as any)?.profileSignals || 0.30,
+        assessmentSignals: (currentWeights.rankingWeights as any)?.assessmentSignals || 0.25,
+        codeIntelligence: (currentWeights.rankingWeights as any)?.codeIntelligence || 0.15,
+        interviewSignals: (currentWeights.rankingWeights as any)?.interviewSignals || 0.15,
+        behaviorSignals: (currentWeights.rankingWeights as any)?.behaviorSignals || 0.15
       },
       lastUpdated: new Date()
     };
@@ -615,17 +615,18 @@ export class LearningLoopService {
   }): Promise<void> {
     const prisma = await this.prisma;
 
+    // decisionMetadata not in schema — store in signals JSON field instead
     await prisma.candidateScore.updateMany({
       where: { candidateId: decision.candidateId, jobId: decision.jobId },
       data: {
-        decisionMetadata: {
+        signals: {
           score: decision.score,
           recommendation: decision.recommendation,
           confidence: decision.confidence,
           signals: decision.signals,
           jobRole: decision.jobRole,
           timestamp: decision.timestamp
-        }
+        } as unknown as any
       }
     });
   }

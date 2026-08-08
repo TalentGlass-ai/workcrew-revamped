@@ -261,7 +261,7 @@ export class SkillOntologyService {
       }
     });
 
-    skills.forEach((skill: Skill) => {
+    skills.forEach((skill: any) => {
       const ontology: SkillOntology = {
         name: skill.name,
         category: skill.category,
@@ -273,7 +273,7 @@ export class SkillOntologyService {
       };
 
       // Build relationships from database
-      skill.fromRelations?.forEach(rel => {
+      skill.fromRelations?.forEach((rel: any) => {
         switch (rel.type) {
           case 'PARENT':
             if (rel.toSkill?.name) {
@@ -293,7 +293,7 @@ export class SkillOntologyService {
         }
       });
 
-      skill.toRelations?.forEach(rel => {
+      skill.toRelations?.forEach((rel: any) => {
         switch (rel.type) {
           case 'PARENT':
             if (rel.fromSkill?.name) {
@@ -585,7 +585,7 @@ export class SkillOntologyService {
     const categories: Record<string, number> = {};
     let totalWeight = 0;
 
-    skills.forEach((skill: Skill) => {
+    skills.forEach((skill: any) => {
       categories[skill.category] = (categories[skill.category] || 0) + 1;
       totalWeight += skill.weight;
     });

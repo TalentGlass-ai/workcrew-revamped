@@ -14,7 +14,7 @@ async function verifyPassword(plain: string, hash: string): Promise<boolean> {
     const [, N, r, p, salt, stored] = parts;
     const params = { N: parseInt(N), r: parseInt(r), p: parseInt(p) };
     if (!salt || !stored || isNaN(params.N) || isNaN(params.r) || isNaN(params.p)) return false;
-    const buf = (await scryptAsync(plain, salt, 64, params)) as Buffer;
+    const buf = (await (scryptAsync as Function)(plain, salt, 64, params)) as Buffer;
     const storedBuf = Buffer.from(stored, "hex");
     if (buf.length !== storedBuf.length) return false;
     return timingSafeEqual(buf, storedBuf);
@@ -46,6 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const valid = await verifyPassword(credentials.password as string, user?.passwordHash ?? DUMMY_HASH);
         if (!valid) return null;
 
+        if (!user) return null;
         return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
     }),

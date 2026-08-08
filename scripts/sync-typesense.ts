@@ -5,47 +5,29 @@ async function syncAllData() {
   console.log('Starting data sync to Typesense...')
 
   try {
-    // Check if Typesense is available
     const typesenseAvailable = await isTypesenseAvailable()
     if (!typesenseAvailable) {
-      console.log('Typesense is not available. Skipping sync. Please start Typesense server first.')
-      console.log('To start Typesense: docker-compose -f docker-compose.typesense.yml up -d')
+      console.log('Typesense is not available. Skipping sync.')
       return
     }
 
-    // Initialize collections
     await initializeCollections()
 
     const prisma = await getPrisma()
-    if (!prisma) {
-      throw new Error('Database not available')
-    }
+    if (!prisma) throw new Error('Database not available')
 
-    // Sync all active jobs
     console.log('Syncing jobs...')
     const jobs = await prisma.job.findMany({
-      where: { isActive: true },
-      include: {
-        company: true,
-        category: true,
-      },
+      where: { status: 'published' },
+      include: { organization: true },
     })
-
-    for (const job of jobs) {
-      await syncJobToTypesense(job)
-    }
+    for (const job of jobs) await syncJobToTypesense(job)
     console.log(`Synced ${jobs.length} jobs`)
 
-    // Sync all active companies
-    console.log('Syncing companies...')
-    const companies = await prisma.company.findMany({
-      where: { isActive: true },
-    })
-
-    for (const company of companies) {
-      await syncCompanyToTypesense(company)
-    }
-    console.log(`Synced ${companies.length} companies`)
+    console.log('Syncing organizations...')
+    const orgs = await prisma.organization.findMany()
+    for (const org of orgs) await syncCompanyToTypesense(org)
+    console.log(`Synced ${orgs.length} organizations`)
 
     console.log('Data sync completed successfully!')
   } catch (error) {
@@ -54,5 +36,4 @@ async function syncAllData() {
   }
 }
 
-// Run the sync
 syncAllData()

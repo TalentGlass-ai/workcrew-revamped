@@ -17,7 +17,7 @@ const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64, SCRYPT_PARAMS)) as Buffer;
+  const buf = (await (scryptAsync as Function)(password, salt, 64, SCRYPT_PARAMS)) as Buffer;
   // Format: scrypt$N$r$p$salt$hash — params versioned so cost can be raised later
   return `scrypt$${SCRYPT_PARAMS.N}$${SCRYPT_PARAMS.r}$${SCRYPT_PARAMS.p}$${salt}$${buf.toString("hex")}`;
 }
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
-    const message = parsed.error.errors[0]?.message ?? "Invalid input";
+    const message = parsed.error.issues[0]?.message ?? "Invalid input";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

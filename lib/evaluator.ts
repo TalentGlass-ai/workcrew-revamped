@@ -73,9 +73,10 @@ export async function evaluateAssessment(
 
         if (evaluation.correct) correctAnswers++;
 
-        // Update skill scores
-        if (question.skills) {
-          question.skills.forEach((skill: string) => {
+        // Update skill scores (scoringRubric may contain skill tags as a JSON object)
+        const rubric = question.scoringRubric as any;
+        if (rubric?.skills && Array.isArray(rubric.skills)) {
+          rubric.skills.forEach((skill: string) => {
             if (!skillScores[skill]) skillScores[skill] = 0;
             skillScores[skill] += evaluation.score;
           });
@@ -88,20 +89,9 @@ export async function evaluateAssessment(
           }
         });
 
-        // Save the answer
-        await prisma.answer.upsert({
-          where: {
-            attemptId_questionId: {
-              attemptId,
-              questionId: question.id
-            }
-          },
-          update: {
-            answerText: answer.answerText,
-            isCorrect: evaluation.correct,
-            score: evaluation.score
-          },
-          create: {
+        // Save the answer (Answer has no unique compound key, so always create)
+        await prisma.answer.create({
+          data: {
             attemptId,
             questionId: question.id,
             answerText: answer.answerText,
@@ -148,19 +138,15 @@ export async function evaluateAssessment(
       where: { id: attempt.assessmentId },
       data: {
         score: weightedScore,
-        maxScore,
-        percentage,
-        status: passed ? 'completed' : 'failed',
-        completedAt: new Date(),
         report: {
-          score: weightedScore,
+          maxScore,
           percentage,
           passed,
           feedback: result.feedback,
           behavioralAnalysis,
           skillScores,
           evaluationBreakdown
-        }
+        } as unknown as any
       }
     });
 
@@ -168,7 +154,7 @@ export async function evaluateAssessment(
     await prisma.assessmentAttempt.update({
       where: { id: attemptId },
       data: {
-        completedAt: new Date(),
+        submittedAt: new Date(),
         score: weightedScore
       }
     });

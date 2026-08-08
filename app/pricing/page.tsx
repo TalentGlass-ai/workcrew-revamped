@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Section,
@@ -238,7 +239,7 @@ export default function PricingPage() {
                   className="absolute flex items-center gap-2"
                   style={{ left: "calc(100% - 16px)", top: "-10px" }}
                 >
-                  <img
+                  <Image
                     src="/icons/curved-arrow.svg"
                     alt="Curved arrow"
                     width={64}
@@ -417,7 +418,7 @@ export default function PricingPage() {
                                 {f.value}
                               </T>
                             ) : f.included ? (
-                              <img
+                              <Image
                                 src="/icons/hugeicons_tick-02.png"
                                 alt="Included"
                                 width={20}
@@ -425,7 +426,7 @@ export default function PricingPage() {
                                 style={{ display: "block" }}
                               />
                             ) : (
-                              <img
+                              <Image
                                 src="/icons/uim_multiply.png"
                                 alt="Not included"
                                 width={20}

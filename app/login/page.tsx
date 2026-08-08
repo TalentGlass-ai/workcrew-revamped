@@ -90,13 +90,6 @@ export default function LoginPage() {
             achievements from any resume format.
           </T>
 
-          {/* Slider bars */}
-          <div className="mt-8 flex gap-2">
-            <div className="h-1.5 w-16 rounded-full bg-white" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-          </div>
         </div>
       </section>
 
@@ -195,7 +188,7 @@ export default function LoginPage() {
                 className="mt-1 text-gray-400"
                 lineHeightPx={18}
               >
-                Minimum 8 characters. (Enforce complexity on the server.)
+                Minimum 8 characters.
               </T>
             </div>
 

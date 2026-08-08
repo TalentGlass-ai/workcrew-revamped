@@ -41,9 +41,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           select: { id: true, name: true, email: true, role: true, passwordHash: true },
         });
 
-        if (!user?.passwordHash) return null;
-
-        const valid = await verifyPassword(credentials.password as string, user.passwordHash);
+        // Run a dummy hash when the user isn't found to prevent timing-based email enumeration
+        const DUMMY_HASH = "scrypt$16384$8$1$0000000000000000$" + "0".repeat(128);
+        const valid = await verifyPassword(credentials.password as string, user?.passwordHash ?? DUMMY_HASH);
         if (!valid) return null;
 
         return { id: user.id, name: user.name, email: user.email, role: user.role };

@@ -704,7 +704,7 @@ function CarouselEndless({ items, cardW = 410, cardH = 215 }: { items: Testimoni
             >
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-[#EEF2FF] flex-shrink-0">
-                  <Image src="/Rah.png" alt="" width={40} height={40} className="object-cover" />
+                  <Image src="/Rah.png" alt="Rahi, WorkCrew AI assistant" width={40} height={40} className="object-cover" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[20px] leading-[28px] font-semibold text-[#111827] truncate">{t.name}</div>

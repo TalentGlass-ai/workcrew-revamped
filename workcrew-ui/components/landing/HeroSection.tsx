@@ -109,13 +109,10 @@ export default function HeroSection(): React.ReactElement {
                 </a>
               </div>
 
-              {/* Stats */}
-              <div className="mt-10 grid max-w-lg grid-cols-4 gap-6 text-center md:text-left">
-                <Stat number="5,000+" label="Candidates" />
-                <Stat number="500+" label="Recruiters" />
-                <Stat number="300+" label="Companies" />
-                <Stat number="400+" label="Jobs Posted" />
-              </div>
+              {/* Trust signal */}
+              <p className="mt-10 text-sm text-[#7B72AF]">
+                Trusted by recruiters and job seekers across India &amp; globally.
+              </p>
             </div>
           </div>
         </div>

@@ -105,12 +105,6 @@ export default function SignupPage() {
           <p className="mt-2 text-sm text-white/80">
             AI smartly extracts and organizes your skills, experience, and achievements from any resume format.
           </p>
-          <div className="mt-8 flex gap-2">
-            <div className="h-1.5 w-16 rounded-full bg-white" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-            <div className="h-1.5 w-10 rounded-full bg-white/40" />
-          </div>
         </div>
       </section>
 

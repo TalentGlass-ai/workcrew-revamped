@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 const scryptAsync = promisify(scrypt);
+
+const signupSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().transform((e) => e.trim().toLowerCase()),
+  password: z.string().min(8).max(128),
+});
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
@@ -12,14 +20,20 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  const { firstName, lastName, email, password } = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
-  if (!firstName || !lastName || !email || !password) {
-    return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+  const parsed = signupSchema.safeParse(body);
+  if (!parsed.success) {
+    const message = parsed.error.errors[0]?.message ?? "Invalid input";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-  }
+
+  const { firstName, lastName, email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {

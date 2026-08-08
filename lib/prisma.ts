@@ -10,3 +10,6 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// Backward-compat shim — callers that used the old async getPrisma() factory still work
+export const getPrisma = () => Promise.resolve(prisma);

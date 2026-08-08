@@ -7,9 +7,16 @@ import { prisma } from "@/lib/prisma";
 const scryptAsync = promisify(scrypt);
 
 async function verifyPassword(plain: string, hash: string): Promise<boolean> {
-  const [salt, stored] = hash.split(":");
-  const buf = (await scryptAsync(plain, salt, 64)) as Buffer;
-  return timingSafeEqual(buf, Buffer.from(stored, "hex"));
+  try {
+    const [salt, stored] = hash.split(":");
+    if (!salt || !stored) return false;
+    const buf = (await scryptAsync(plain, salt, 64)) as Buffer;
+    const storedBuf = Buffer.from(stored, "hex");
+    if (buf.length !== storedBuf.length) return false;
+    return timingSafeEqual(buf, storedBuf);
+  } catch {
+    return false;
+  }
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -24,8 +31,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
+        const email = (credentials.username as string).trim().toLowerCase();
         const user = await prisma.user.findUnique({
-          where: { email: credentials.username as string },
+          where: { email },
           select: { id: true, name: true, email: true, role: true, passwordHash: true },
         });
 

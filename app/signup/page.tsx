@@ -5,11 +5,24 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 
+function passwordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string } {
+  if (!pw) return { level: 0, label: "" };
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasLower = /[a-z]/.test(pw);
+  const hasNum = /\d/.test(pw);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+  const score = [pw.length >= 8, hasUpper && hasLower, hasNum, hasSpecial].filter(Boolean).length;
+  if (score <= 1) return { level: 1, label: "Weak" };
+  if (score === 2) return { level: 2, label: "Fair" };
+  return { level: 3, label: "Strong" };
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirm: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const strength = passwordStrength(form.password);
 
   function set(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -158,6 +171,27 @@ export default function SignupPage() {
                 minLength={8}
                 required
               />
+              {form.password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map((n) => (
+                      <div
+                        key={n}
+                        className="h-1 flex-1 rounded-full transition-colors duration-200"
+                        style={{
+                          background: strength.level >= n
+                            ? strength.level === 1 ? "#ef4444" : strength.level === 2 ? "#f59e0b" : "#10b981"
+                            : "#e5e7eb",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {strength.label && <span style={{ color: strength.level === 1 ? "#ef4444" : strength.level === 2 ? "#f59e0b" : "#10b981" }}>{strength.label}</span>}
+                    {" — "}Use uppercase, numbers &amp; symbols for a stronger password.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">

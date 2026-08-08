@@ -64,8 +64,8 @@ export default function PricingPage() {
   const plans: Plan[] = [
     {
       name: "Starter",
-      price: billing === "monthly" ? 99 : Math.round(99 * 12 * 0.9),
-      durationLine: "/month",
+      price: billing === "monthly" ? 99 : Math.round(99 * 0.9),
+      durationLine: billing === "monthly" ? "/month" : "/month, billed annually",
       highlight: false,
       cta: "Choose plan",
       features: [
@@ -82,8 +82,8 @@ export default function PricingPage() {
     },
     {
       name: "Growth",
-      price: billing === "monthly" ? 199 : Math.round(199 * 12 * 0.9),
-      durationLine: "/month",
+      price: billing === "monthly" ? 199 : Math.round(199 * 0.9),
+      durationLine: billing === "monthly" ? "/month" : "/month, billed annually",
       highlight: true, // ✅ Recommended
       cta: "Choose plan",
       features: [
@@ -100,8 +100,8 @@ export default function PricingPage() {
     },
     {
       name: "Enterprise",
-      price: billing === "monthly" ? 399 : Math.round(399 * 12 * 0.9),
-      durationLine: "/month",
+      price: billing === "monthly" ? 399 : Math.round(399 * 0.9),
+      durationLine: billing === "monthly" ? "/month" : "/month, billed annually",
       highlight: false,
       cta: "Contact sales",
       features: [
@@ -257,8 +257,8 @@ export default function PricingPage() {
           </Container>
 
           {/* Cards (3 only)  */}
-          <div className="relative z-10 mt-[106px] px-[200px]">
-            <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <div className="relative z-10 mt-[106px] px-4 md:px-12 xl:px-[200px]">
+            <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch">
               {plans.map((plan) => {
                 const isHighlight = !!plan.highlight;
 
@@ -449,11 +449,8 @@ export default function PricingPage() {
       {/* Custom Plan CTA — viewport-aligned (180px from left) */}
       <Section withContainer={false}>
         <div
-          className="rounded-[16px] flex items-center gap-6"
+          className="rounded-[16px] flex flex-col sm:flex-row items-start sm:items-center gap-6 mx-4 md:mx-12 xl:mx-[180px]"
           style={{
-            marginLeft: 180,
-            width: "fit-content",
-            maxWidth: "calc(100vw - 200px)",
             padding: 24,
             background:
               "linear-gradient(90deg, rgba(147,129,250,0.17) 0%, rgba(169,195,247,0.10) 100%)",

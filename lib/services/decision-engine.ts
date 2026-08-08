@@ -519,7 +519,7 @@ export class DecisionEngine {
     const prisma = await this.prisma;
 
     // Get all candidates who applied to this job
-    const applications = await prisma.jobApplication.findMany({
+    const applications = await prisma.candidateApplication.findMany({
       where: { jobId },
       select: { candidateId: true }
     });
@@ -958,7 +958,7 @@ export class DecisionEngine {
         codeIntelligence: result.breakdown.codeIntelligence,
         interviewSignals: result.breakdown.interviewSignals,
         behaviorSignals: result.breakdown.behaviorSignals,
-        signals: result.signals,
+        signals: result.signals as unknown as any,
         explanation: result.explanation,
         signalCompleteness: result.metadata.signalCompleteness,
         confidenceFactors: result.metadata.confidenceFactors,
@@ -976,7 +976,7 @@ export class DecisionEngine {
         codeIntelligence: result.breakdown.codeIntelligence,
         interviewSignals: result.breakdown.interviewSignals,
         behaviorSignals: result.breakdown.behaviorSignals,
-        signals: result.signals,
+        signals: result.signals as unknown as any,
         explanation: result.explanation,
         signalCompleteness: result.metadata.signalCompleteness,
         confidenceFactors: result.metadata.confidenceFactors,

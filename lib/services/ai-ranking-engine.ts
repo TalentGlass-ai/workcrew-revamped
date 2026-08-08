@@ -87,14 +87,14 @@ export class AIRankingEngine {
     const companyWeights = await feedbackLearningEngine.getPersonalizedWeights('company', job.organizationId);
     const systemWeights = await feedbackLearningEngine.getPersonalizedWeights('system', 'global');
 
-    const jobAnalysis = await this.analyzeJob(job);
+    const jobAnalysis = await this.analyzeJob(job as any);
 
     // Step 2: Fast candidate retrieval (performance critical)
     const candidates = await this.retrieveCandidatePool(jobAnalysis, limit * 2);
 
     // Step 3: Deep scoring for each candidate
     const scoredCandidates = await Promise.all(
-      candidates.map(candidate => this.scoreCandidate(candidate, job, jobAnalysis, companyWeights, systemWeights))
+      candidates.map(candidate => this.scoreCandidate(candidate as any, job as any, jobAnalysis, companyWeights, systemWeights))
     );
 
     // Step 4: Sort by final score and limit results
@@ -167,7 +167,7 @@ export class AIRankingEngine {
       }
     });
 
-    return candidates;
+    return candidates as any;
   }
 
   /**

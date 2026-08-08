@@ -260,15 +260,15 @@ export class AutoGradingEngine {
           language: submission.language,
           code: submission.code,
           score: result.score,
-          breakdown: result.breakdown,
-          feedback: result.aiReview,
-          metrics: result.metrics,
-          testResults: result.testResults,
+          breakdown: result.breakdown as unknown as any,
+          feedback: result.aiReview as unknown as any,
+          metrics: result.metrics as unknown as any,
+          testResults: result.testResults as unknown as any,
           behaviorSignals: behaviorResult ? {
             suspicionScore: behaviorResult.suspicionScore,
             riskLevel: behaviorResult.riskLevel,
             signals: behaviorResult.signals
-          } : null
+          } as unknown as any : undefined
         }
       });
     } catch (error) {

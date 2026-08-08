@@ -8,9 +8,13 @@ const scryptAsync = promisify(scrypt);
 
 async function verifyPassword(plain: string, hash: string): Promise<boolean> {
   try {
-    const [salt, stored] = hash.split(":");
-    if (!salt || !stored) return false;
-    const buf = (await scryptAsync(plain, salt, 64)) as Buffer;
+    // Format: scrypt$N$r$p$salt$storedHash
+    const parts = hash.split("$");
+    if (parts.length !== 6 || parts[0] !== "scrypt") return false;
+    const [, N, r, p, salt, stored] = parts;
+    const params = { N: parseInt(N), r: parseInt(r), p: parseInt(p) };
+    if (!salt || !stored || isNaN(params.N) || isNaN(params.r) || isNaN(params.p)) return false;
+    const buf = (await scryptAsync(plain, salt, 64, params)) as Buffer;
     const storedBuf = Buffer.from(stored, "hex");
     if (buf.length !== storedBuf.length) return false;
     return timingSafeEqual(buf, storedBuf);

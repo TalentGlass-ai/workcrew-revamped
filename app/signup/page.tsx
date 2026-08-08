@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import React, { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -36,6 +37,17 @@ export default function SignupPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Something went wrong");
+        return;
+      }
+      // Sign in immediately so the user lands on onboarding with an active session
+      const result = await signIn("credentials", {
+        username: form.email,
+        password: form.password,
+        redirect: false,
+      });
+      if (result?.error) {
+        // Account created but auto-login failed — send to login page
+        router.push("/login");
         return;
       }
       router.push("/onboarding/upload-resume");

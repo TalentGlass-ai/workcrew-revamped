@@ -2,24 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import React from "react";
-
-function loadDraft<T = any>(): T {
-  if (typeof window === "undefined") return {} as T;
-  try { return JSON.parse(localStorage.getItem("wc_onboard") || "{}"); } catch { return {} as T; }
-}
-function clearDraft() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("wc_onboard");
-}
+import { useOnboardingStore } from "@/components/../lib/stores/onboardingStore";
 
 export default function ReviewPage() {
   const router = useRouter();
-  const data = loadDraft();
+  const { personalDetails, workExperience, education, professionalSummary, clearOnboardingState } = useOnboardingStore();
 
   function complete() {
-    // Submit to API here if needed
-    clearDraft();
-    router.push("/find-jobs"); // or dashboard
+    clearOnboardingState();
+    router.push("/find-jobs");
   }
 
   return (
@@ -40,12 +31,12 @@ export default function ReviewPage() {
               <button className="text-[#4D31EC]" onClick={() => router.push("/onboarding/personal-details")}>Edit</button>
             </div>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div><span className="font-medium">Name:</span> {data.firstName} {data.lastName}</div>
-              <div><span className="font-medium">Email:</span> {data.email}</div>
-              <div><span className="font-medium">Phone:</span> {data.phoneCountry} {data.phone}</div>
-              <div><span className="font-medium">Location:</span> {data.location}</div>
-              <div className="md:col-span-2"><span className="font-medium">LinkedIn:</span> {data.linkedin || "—"}</div>
-              <div className="md:col-span-2"><span className="font-medium">Portfolio:</span> {data.portfolio || "—"}</div>
+              <div><span className="font-medium">Name:</span> {personalDetails.firstName} {personalDetails.lastName}</div>
+              <div><span className="font-medium">Email:</span> {personalDetails.email}</div>
+              <div><span className="font-medium">Phone:</span> {personalDetails.phoneCountry} {personalDetails.phone}</div>
+              <div><span className="font-medium">Location:</span> {personalDetails.location}</div>
+              <div className="md:col-span-2"><span className="font-medium">LinkedIn:</span> {personalDetails.linkedin || "—"}</div>
+              <div className="md:col-span-2"><span className="font-medium">Portfolio:</span> {personalDetails.portfolio || "—"}</div>
             </div>
           </div>
 
@@ -55,18 +46,13 @@ export default function ReviewPage() {
               <h3 className="font-semibold text-lg">Work experience</h3>
               <button className="text-[#4D31EC]" onClick={() => router.push("/onboarding/work-experience")}>Edit</button>
             </div>
-            {data.exp ? (
+            {workExperience.title ? (
               <div className="text-sm space-y-2">
-                <div className="font-medium">{data.exp.title} at {data.exp.company}</div>
+                <div className="font-medium">{workExperience.title} at {workExperience.company}</div>
                 <div className="text-gray-600">
-                  {data.exp.start} – {data.exp.current ? "Present" : data.exp.end}
+                  {workExperience.start} – {workExperience.current ? "Present" : workExperience.end}
                 </div>
-                <pre className="bg-[#F8F9FC] p-3 rounded-lg whitespace-pre-wrap">{data.exp.bullets}</pre>
-                <div className="flex gap-2 flex-wrap mt-2">
-                  <span className="px-3 py-1 rounded-full bg-[#F4F3FF] text-[#4D31EC] text-xs">Leadership</span>
-                  <span className="px-3 py-1 rounded-full bg-[#F4F3FF] text-[#4D31EC] text-xs">Python</span>
-                  <span className="px-3 py-1 rounded-full bg-[#F4F3FF] text-[#4D31EC] text-xs">SQL</span>
-                </div>
+                <pre className="bg-[#F8F9FC] p-3 rounded-lg whitespace-pre-wrap">{workExperience.bullets}</pre>
               </div>
             ) : (
               <div className="text-sm text-gray-500">No experience added.</div>
@@ -79,11 +65,11 @@ export default function ReviewPage() {
               <h3 className="font-semibold text-lg">Education</h3>
               <button className="text-[#4D31EC]" onClick={() => router.push("/onboarding/education")}>Edit</button>
             </div>
-            {data.edu ? (
+            {education.degree ? (
               <div className="text-sm space-y-1">
-                <div className="font-medium">{data.edu.degree} — {data.edu.field}</div>
-                <div>{data.edu.institution}, {data.edu.year}</div>
-                {data.edu.gpa && <div>CGPA: {data.edu.gpa}</div>}
+                <div className="font-medium">{education.degree} — {education.field}</div>
+                <div>{education.institution}, {education.year}</div>
+                {education.gpa && <div>CGPA: {education.gpa}</div>}
               </div>
             ) : (
               <div className="text-sm text-gray-500">No education added.</div>
@@ -96,7 +82,7 @@ export default function ReviewPage() {
               <h3 className="font-semibold text-lg">Professional summary</h3>
               <button className="text-[#4D31EC]" onClick={() => router.push("/onboarding/professional-summary")}>Edit</button>
             </div>
-            <p className="text-sm">{data.summary || "—"}</p>
+            <p className="text-sm">{professionalSummary.summary || "—"}</p>
           </div>
 
           {/* Actions */}

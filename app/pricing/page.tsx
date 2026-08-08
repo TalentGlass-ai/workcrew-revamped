@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Section,
   Container,
@@ -33,6 +34,7 @@ type Plan = {
 };
 
 export default function PricingPage() {
+  const router = useRouter();
   // Simple region detection - in production, use proper geolocation
   React.useEffect(() => {
     const detectRegion = () => {
@@ -355,7 +357,6 @@ export default function PricingPage() {
                       aria-label={plan.cta}
                       className="mt-5 mb-3 inline-flex w-full items-center justify-center gap-3 rounded-[14px] bg-[#4D31EC] px-5 py-3 text-white hover:bg-[#4029c8] transition"
                       onClick={() => {
-                        // Conversion tracking
                         if (typeof window !== 'undefined' && (window as any).gtag) {
                           (window as any).gtag('event', 'pricing_click', {
                             plan_name: plan.name,
@@ -363,6 +364,7 @@ export default function PricingPage() {
                             billing: billing
                           });
                         }
+                        router.push('/signup');
                       }}
                     >
                       <T
@@ -496,12 +498,12 @@ export default function PricingPage() {
               flexShrink: 0,
             }}
             onClick={() => {
-              // Conversion tracking
               if (typeof window !== 'undefined' && (window as any).gtag) {
                 (window as any).gtag('event', 'custom_plan_click', {
                   region: 'global'
                 });
               }
+              router.push('/signup');
             }}
           >
             <span className="inline-flex items-center gap-2">

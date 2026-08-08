@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import JobsPageClient from './JobsPageClient'
 
 interface JobsPageProps {
@@ -58,8 +57,8 @@ export async function generateMetadata({ searchParams }: JobsPageProps): Promise
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
+  const resolvedSearchParams = await searchParams
   try {
-    const resolvedSearchParams = await searchParams
 
     // Build API URL with search params
     const params = new URLSearchParams()
@@ -83,6 +82,6 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return <JobsPageClient initialData={data} searchParams={resolvedSearchParams} />
   } catch (error) {
     console.error('Jobs page error:', error)
-    notFound()
+    return <JobsPageClient initialData={{ jobs: [], pagination: { page: 1, limit: 12, total: 0, pages: 0, hasNext: false, hasPrev: false }, filters: {} }} searchParams={resolvedSearchParams} />
   }
 }

@@ -37,7 +37,7 @@ export default function LoginPage() {
       toast.error("Invalid credentials", { description: "Please check your username and password." });
     } else {
       toast.success("Login successful!");
-      router.push("/onboarding/upload-resume");
+      router.push(role === "employer" ? "/employer" : "/onboarding/upload-resume");
     }
   }
 

@@ -291,7 +291,7 @@ export default function FindJobsPage() {
         const pages = [1, 2];
         const chunked: Job[] = [];
         for (const p of pages) {
-          const res = await fetch(`${config.api.baseUrl}/api/v2/jobs?page=${p}&limit=10`, {
+          const res = await fetch(`/api/jobs?page=${p}&limit=10`, {
             cache: "no-store",
           });
           if (!res.ok) continue;
@@ -315,7 +315,7 @@ export default function FindJobsPage() {
             location: j.location ?? "",
             salaryRange: j.salaryRange ?? j.salary ?? "",
             salary: j.salary ?? "",
-            company: j.company ?? null,
+            company: j.company ?? (j as any).organization ?? null,
             tags: j.tags ?? [],
             skills: normalizeSkills(j),
             experienceLevel: j.experienceLevel,

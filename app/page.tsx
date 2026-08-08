@@ -44,7 +44,31 @@ function GapSection({ children }: { children: React.ReactNode }) {
   );
 }
 
+function useContactForm() {
+  const [status, setStatus] = React.useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus('loading');
+    const fd = new FormData(e.currentTarget);
+    const body = Object.fromEntries(fd.entries());
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      setStatus(res.ok ? 'ok' : 'err');
+    } catch {
+      setStatus('err');
+    }
+  }
+
+  return { status, handleSubmit };
+}
+
 export default function HomePage() {
+  const { status: contactStatus, handleSubmit: handleContact } = useContactForm();
   return (
     <main>
       <DevBuildBadge />
@@ -133,24 +157,25 @@ export default function HomePage() {
               <div className="mx-auto max-w-[800px]">
                 <form
                   className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
-                  onSubmit={(e) => e.preventDefault()}
+                  onSubmit={handleContact}
                 >
                   <ContactField label="Company name" required htmlFor="company">
-                    <ContactInput id="company" placeholder="Enter your company name" />
+                    <ContactInput id="company" name="company" placeholder="Enter your company name" required />
                   </ContactField>
 
                   <ContactField label="Contact person" required htmlFor="contactPerson">
-                    <ContactInput id="contactPerson" placeholder="Your full name" />
+                    <ContactInput id="contactPerson" name="contactPerson" placeholder="Your full name" required />
                   </ContactField>
 
                   <ContactField label="Business email" required htmlFor="email">
-                    <ContactInput id="email" type="email" placeholder="you@company.com" />
+                    <ContactInput id="email" name="email" type="email" placeholder="you@company.com" required />
                   </ContactField>
 
                   <ContactField label="Phone number" required htmlFor="phone">
                     <div className="flex gap-3">
                       <ContactSelect
                         aria-label="Country code"
+                        name="countryCode"
                         className="w-[86px]"
                         defaultValue="+91"
                         options={[
@@ -160,13 +185,14 @@ export default function HomePage() {
                           { value: "+61", label: "+61" },
                         ]}
                       />
-                      <ContactInput id="phone" placeholder="123456790" inputMode="numeric" />
+                      <ContactInput id="phone" name="phone" placeholder="123456790" inputMode="numeric" required />
                     </div>
                   </ContactField>
 
                   <ContactField label="Company size" required htmlFor="companySize">
                     <ContactSelect
                       id="companySize"
+                      name="companySize"
                       placeholder="Select company size"
                       options={[
                         { value: "1-10", label: "1–10" },
@@ -181,6 +207,7 @@ export default function HomePage() {
                   <ContactField label="Your role" required htmlFor="role">
                     <ContactSelect
                       id="role"
+                      name="role"
                       placeholder="Select your role"
                       options={[
                         { value: "founder", label: "Founder / CXO" },
@@ -195,18 +222,31 @@ export default function HomePage() {
                     <ContactField label="Description" htmlFor="desc">
                       <ContactTextarea
                         id="desc"
+                        name="desc"
                         placeholder="Tell us more about your hiring needs"
                         rows={5}
                       />
                     </ContactField>
                   </div>
 
+                  {contactStatus === 'ok' && (
+                    <div className="md:col-span-2 rounded-xl bg-green-50 p-4 text-center text-green-700 font-medium">
+                      Thanks! We'll be in touch shortly.
+                    </div>
+                  )}
+                  {contactStatus === 'err' && (
+                    <div className="md:col-span-2 rounded-xl bg-red-50 p-4 text-center text-red-600 font-medium">
+                      Something went wrong. Please try again.
+                    </div>
+                  )}
+
                   <div className="md:col-span-2 flex justify-center pt-2">
                     <button
                       type="submit"
+                      disabled={contactStatus === 'loading' || contactStatus === 'ok'}
                       className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white
                                bg-[#5A3BFF] hover:bg-[#4F35E6] active:bg-[#442ECC]
-                               shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition"
+                               shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
                         <path
@@ -217,7 +257,9 @@ export default function HomePage() {
                           strokeLinejoin="round"
                         />
                       </svg>
-                      <span className="font-medium">Get in touch</span>
+                      <span className="font-medium">
+                        {contactStatus === 'loading' ? 'Sending…' : 'Get in touch'}
+                      </span>
                     </button>
                   </div>
                 </form>

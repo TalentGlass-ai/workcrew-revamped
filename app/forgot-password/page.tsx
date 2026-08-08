@@ -5,9 +5,18 @@ import React, { useState } from "react";
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setLoading(true);
+    const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
+    await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    setLoading(false);
     setSubmitted(true);
   }
 
@@ -34,6 +43,7 @@ export default function ForgotPasswordPage() {
             </p>
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
               <input
+                name="email"
                 type="email"
                 placeholder="you@example.com"
                 required
@@ -41,9 +51,10 @@ export default function ForgotPasswordPage() {
               />
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#4D31EC] py-3 font-semibold text-white hover:bg-[#3b25b5]"
+                disabled={loading}
+                className="w-full rounded-full bg-[#4D31EC] py-3 font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-60"
               >
-                Send reset link
+                {loading ? "Sending…" : "Send reset link"}
               </button>
             </form>
             <p className="mt-4 text-center text-sm text-gray-500">

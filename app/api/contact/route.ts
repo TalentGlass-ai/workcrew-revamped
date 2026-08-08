@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getPrisma } from "@/lib/prisma";
 
 const contactSchema = z.object({
   company: z.string().min(1).max(200),
@@ -25,8 +26,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  // ponytail: log to console — wire to email/CRM when ready
-  console.log("Contact form submission:", parsed.data);
+  const prisma = await getPrisma();
+  if (prisma) {
+    await prisma.auditLog.create({
+      data: {
+        action: "contact_form_submitted",
+        resource: "contact",
+        details: parsed.data as unknown as any,
+        severity: "low",
+      },
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

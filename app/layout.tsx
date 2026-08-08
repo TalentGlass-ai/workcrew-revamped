@@ -18,9 +18,18 @@ const archivo = Archivo({
   weight: "variable",
 });
 
+import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { Providers } from "./Providers";
 import { SEO_CONFIG } from "../lib/seo";
+
+export const metadata: Metadata = {
+  title: {
+    default: "WorkCrew.ai — AI-Powered Hiring Platform",
+    template: "%s | WorkCrew.ai",
+  },
+  description: "WorkCrew.ai connects top talent with great companies using AI-driven matching, smart assessments, and seamless hiring workflows.",
+};
 
 export default function RootLayout({
   children,

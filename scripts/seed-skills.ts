@@ -75,8 +75,8 @@ async function seedSkills() {
     for (const skillName of skills) {
       await prisma.skill.upsert({
         where: { name: skillName },
-        update: { category, synonyms: SKILL_SYNONYMS[skillName] || [] },
-        create: { name: skillName, category, synonyms: SKILL_SYNONYMS[skillName] || [] }
+        update: { category, aliases: SKILL_SYNONYMS[skillName] || [] },
+        create: { name: skillName, category, aliases: SKILL_SYNONYMS[skillName] || [] }
       });
     }
   }

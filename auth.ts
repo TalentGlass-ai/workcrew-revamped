@@ -1,5 +1,27 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import { prisma } from "@/lib/prisma";
+
+const scryptAsync = promisify(scrypt);
+
+async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+  try {
+    // Format: scrypt$N$r$p$salt$storedHash
+    const parts = hash.split("$");
+    if (parts.length !== 6 || parts[0] !== "scrypt") return false;
+    const [, N, r, p, salt, stored] = parts;
+    const params = { N: parseInt(N), r: parseInt(r), p: parseInt(p) };
+    if (!salt || !stored || isNaN(params.N) || isNaN(params.r) || isNaN(params.p)) return false;
+    const buf = (await scryptAsync(plain, salt, 64, params)) as Buffer;
+    const storedBuf = Buffer.from(stored, "hex");
+    if (buf.length !== storedBuf.length) return false;
+    return timingSafeEqual(buf, storedBuf);
+  } catch {
+    return false;
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -11,27 +33,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         role: { label: "Role", type: "text" }
       },
       async authorize(credentials) {
-        // [TODO]: Connect to Database to verify credentials
-        // For prototyping, we accept any username + password > 3 chars
-        
-        if (!credentials?.username || !credentials?.password) {
-          return null;
-        }
+        if (!credentials?.username || !credentials?.password) return null;
 
-        const username = credentials.username as string;
-        const password = credentials.password as string;
-        const role = (credentials.role as string) || "candidate";
+        const email = (credentials.username as string).trim().toLowerCase();
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, name: true, email: true, role: true, passwordHash: true },
+        });
 
-        if (username.length > 3 && password.length >= 8) {
-          return {
-            id: "1",
-            name: username.split("@")[0],
-            email: username.includes("@") ? username : `${username}@example.com`,
-            role: role,
-          };
-        }
+        // Run a dummy hash when the user isn't found to prevent timing-based email enumeration
+        const DUMMY_HASH = "scrypt$16384$8$1$0000000000000000$" + "0".repeat(128);
+        const valid = await verifyPassword(credentials.password as string, user?.passwordHash ?? DUMMY_HASH);
+        if (!valid) return null;
 
-        return null; // Return null if user data could not be retrieved
+        return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
     }),
   ],
@@ -40,16 +55,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        // Add role to token
-        token.role = (user as any).role;
-      }
+      if (user) token.role = (user as any).role;
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).role = token.role;
-      }
+      if (session.user) (session.user as any).role = token.role;
       return session;
     },
   },

@@ -216,16 +216,62 @@ export class SkillInferenceEngine {
   }
 
   /**
-   * Graph-based inference: using Neo4j relationships
+   * Graph-based inference: BFS through skill ontology children (2 hops)
+   * ponytail: uses in-memory SKILL_ONTOLOGY instead of Neo4j; swap driver when Neo4j is available
    */
   private async inferFromGraph(
     candidateId: string,
     existingInferred: string[]
   ): Promise<InferredSkill[]> {
     try {
-      // This would use Neo4j if available
-      // For now, return empty array as Neo4j integration is pending
-      return [];
+      const prisma = await getPrisma();
+      if (!prisma) return [];
+
+      const candidate = await prisma.candidate.findUnique({
+        where: { id: candidateId },
+        include: { skills: true },
+      });
+
+      const explicitSkills = new Set<string>(candidate?.skills?.map((s: any) => s.skillName) ?? []);
+      const excluded = new Set<string>([...explicitSkills, ...existingInferred]);
+      const inferences: InferredSkill[] = [];
+      const seen = new Set<string>();
+
+      // Hop 1: direct children of explicit skills
+      const hop1: string[] = [];
+      for (const skill of explicitSkills) {
+        const ontology = this.ontologyService.getSkillOntology(skill);
+        for (const child of ontology?.children ?? []) {
+          if (!excluded.has(child) && !seen.has(child)) {
+            seen.add(child);
+            hop1.push(child);
+            inferences.push({
+              skillName: child,
+              confidence: 0.55,
+              reason: `Specialization of ${skill}`,
+              inferenceType: 'GRAPH_BASED',
+            });
+          }
+        }
+      }
+
+      // Hop 2: children of children
+      for (const skill of hop1) {
+        const ontology = this.ontologyService.getSkillOntology(skill);
+        for (const child of ontology?.children ?? []) {
+          if (!excluded.has(child) && !seen.has(child)) {
+            seen.add(child);
+            inferences.push({
+              skillName: child,
+              confidence: 0.4,
+              reason: `Extended specialization via ${skill}`,
+              inferenceType: 'GRAPH_BASED',
+            });
+          }
+        }
+      }
+
+      return inferences;
     } catch (error) {
       console.warn('Graph-based inference not available:', error);
       return [];

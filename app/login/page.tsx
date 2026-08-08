@@ -199,17 +199,7 @@ export default function LoginPage() {
               </T>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input
-                  name="remember"
-                  type="checkbox"
-                  className="accent-[#4D31EC]"
-                />
-                <T as="span" variant="sub14">
-                  Remember me
-                </T>
-              </label>
+            <div className="flex items-center justify-end">
               <Link href="/forgot-password" className="text-[#4D31EC]">
                 <T as="span" variant="sub14" weight={600}>
                   Forgot password?
@@ -228,50 +218,6 @@ export default function LoginPage() {
                 {isLoading ? "Logging in..." : "Login →"}
               </T>
             </button>
-
-            {/* OR divider */}
-            <div className="flex items-center gap-3">
-              <span className="h-px w-full bg-gray-200" />
-              <T as="span" variant="sub14" weight={600} className="text-black">
-                or continue with
-              </T>
-              <span className="h-px w-full bg-gray-200" />
-            </div>
-
-            {/* Social buttons with real icons */}
-            <div className="flex justify-center gap-4">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
-                aria-label="Continue with Google"
-              >
-                <Image
-                  src="/flat-color-icons_google.png"
-                  alt="Google"
-                  width={16}
-                  height={16}
-                />
-                <T as="span" variant="sub14" weight={600}>
-                  Google
-                </T>
-              </button>
-
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-full border px-6 py-2"
-                aria-label="Continue with Microsoft"
-              >
-                <Image
-                  src="/logos_microsoft-icon.png"
-                  alt="Microsoft"
-                  width={16}
-                  height={16}
-                />
-                <T as="span" variant="sub14" weight={600}>
-                  Microsoft
-                </T>
-              </button>
-            </div>
 
             <T as="p" variant="sub14" className="text-center">
               Don’t have an account?{" "}

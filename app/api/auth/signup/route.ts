@@ -3,6 +3,7 @@ import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimiter";
 
 const scryptAsync = promisify(scrypt);
 
@@ -23,6 +24,11 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown";
+  if (!rateLimit(`signup:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

@@ -16,7 +16,10 @@
     "rank:job": "tsx scripts/batch-rank-jobs.ts job",
     "process:feedback": "tsx scripts/process-feedback-learning.ts",
     "process:alerts": "tsx lib/jobAlerts.ts",
-    "sync:typesense": "tsx scripts/sync-typesense.ts"
+    "sync:typesense": "tsx scripts/sync-typesense.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -24,6 +27,7 @@
     "@mediapipe/face_detection": "^0.4.1646425229",
     "@prisma/adapter-better-sqlite3": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "@sentry/nextjs": "^10.69.0",
     "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@types/ws": "^8.18.1",
@@ -54,11 +58,13 @@
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.10"
   }
 }

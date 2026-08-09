@@ -237,8 +237,10 @@ async function evaluateAnswer(
     criteria.correctness = correct ? 100 : 0;
   }
 
-  // Additional criteria evaluation based on pack
-  if (pack) {
+  // Keyword heuristics only apply to text/open-ended questions.
+  // Coding questions are graded by the autoGradingEngine above; applying
+  // keyword heuristics on top would produce misleading scores.
+  if (pack && question.questionType !== 'coding') {
     // Evaluate system design aspects
     if (pack.evaluation_weights.system_design) {
       criteria.system_design = evaluateSystemDesign(answer.answerText, question);

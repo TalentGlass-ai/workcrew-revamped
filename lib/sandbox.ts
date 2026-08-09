@@ -285,18 +285,17 @@ except Exception as e:
   }
 
   private async executeJava(
-    code: string,
-    input?: any,
-    timeout: number = 10000
+    _code: string,
+    _input?: any,
+    _timeout: number = 10000
   ): Promise<ExecutionResult> {
-    // Java execution would require more complex setup with compilation
-    // For now, return a placeholder
+    // ponytail: Java requires javac + JRE in the sandbox environment; add when infra supports it
     return {
       success: false,
       output: null,
       executionTime: 0,
       memoryUsage: 0,
-      error: 'Java execution not yet implemented'
+      error: 'Java is not supported in this environment. Please use JavaScript or Python.'
     };
   }
 

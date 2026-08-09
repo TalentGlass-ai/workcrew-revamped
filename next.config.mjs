@@ -1,6 +1,7 @@
 // next.config.mjs
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // Re-create __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -25,4 +26,10 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: true,          // no build-time noise when DSN is absent
+  disableLogger: true,
+  automaticVercelMonitors: false,
+});

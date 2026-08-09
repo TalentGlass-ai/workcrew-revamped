@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { aiInterviewer, InterviewSession, InterviewQuestion, interviewSessions } from '@/workcrew-ui/lib/aiInterviewer';
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { candidateId, code, language } = await request.json();
 

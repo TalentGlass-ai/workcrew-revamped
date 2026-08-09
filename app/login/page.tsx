@@ -6,13 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import T from "@/components/primitives/Typography";
-
-import { signIn } from "next-auth/react";
-import { toast } from "sonner"; // We can add sonner toasts for errors
+import { signIn, getSession } from "next-auth/react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = React.useState<"candidate" | "employer">("candidate");
   const [isLoading, setIsLoading] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -22,30 +20,32 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
-    
-    // Call NextAuth Credentials Provider
+
     const result = await signIn("credentials", {
       username,
       password,
-      role,
-      redirect: false, // Handle routing manually
+      redirect: false,
     });
 
     setIsLoading(false);
 
     if (result?.error) {
       toast.error("Invalid credentials", { description: "Please check your username and password." });
-    } else {
-      toast.success("Login successful!");
-      router.push(role === "employer" ? "/employer" : "/onboarding/upload-resume");
+      return;
     }
+
+    toast.success("Login successful!");
+
+    // Read the actual DB role from the session JWT — never trust client-side state
+    const session = await getSession();
+    const role = (session?.user as any)?.role ?? "candidate";
+    router.push(role === "recruiter" || role === "admin" ? "/employer" : "/dashboard");
   }
 
   return (
     <main className="flex min-h-screen">
       {/* LEFT (Blue half) */}
       <section className="relative hidden w-1/2 items-center justify-center bg-[#4D31EC] px-12 text-white md:flex">
-        {/* WorkCrew icon: 50px from left, 50px below navbar */}
         <Image
           src="/workcrew-icon.png"
           alt="WorkCrew.ai"
@@ -55,9 +55,7 @@ export default function LoginPage() {
           priority
         />
 
-        {/* Centered content block */}
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
-          {/* White card like Figma tile */}
           <div className="mb-6 w-full overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <div className="relative aspect-[16/10] w-full">
               <video
@@ -89,7 +87,6 @@ export default function LoginPage() {
             AI smartly extracts and organizes your skills, experience, and
             achievements from any resume format.
           </T>
-
         </div>
       </section>
 
@@ -116,50 +113,19 @@ export default function LoginPage() {
             Enter your credentials to login
           </T>
 
-          {/* Role toggle */}
-          <div className="mt-6 flex justify-center gap-6">
-            <button
-              onClick={() => setRole("candidate")}
-              className={`rounded-md px-8 py-2 transition ${
-                role === "candidate"
-                  ? "bg-[#4D31EC] text-white"
-                  : "text-gray-800 hover:text-[#4D31EC]"
-              }`}
-            >
-              <T as="span" variant="sub14" weight={600} trackingPct={2}>
-                Candidate
-              </T>
-            </button>
-            <button
-              onClick={() => setRole("employer")}
-              className={`rounded-md px-8 py-2 transition ${
-                role === "employer"
-                  ? "bg-[#4D31EC] text-white"
-                  : "text-gray-800 hover:text-[#4D31EC]"
-              }`}
-            >
-              <T as="span" variant="sub14" weight={600} trackingPct={2}>
-                Employer
-              </T>
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div>
-              {/* keep htmlFor on a real <label>, render text with T */}
               <label htmlFor="username" className="mb-1 block">
                 <T as="span" variant="body16" weight={500}>
-                  Username
+                  Email
                 </T>
               </label>
               <input
                 id="username"
                 name="username"
-                // RULES: 3–30 chars, letters/numbers/_/., or email allowed
-                pattern="^([A-Za-z0-9_.]{3,30}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$"
-                title="Use an email or 3–30 characters (letters, numbers, dot or underscore)."
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
-                placeholder="Enter your username or email"
+                type="email"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC] transition-colors"
+                placeholder="you@example.com"
                 autoComplete="username"
                 required
               />
@@ -175,21 +141,12 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
-                // RULES: at least 8 chars (add stronger rules in backend)
                 minLength={8}
-                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC]"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:border-[#4D31EC] transition-colors"
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
               />
-              <T
-                as="p"
-                variant="sub14"
-                className="mt-1 text-gray-400"
-                lineHeightPx={18}
-              >
-                Minimum 8 characters.
-              </T>
             </div>
 
             <div className="flex items-center justify-end">
@@ -208,12 +165,12 @@ export default function LoginPage() {
               }`}
             >
               <T as="span" variant="button">
-                {isLoading ? "Logging in..." : "Login →"}
+                {isLoading ? "Logging in…" : "Login →"}
               </T>
             </button>
 
             <T as="p" variant="sub14" className="text-center">
-              Don’t have an account?{" "}
+              Don't have an account?{" "}
               <Link href="/signup" className="font-semibold text-[#4D31EC]">
                 <T as="span" variant="sub14" weight={600}>
                   Sign up

@@ -21,6 +21,7 @@ const archivo = Archivo({
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { Providers } from "./Providers";
+import { AppNavBar } from "@/components/AppNavBar";
 import { SEO_CONFIG } from "../lib/seo";
 
 export const metadata: Metadata = {
@@ -56,7 +57,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Toaster position="top-center" />
-          {/* Page content */}
+          <AppNavBar />
           {children}
 
         {/* ✅ Floating Chatbot visible on all pages */}

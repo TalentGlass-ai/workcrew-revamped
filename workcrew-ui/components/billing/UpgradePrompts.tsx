@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 
 interface UpgradeRecommendation {
   type: 'usage_limit' | 'feature_unlock' | 'performance'
@@ -15,13 +16,14 @@ interface UpgradePromptsProps {
 }
 
 export default function UpgradePrompts({ recommendations }: UpgradePromptsProps) {
+  const router = useRouter()
+
   if (recommendations.length === 0) {
     return null
   }
 
   const handleUpgrade = (plan: string) => {
-    // TODO: Implement upgrade flow
-    console.log('Upgrade to:', plan)
+    router.push(`/billing/checkout?plan=${encodeURIComponent(plan.toLowerCase())}`)
   }
 
   return (

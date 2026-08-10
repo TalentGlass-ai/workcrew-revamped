@@ -145,6 +145,58 @@ export const emailTemplates = {
     };
   },
 
+  subscriptionCancelled(planName: string, periodEnd: Date): { subject: string; html: string } {
+    const dateStr = periodEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    return {
+      subject: 'Your WorkCrew.ai subscription has been cancelled',
+      html: layout('Subscription cancelled', `
+        ${h1('Subscription cancelled')}
+        ${p(`Your <strong>${planName}</strong> subscription has been cancelled. You'll retain access to paid features until <strong>${dateStr}</strong>.`)}
+        ${p('After that date your account will revert to the free plan. You can resubscribe at any time from your billing page.')}
+        ${btn('Manage billing', `${APP_URL}/billing`)}
+      `),
+    };
+  },
+
+  usageAlert(metric: string, current: number, limit: number, alertType: 'warning' | 'critical'): { subject: string; html: string } {
+    const pct = Math.round((current / limit) * 100);
+    const metricName = metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const isWarning = alertType === 'warning';
+    return {
+      subject: `${isWarning ? 'Heads up' : 'Action required'} — ${pct}% of ${metricName} limit used`,
+      html: layout(`${isWarning ? 'Usage warning' : 'Usage limit critical'}`, `
+        ${h1(isWarning ? `You're at ${pct}% of your ${metricName} limit` : `You're almost out of ${metricName}`)}
+        ${p(`You've used <strong>${current.toLocaleString()} of ${limit.toLocaleString()}</strong> ${metricName.toLowerCase()} this billing period (${pct}%).`)}
+        ${isWarning
+          ? p('You\'re approaching your plan\'s limit. Consider upgrading to avoid service interruption.')
+          : p('You\'re very close to your limit. Upgrade now to keep your workflow uninterrupted.')}
+        ${btn('Upgrade plan', `${APP_URL}/pricing`)}
+      `),
+    };
+  },
+
+  jobAlert(alertId: string, jobs: Array<{ title: string; company: string; location?: string; id: string }>): { subject: string; html: string } {
+    const rows = jobs.slice(0, 10).map(j => `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;">
+          <a href="${APP_URL}/jobs/${j.id}" style="font-weight:600;color:#5A3BFF;text-decoration:none;">${j.title}</a>
+          <br><span style="font-size:13px;color:#6b7280;">${j.company}${j.location ? ` · ${j.location}` : ''}</span>
+        </td>
+      </tr>`).join('');
+    return {
+      subject: `${jobs.length} new job${jobs.length === 1 ? '' : 's'} match your alert`,
+      html: layout('New job matches', `
+        ${h1(`${jobs.length} new job${jobs.length === 1 ? '' : 's'} for you`)}
+        ${p('We found new jobs matching your saved alert:')}
+        <table style="width:100%;border-collapse:collapse;">${rows}</table>
+        ${btn('View all jobs', `${APP_URL}/jobs`)}
+        <p style="margin-top:24px;font-size:12px;color:#9ca3af;">
+          <a href="${APP_URL}/settings/alerts/${alertId}" style="color:#9ca3af;">Manage this alert</a>
+        </p>
+      `),
+    };
+  },
+
   contactReceived(data: {
     company: string;
     contactPerson: string;

@@ -224,15 +224,21 @@ async function handleSubscriptionEvent(data: any, gateway: 'stripe' | 'razorpay'
 async function handleSubscriptionCancellation(data: any, gateway: 'stripe' | 'razorpay') {
   const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
 
+  const sub = await prisma.subscription.findFirst({ where: { [subscriptionField]: data.id } });
+
   await prisma.subscription.updateMany({
-    where: {
-      [subscriptionField]: data.id,
-    },
-    data: {
-      status: 'canceled',
-      cancelAtPeriodEnd: false,
-    },
+    where: { [subscriptionField]: data.id },
+    data: { status: 'canceled', cancelAtPeriodEnd: false },
   });
+
+  if (sub) {
+    const email = await getBillingEmail(sub);
+    if (email) {
+      const periodEnd = data.current_period_end ? new Date(data.current_period_end * 1000) : new Date();
+      const tpl = emailTemplates.subscriptionCancelled(sub.planId, periodEnd);
+      await sendEmail(email, tpl.subject, tpl.html);
+    }
+  }
 
   console.log(`Canceled subscription ${data.id}`);
 }

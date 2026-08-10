@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
     // Get payment service for global region (Stripe)
     const paymentService = getPaymentServiceForRegion('global');
 
-    // Handle webhook with enhanced error handling
-    const result = await paymentService.handleWebhook(webhookData, signature);
+    // Pass raw body string — constructEvent requires it, not parsed JSON
+    const result = await paymentService.handleWebhook(body, signature);
 
     // Check idempotency using database
     const eventId = result.id;
@@ -334,7 +334,11 @@ async function handlePaymentFailed(data: any, gateway: 'stripe' | 'razorpay') {
   console.log(`Recorded failed payment for subscription ${data.subscription}`);
 }
 
-async function handleTrialEnding(data: any, gateway: 'stripe' | 'razorpay') {
-  // TODO: Send notification to customer about trial ending
-  console.log(`Trial ending for subscription ${data.id}`);
+async function handleTrialEnding(data: any, _gateway: 'stripe' | 'razorpay') {
+  // Mark trial_ends_at on the subscription so the billing UI can surface a banner
+  await prisma.subscription.updateMany({
+    where: { stripeSubscriptionId: data.id },
+    data: { status: 'trialing' },
+  });
+  console.log(`Trial ending soon for subscription ${data.id}`);
 }

@@ -204,44 +204,14 @@ export class StripeService implements PaymentService {
     }
   }
 
-  async handleWebhook(payload: any, signature: string): Promise<WebhookResult> {
+  async handleWebhook(rawBody: string, signature: string): Promise<WebhookResult> {
     try {
-      const event = this.stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET!);
-
-      // Process the event based on type
-      const processedData: any = {};
-
-      switch (event.type) {
-        case 'invoice.payment_succeeded':
-          processedData.subscriptionId = (event.data.object as any).subscription;
-          processedData.status = 'paid';
-          processedData.amount = event.data.object.amount_due / 100;
-          break;
-        case 'invoice.payment_failed':
-          processedData.subscriptionId = (event.data.object as any).subscription;
-          processedData.status = 'past_due';
-          break;
-        case 'customer.subscription.updated':
-          processedData.subscriptionId = event.data.object.id;
-          processedData.status = event.data.object.status;
-          processedData.currentPeriodStart = new Date((event.data.object as any).current_period_start * 1000);
-          processedData.currentPeriodEnd = new Date((event.data.object as any).current_period_end * 1000);
-          break;
-        case 'customer.subscription.deleted':
-          processedData.subscriptionId = event.data.object.id;
-          processedData.status = 'canceled';
-          break;
-        case 'customer.subscription.created':
-          processedData.subscriptionId = event.data.object.id;
-          processedData.status = event.data.object.status;
-          break;
-        default:
-          console.log(`Unhandled event type ${event.type}`);
-      }
-
+      // constructEvent requires the raw body string, not parsed JSON
+      const event = this.stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!);
       return {
+        id: event.id,
         type: event.type,
-        data: processedData,
+        data: event.data.object, // raw Stripe object — route handlers use Stripe field names directly
         processed: true,
       };
     } catch (error) {

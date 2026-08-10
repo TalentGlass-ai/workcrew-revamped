@@ -167,21 +167,26 @@ export async function POST(request: NextRequest) {
 
 async function updateDatabaseFromWebhook(result: any, gateway: 'stripe' | 'razorpay') {
   const { type, data } = result;
+  // data = { subscription?: { entity: {...} }, payment?: { entity: {...} } }
 
   switch (type) {
     case 'subscription.created':
+    case 'subscription.activated':
     case 'subscription.updated':
-      await handleSubscriptionEvent(data, gateway);
+      await handleSubscriptionEvent(data.subscription?.entity, gateway);
       break;
 
     case 'subscription.cancelled':
-      await handleSubscriptionCancellation(data, gateway);
+    case 'subscription.completed':
+      await handleSubscriptionCancellation(data.subscription?.entity, gateway);
       break;
 
+    case 'subscription.charged':
     case 'payment.captured':
       await handlePaymentSucceeded(data, gateway);
       break;
 
+    case 'subscription.halted':
     case 'payment.failed':
       await handlePaymentFailed(data, gateway);
       break;
@@ -191,141 +196,114 @@ async function updateDatabaseFromWebhook(result: any, gateway: 'stripe' | 'razor
   }
 }
 
-async function handleSubscriptionEvent(data: any, gateway: 'stripe' | 'razorpay') {
-  const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
-
-  // Update subscription status and dates
+async function handleSubscriptionEvent(sub: any, _gateway: 'stripe' | 'razorpay') {
+  if (!sub?.id) return;
   await prisma.subscription.updateMany({
-    where: {
-      [subscriptionField]: data.id,
-    },
+    where: { razorpaySubscriptionId: sub.id },
     data: {
-      status: data.status,
-      currentPeriodStart: data.current_start ? new Date(data.current_start * 1000) : undefined,
-      currentPeriodEnd: data.current_end ? new Date(data.current_end * 1000) : undefined,
-      cancelAtPeriodEnd: data.cancel_at_period_end || false,
+      status: sub.status,
+      currentPeriodStart: sub.current_start ? new Date(sub.current_start * 1000) : undefined,
+      currentPeriodEnd: sub.current_end ? new Date(sub.current_end * 1000) : undefined,
     },
   });
-
-  console.log(`Updated subscription ${data.id} status to ${data.status}`);
+  console.log(`Updated Razorpay subscription ${sub.id} to ${sub.status}`);
 }
 
-async function handleSubscriptionCancellation(data: any, gateway: 'stripe' | 'razorpay') {
-  const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
-
+async function handleSubscriptionCancellation(sub: any, _gateway: 'stripe' | 'razorpay') {
+  if (!sub?.id) return;
   await prisma.subscription.updateMany({
-    where: {
-      [subscriptionField]: data.id,
-    },
-    data: {
-      status: 'canceled',
-      cancelAtPeriodEnd: false,
-    },
+    where: { razorpaySubscriptionId: sub.id },
+    data: { status: 'canceled', cancelAtPeriodEnd: false },
   });
-
-  console.log(`Canceled subscription ${data.id}`);
+  console.log(`Canceled Razorpay subscription ${sub.id}`);
 }
 
-async function handlePaymentSucceeded(data: any, gateway: 'stripe' | 'razorpay') {
-  const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
+async function handlePaymentSucceeded(data: any, _gateway: 'stripe' | 'razorpay') {
+  const payment = data.payment?.entity;
+  const sub = data.subscription?.entity;
+  if (!payment) return;
 
-  // Find subscription
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      [subscriptionField]: data.subscription_id,
-    },
-  });
-
-  if (!subscription) {
-    console.error(`Subscription not found for ${gateway} payment ${data.id}`);
+  const subscriptionId = payment.subscription_id ?? sub?.id;
+  if (!subscriptionId) {
+    console.error(`No subscription ID on Razorpay payment ${payment.id}`);
     return;
   }
 
-  // Update or create invoice
-  const invoiceData = {
-    subscriptionId: subscription.id,
-    amount: data.amount / 100, // Convert from paisa
-    status: 'paid',
-    paidAt: new Date(),
-    [`${gateway}InvoiceId`]: data.invoice_id || data.id,
-  };
-
-  const existingInvoice = await prisma.invoice.findFirst({
-    where: {
-      [`${gateway}InvoiceId`]: data.invoice_id || data.id,
-    },
+  const subscription = await prisma.subscription.findFirst({
+    where: { razorpaySubscriptionId: subscriptionId },
   });
-
-  let invoice;
-  if (existingInvoice) {
-    invoice = await prisma.invoice.update({
-      where: { id: existingInvoice.id },
-      data: invoiceData,
-    });
-  } else {
-    invoice = await prisma.invoice.create({
-      data: invoiceData,
-    });
+  if (!subscription) {
+    console.error(`Subscription not found for Razorpay payment ${payment.id}`);
+    return;
   }
 
-  // Create payment record
+  const existingInvoice = await prisma.invoice.findFirst({
+    where: { razorpayInvoiceId: payment.invoice_id ?? payment.id },
+  });
+
+  const invoiceFields = {
+    subscriptionId: subscription.id,
+    amount: Number(payment.amount) / 100,
+    currency: payment.currency ?? 'INR',
+    status: 'paid' as const,
+    paidAt: new Date(),
+    razorpayInvoiceId: payment.invoice_id ?? payment.id,
+  };
+
+  const invoice = existingInvoice
+    ? await prisma.invoice.update({ where: { id: existingInvoice.id }, data: invoiceFields })
+    : await prisma.invoice.create({ data: invoiceFields });
+
   await prisma.payment.create({
     data: {
       invoiceId: invoice.id,
-      amount: data.amount / 100,
-      currency: data.currency,
+      amount: Number(payment.amount) / 100,
+      currency: payment.currency ?? 'INR',
       status: 'succeeded',
-      gateway,
-      region: gateway === 'stripe' ? 'global' : 'india',
-      [`${gateway}PaymentId`]: data.id,
+      gateway: 'razorpay',
+      region: 'india',
+      razorpayPaymentId: payment.id,
     },
   });
 
-  console.log(`Recorded successful payment for invoice ${data.invoice_id || data.id}`);
+  console.log(`Recorded Razorpay payment ${payment.id}`);
 }
 
-async function handlePaymentFailed(data: any, gateway: 'stripe' | 'razorpay') {
-  const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
+async function handlePaymentFailed(data: any, _gateway: 'stripe' | 'razorpay') {
+  const payment = data.payment?.entity;
+  const sub = data.subscription?.entity;
 
-  // Find subscription
+  const subscriptionId = payment?.subscription_id ?? sub?.id;
+  if (!subscriptionId) return;
+
   const subscription = await prisma.subscription.findFirst({
-    where: {
-      [subscriptionField]: data.subscription_id,
-    },
+    where: { razorpaySubscriptionId: subscriptionId },
   });
+  if (!subscription) return;
 
-  if (!subscription) {
-    console.error(`Subscription not found for failed ${gateway} payment ${data.id}`);
-    return;
-  }
-
-  // Update subscription status to past_due
   await prisma.subscription.update({
     where: { id: subscription.id },
     data: { status: 'past_due' },
   });
 
-  // Create failed payment record
-  const invoice = await prisma.invoice.findFirst({
-    where: {
-      subscriptionId: subscription.id,
-      status: 'open',
-    },
-  });
-
-  if (invoice) {
-    await prisma.payment.create({
-      data: {
-        invoiceId: invoice.id,
-        amount: data.amount / 100,
-        currency: data.currency,
-        status: 'failed',
-        gateway,
-        region: gateway === 'stripe' ? 'global' : 'india',
-        [`${gateway}PaymentId`]: data.id,
-      },
+  if (payment) {
+    const invoice = await prisma.invoice.findFirst({
+      where: { subscriptionId: subscription.id, status: 'open' },
     });
+    if (invoice) {
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: Number(payment.amount) / 100,
+          currency: payment.currency ?? 'INR',
+          status: 'failed',
+          gateway: 'razorpay',
+          region: 'india',
+          razorpayPaymentId: payment.id,
+        },
+      });
+    }
   }
 
-  console.log(`Recorded failed payment for subscription ${data.subscription_id}`);
+  console.log(`Recorded Razorpay payment failure for subscription ${subscriptionId}`);
 }

@@ -24,6 +24,7 @@ const CANDIDATE_LINKS = [
 const RECRUITER_LINKS = [
   { href: "/employer", label: "Dashboard" },
   { href: "/assessments", label: "Assessments" },
+  { href: "/billing", label: "Billing" },
 ];
 
 export function AppNavBar() {

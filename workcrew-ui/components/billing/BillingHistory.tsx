@@ -34,9 +34,8 @@ export default function BillingHistory({ invoices }: BillingHistoryProps) {
     }).format(amount)
   }
 
-  const handleDownload = (invoiceId: string) => {
-    // TODO: Implement invoice download
-    console.log('Download invoice:', invoiceId)
+  const handleDownload = (_invoiceId: string) => {
+    window.print()
   }
 
   return (

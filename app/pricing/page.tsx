@@ -4,6 +4,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Section,
   Container,
@@ -36,6 +37,7 @@ type Plan = {
 
 export default function PricingPage() {
   const router = useRouter();
+  const { status } = useSession();
   // Simple region detection - in production, use proper geolocation
   React.useEffect(() => {
     const detectRegion = () => {
@@ -365,7 +367,11 @@ export default function PricingPage() {
                             billing: billing
                           });
                         }
-                        router.push('/signup');
+                        if (status === 'authenticated') {
+                          router.push(`/billing/checkout?plan=${plan.name.toLowerCase()}&billing=${billing}`);
+                        } else {
+                          router.push('/signup');
+                        }
                       }}
                     >
                       <T

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 interface Job {
   id: string
@@ -51,13 +53,33 @@ interface JobDetailClientProps {
 }
 
 export default function JobDetailClient({ job }: JobDetailClientProps) {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [applyError, setApplyError] = useState<string | null>(null)
 
-  const handleApply = () => {
-    // In a real app, this would integrate with authentication
-    setApplied(true)
-    alert('Application submitted! (Demo)')
+  const handleApply = async () => {
+    if (!session) { router.push('/login'); return; }
+    setApplying(true)
+    setApplyError(null)
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job.id }),
+      })
+      if (res.status === 409) { setApplied(true); return; }
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setApplyError(d.error ?? 'Failed to apply. Please try again.')
+        return
+      }
+      setApplied(true)
+    } finally {
+      setApplying(false)
+    }
   }
 
   const formatSalary = (min: number | null, max: number | null) => {
@@ -122,15 +144,21 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
             <div className="flex-shrink-0">
               <button
                 onClick={handleApply}
-                disabled={applied}
-                className={`px-8 py-3 rounded-lg font-medium ${
+                disabled={applied || applying}
+                className={`px-8 py-3 rounded-lg font-medium transition-colors ${
                   applied
                     ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60'
                 }`}
               >
-                {applied ? 'Applied ✓' : 'Apply Now'}
+                {applied ? 'Applied ✓' : applying ? 'Applying…' : 'Apply Now'}
               </button>
+              {applyError && <p className="mt-2 text-xs text-red-500">{applyError}</p>}
+              {applied && (
+                <Link href="/dashboard/applications" className="mt-2 block text-center text-xs text-blue-600 hover:underline">
+                  View application →
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -16,8 +16,8 @@ type Assessment = {
 
 const QUICK_LINKS = [
   { href: "/find-jobs", label: "Find Jobs", desc: "Browse AI-matched roles tailored to your skills.", icon: "🔍" },
+  { href: "/dashboard/applications", label: "My Applications", desc: "Track the status of every job you've applied to.", icon: "📋" },
   { href: "/onboarding/personal-details", label: "Update Profile", desc: "Keep your personal details and resume up to date.", icon: "✏️" },
-  { href: "/onboarding/upload-resume", label: "Upload Resume", desc: "Re-parse a new resume to refresh your profile.", icon: "📄" },
   { href: "/ai-interviewer", label: "AI Mock Interview", desc: "Practice for your next interview with our AI coach.", icon: "🎙️" },
 ];
 
@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [assLoading, setAssLoading] = useState(true);
+  const [activeApps, setActiveApps] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -43,6 +44,9 @@ export default function DashboardPage() {
       .then((r) => r.ok ? r.json() : { assessments: [] })
       .then((d) => setAssessments(d.assessments ?? []))
       .finally(() => setAssLoading(false));
+    fetch("/api/applications")
+      .then((r) => r.ok ? r.json() : { applications: [] })
+      .then((d) => setActiveApps((d.applications ?? []).filter((a: any) => a.status === "active").length));
   }, [status]);
 
   if (status === "loading") {
@@ -69,6 +73,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-8 space-y-8">
+        {/* Active applications summary */}
+        {activeApps !== null && activeApps > 0 && (
+          <Link href="/dashboard/applications"
+            className="flex items-center justify-between rounded-xl border border-[#4D31EC]/20 bg-[#4D31EC]/5 px-5 py-4 hover:bg-[#4D31EC]/10 transition-colors">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#4D31EC]/10 text-lg">📋</span>
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {activeApps} active application{activeApps !== 1 ? "s" : ""}
+                </p>
+                <p className="text-xs text-gray-500">Track your pipeline stages</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-[#4D31EC]">View all →</span>
+          </Link>
+        )}
+
         {/* Pending assessments */}
         {(assLoading || assessments.length > 0) && (
           <section>

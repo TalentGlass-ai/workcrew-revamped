@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { prisma } from '../../../../lib/prisma';
+import { sendEmail, emailTemplates } from '../../../../lib/email';
 
 const STAGES = ['applied', 'screening', 'interview', 'offer', 'hired'] as const;
 type Stage = typeof STAGES[number];
@@ -43,6 +44,26 @@ export async function PATCH(
   }
 
   const updated = await prisma.candidateApplication.update({ where: { id }, data });
+
+  // Fire-and-forget: email the candidate on any stage/status change
+  prisma.candidateApplication.findUnique({
+    where: { id },
+    include: {
+      candidate: { include: { user: { select: { email: true } } } },
+      job: { include: { organization: { select: { name: true } } } },
+    },
+  }).then((full) => {
+    const email = full?.candidate?.user?.email;
+    if (!email) return;
+    const tpl = emailTemplates.applicationStageChanged(
+      full?.job?.title ?? 'the role',
+      full?.job?.organization?.name ?? 'the company',
+      updated.currentStage,
+      updated.status,
+    );
+    return sendEmail(email, tpl.subject, tpl.html);
+  }).catch(() => null);
+
   return NextResponse.json({ application: updated });
 }
 

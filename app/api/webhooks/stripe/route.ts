@@ -3,6 +3,7 @@ import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { prisma } from '../../../../lib/prisma';
 import { SecurityUtils } from '../../../../lib/utils/security';
 import { AuditLogger } from '../../../../lib/services/audit-logger';
+import { sendEmail, emailTemplates, getBillingEmail } from '../../../../lib/email';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -198,11 +199,8 @@ async function updateDatabaseFromWebhook(result: any, gateway: 'stripe' | 'razor
 async function handleSubscriptionEvent(data: any, gateway: 'stripe' | 'razorpay') {
   const subscriptionField = gateway === 'stripe' ? 'stripeSubscriptionId' : 'razorpaySubscriptionId';
 
-  // Update subscription status and dates
   await prisma.subscription.updateMany({
-    where: {
-      [subscriptionField]: data.id,
-    },
+    where: { [subscriptionField]: data.id },
     data: {
       status: data.status,
       currentPeriodStart: data.current_period_start ? new Date(data.current_period_start * 1000) : undefined,
@@ -210,6 +208,15 @@ async function handleSubscriptionEvent(data: any, gateway: 'stripe' | 'razorpay'
       cancelAtPeriodEnd: data.cancel_at_period_end || false,
     },
   });
+
+  const sub = await prisma.subscription.findFirst({ where: { [subscriptionField]: data.id } });
+  if (sub) {
+    const email = await getBillingEmail(sub);
+    if (email) {
+      const tpl = emailTemplates.subscriptionUpdated(sub.planId, data.status);
+      await sendEmail(email, tpl.subject, tpl.html);
+    }
+  }
 
   console.log(`Updated subscription ${data.id} status to ${data.status}`);
 }
@@ -285,6 +292,12 @@ async function handlePaymentSucceeded(data: any, gateway: 'stripe' | 'razorpay')
     },
   });
 
+  const email = await getBillingEmail(subscription);
+  if (email) {
+    const tpl = emailTemplates.paymentSucceeded(data.amount_due / 100, data.currency, new Date());
+    await sendEmail(email, tpl.subject, tpl.html);
+  }
+
   console.log(`Recorded successful payment for invoice ${data.id}`);
 }
 
@@ -331,14 +344,31 @@ async function handlePaymentFailed(data: any, gateway: 'stripe' | 'razorpay') {
     });
   }
 
+  const email = await getBillingEmail(subscription);
+  if (email) {
+    const tpl = emailTemplates.paymentFailed(data.amount_due ? data.amount_due / 100 : undefined, data.currency);
+    await sendEmail(email, tpl.subject, tpl.html);
+  }
+
   console.log(`Recorded failed payment for subscription ${data.subscription}`);
 }
 
 async function handleTrialEnding(data: any, _gateway: 'stripe' | 'razorpay') {
-  // Mark trial_ends_at on the subscription so the billing UI can surface a banner
   await prisma.subscription.updateMany({
     where: { stripeSubscriptionId: data.id },
     data: { status: 'trialing' },
   });
+
+  const sub = await prisma.subscription.findFirst({ where: { stripeSubscriptionId: data.id } });
+  if (sub) {
+    const email = await getBillingEmail(sub);
+    if (email) {
+      const trialEnd = data.trial_end ? new Date(data.trial_end * 1000) : new Date();
+      const daysLeft = Math.max(1, Math.ceil((trialEnd.getTime() - Date.now()) / 86_400_000));
+      const tpl = emailTemplates.trialEnding(daysLeft);
+      await sendEmail(email, tpl.subject, tpl.html);
+    }
+  }
+
   console.log(`Trial ending soon for subscription ${data.id}`);
 }

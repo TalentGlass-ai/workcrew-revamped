@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 const contactSchema = z.object({
   company: z.string().min(1).max(200),
@@ -36,6 +37,13 @@ export async function POST(req: NextRequest) {
         severity: "low",
       },
     });
+  }
+
+  // Notify the team inbox
+  const notifyEmail = process.env.EMAIL_FROM?.replace(/.*<(.+)>/, '$1') ?? process.env.EMAIL_FROM;
+  if (notifyEmail) {
+    const tpl = emailTemplates.contactReceived(parsed.data);
+    await sendEmail(notifyEmail, tpl.subject, tpl.html);
   }
 
   return NextResponse.json({ ok: true });

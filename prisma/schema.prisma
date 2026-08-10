@@ -97,8 +97,26 @@ model User {
   subscriptions  Subscription[]
   paymentMethods PaymentMethod[]
   actions        CandidateAction[] // As recruiter
+  jobAlerts      JobAlert[]
 
   @@map("users")
+}
+
+model JobAlert {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  query      String?   // keyword filter on title/description
+  location   String?   // location filter
+  jobType    String?   @map("job_type") // full-time, part-time, contract, etc.
+  skills     String[]  // required skill names (any match triggers alert)
+  frequency  String    @default("daily") // "daily" | "weekly"
+  lastSentAt DateTime? @map("last_sent_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_alerts")
 }
 
 model Account {

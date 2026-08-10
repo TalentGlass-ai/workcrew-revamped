@@ -1,6 +1,7 @@
 // lib/services/usage-alerts.ts
 import { prisma } from '../prisma';
 import { UsageService } from './usage-service';
+import { sendEmail, emailTemplates } from '../email';
 
 export interface UsageAlert {
   id: string;
@@ -181,11 +182,9 @@ export class UsageAlertsService {
    * Send alert notification (placeholder for email/SMS integration)
    */
   private static async sendAlertNotification(user: any, alert: any): Promise<void> {
-    // TODO: Integrate with notification service
-    console.log(`Sending ${alert.alertType} alert to ${user.email}: ${alert.message}`);
-
-    // Could send email, SMS, in-app notification, etc.
-    // For now, just log it
+    if (!user?.email) return;
+    const tpl = emailTemplates.usageAlert(alert.metric, alert.currentUsage, alert.limit, alert.alertType);
+    await sendEmail(user.email, tpl.subject, tpl.html);
   }
 
   /**

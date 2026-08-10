@@ -222,10 +222,23 @@ async function handleSubscriptionEvent(sub: any, _gateway: 'stripe' | 'razorpay'
 
 async function handleSubscriptionCancellation(sub: any, _gateway: 'stripe' | 'razorpay') {
   if (!sub?.id) return;
+
+  const subscription = await prisma.subscription.findFirst({ where: { razorpaySubscriptionId: sub.id } });
+
   await prisma.subscription.updateMany({
     where: { razorpaySubscriptionId: sub.id },
     data: { status: 'canceled', cancelAtPeriodEnd: false },
   });
+
+  if (subscription) {
+    const email = await getBillingEmail(subscription);
+    if (email) {
+      const periodEnd = sub.current_end ? new Date(sub.current_end * 1000) : new Date();
+      const tpl = emailTemplates.subscriptionCancelled(subscription.planId, periodEnd);
+      await sendEmail(email, tpl.subject, tpl.html);
+    }
+  }
+
   console.log(`Canceled Razorpay subscription ${sub.id}`);
 }
 

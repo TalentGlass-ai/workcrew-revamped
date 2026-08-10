@@ -187,6 +187,10 @@ export default function EmployerPage() {
                   </div>
                   <div className="ml-4 flex flex-shrink-0 items-center gap-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
+                    <Link href={`/employer/jobs/${job.id}`}
+                      className="text-xs font-semibold text-[#4D31EC] hover:underline">
+                      Pipeline →
+                    </Link>
                     {job.status === "draft" && (
                       <button onClick={() => setStatus(job.id, "published")}
                         className="text-xs font-semibold text-[#4D31EC] hover:underline">Publish</button>

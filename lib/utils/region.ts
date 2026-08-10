@@ -1,80 +1,73 @@
 // lib/utils/region.ts
 
-/**
- * Detects the payment region based on IP address and profile settings
- */
+import type { NextRequest } from 'next/server';
+import { prisma } from '../prisma';
 
 export type PaymentRegion = 'global' | 'india';
 
 interface RegionDetectionOptions {
   ipAddress?: string;
-  organizationRegion?: string;
-  userRegion?: string;
+  organizationCountry?: string | null;
+  userCountry?: string | null;
 }
 
 /**
- * Detects the appropriate payment region
- * Priority: profile-based > IP-based
+ * Determines payment region from stored profile data and/or CDN country header.
+ * Priority: org country > user country > CDN header > default global.
  */
 export function detectPaymentRegion(options: RegionDetectionOptions): PaymentRegion {
-  const { ipAddress, organizationRegion, userRegion } = options;
+  const { organizationCountry, userCountry, ipAddress } = options;
 
-  // Profile-based detection (highest priority)
-  if (organizationRegion) {
-    return organizationRegion.toLowerCase() === 'india' ? 'india' : 'global';
-  }
+  const orgCountry = organizationCountry?.toUpperCase();
+  if (orgCountry) return orgCountry === 'IN' ? 'india' : 'global';
 
-  if (userRegion) {
-    return userRegion.toLowerCase() === 'india' ? 'india' : 'global';
-  }
+  const uCountry = userCountry?.toUpperCase();
+  if (uCountry) return uCountry === 'IN' ? 'india' : 'global';
 
-  // IP-based detection
-  if (ipAddress) {
-    return isIndianIP(ipAddress) ? 'india' : 'global';
-  }
+  // CDN country header (ipAddress param re-used for the header value to keep signature compat)
+  if (ipAddress) return ipAddress.toUpperCase() === 'IN' ? 'india' : 'global';
 
-  // Default to global
   return 'global';
 }
 
 /**
- * Simple IP-based India detection
- * In production, use a proper geolocation service
+ * Reads the CDN country code from a Next.js request.
+ * Vercel Edge sets x-vercel-ip-country; Cloudflare sets CF-IPCountry.
+ * Returns the ISO 3166-1 alpha-2 code (e.g. "IN", "US") or null.
  */
-function isIndianIP(ipAddress: string): boolean {
-  // This is a simplified implementation
-  // In production, use a service like MaxMind GeoIP or similar
-
-  // For demo purposes, check if IP starts with common Indian ranges
-  // This is not accurate, just for illustration
-  const indianRanges = [
-    '103.', // Some Indian IPs
-    '106.',
-    '110.',
-    '112.',
-    '113.',
-    '114.',
-    '115.',
-    '116.',
-    '117.',
-    '118.',
-    '119.',
-    '120.',
-    '121.',
-    '122.',
-    '123.',
-    '124.',
-    '125.',
-    '126.',
-    '127.',
-    // Add more ranges as needed
-  ];
-
-  return indianRanges.some(range => ipAddress.startsWith(range));
+export function getCountryFromRequest(req: NextRequest): string | null {
+  return (
+    req.headers.get('x-vercel-ip-country') ??
+    req.headers.get('cf-ipcountry') ??
+    null
+  );
 }
 
 /**
- * Gets the appropriate payment service based on region
+ * Resolve the payment region for the given user ID.
+ * Checks org.country → user.country → CDN header → default global.
+ */
+export async function resolveRegionForUser(
+  userId: string,
+  req: NextRequest,
+): Promise<PaymentRegion> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      country: true,
+      organization: { select: { country: true } },
+    },
+  });
+
+  return detectPaymentRegion({
+    organizationCountry: user?.organization?.country ?? null,
+    userCountry: user?.country ?? null,
+    ipAddress: getCountryFromRequest(req) ?? undefined,
+  });
+}
+
+/**
+ * Gets the appropriate payment service based on region.
  */
 export function getPaymentServiceForRegion(region: PaymentRegion) {
   if (region === 'india') {

@@ -28,13 +28,14 @@ enum RelationType {
 // -----------------------------------------------------------------------------
 
 model Organization {
-  id               String   @id @default(uuid()) 
+  id               String   @id @default(uuid())
   name             String
   slug             String   @unique
   logo             String?
   website          String?
   industry         String?
   size             String?
+  country          String?  // ISO 3166-1 alpha-2, e.g. "IN", "US"
   subscriptionPlan String   @default("free") @map("subscription_plan")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -82,6 +83,7 @@ model User {
   image          String?   // Auth.js compat
   passwordHash   String?   @map("password_hash")
   phone          String?
+  country        String?   // ISO 3166-1 alpha-2, e.g. "IN", "US"
   status         String    @default("active")
   lastLogin      DateTime? @map("last_login")
   createdAt      DateTime  @default(now()) @map("created_at")

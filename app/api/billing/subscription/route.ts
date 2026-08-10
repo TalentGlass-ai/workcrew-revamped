@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { auth } from '../../../../auth';
 import { prisma } from '../../../../lib/prisma';
+import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
 
 // Maps plan keys to Stripe price IDs via env vars.
 // Set STRIPE_PRICE_<PLAN>_<BILLING> in production.
@@ -63,6 +64,21 @@ export async function POST(request: NextRequest) {
     if (!planKey) return NextResponse.json({ error: 'planKey required' }, { status: 400 });
 
     const key = `${planKey}_${billing}`;
+    const region = await resolveRegionForUser(session.user.id, request);
+
+    // India: create a Razorpay order (subscription billing via Razorpay checkout)
+    if (region === 'india') {
+      const amount = PLAN_AMOUNTS[key];
+      if (!amount) return NextResponse.json({ error: 'Unknown plan' }, { status: 400 });
+      const paymentService = getPaymentServiceForRegion('india');
+      const result = await paymentService.createPaymentIntent({
+        amount,
+        currency: 'INR',
+        metadata: { userId: session.user.id, planKey, billing },
+      });
+      return NextResponse.json({ clientSecret: result.paymentIntentId, mode: 'payment', gateway: 'razorpay' });
+    }
+
     const priceId = PRICE_ID[key];
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 

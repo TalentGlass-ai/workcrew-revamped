@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { prisma } from '../../../../lib/prisma';
 import { auth } from '../../../../auth';
 
@@ -16,8 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment intent ID required' }, { status: 400 });
     }
 
-    // Determine region - for now assume global, can be enhanced
-    const region = 'global';
+    const region = await resolveRegionForUser(session.user.id, request);
     const paymentService = getPaymentServiceForRegion(region);
 
     // Confirm payment

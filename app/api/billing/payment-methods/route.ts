@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { detectPaymentRegion, getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { prisma } from '../../../../lib/prisma';
 import { auth } from '../../../../auth';
 
@@ -48,12 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment method ID required' }, { status: 400 });
     }
 
-    // Determine region and service
-    const region = detectPaymentRegion({
-      organizationRegion: organizationId ? undefined : undefined, // TODO: get from org profile
-      userRegion: undefined, // TODO: get from user profile
-      ipAddress: request.headers.get('x-forwarded-for') as string || request.headers.get('x-real-ip') as string
-    });
+    const region = await resolveRegionForUser(session.user.id, request);
     const paymentService = getPaymentServiceForRegion(region);
 
     // Determine gateway based on region

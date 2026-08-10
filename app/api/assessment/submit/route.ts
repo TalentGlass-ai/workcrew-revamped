@@ -45,104 +45,105 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Assessment already submitted' }, { status: 400 });
   }
 
-  // Save answers to DB
-  await prisma.answer.createMany({
-    data: answers.map(a => ({
-      attemptId,
-      questionId: a.questionId,
-      answerText: a.answerText,
-    })),
-  });
+  try {
+    // Save answers to DB
+    await prisma.answer.createMany({
+      data: answers.map(a => ({
+        attemptId,
+        questionId: a.questionId,
+        answerText: a.answerText,
+      })),
+    });
 
-  // Run evaluation
-  const result = await evaluateAssessment(attemptId, answers);
+    // Run evaluation
+    const result = await evaluateAssessment(attemptId, answers);
 
-  const now = new Date();
-  const timeTaken = Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000);
+    const now = new Date();
+    const timeTaken = Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000);
 
-  // Write validated CandidateSkill records for skills scored ≥ 60
-  const now2 = new Date();
-  const skillUpserts: Promise<unknown>[] = [];
+    // Write validated CandidateSkill records for skills scored ≥ 60
+    const skillUpserts: Promise<unknown>[] = [];
 
-  // Skills from question rubric tags
-  for (const [skillName, score] of Object.entries(result.skillScores)) {
-    if (score >= 60) {
+    for (const [skillName, score] of Object.entries(result.skillScores)) {
+      if (score >= 60) {
+        skillUpserts.push(
+          prisma.candidateSkill.upsert({
+            where: { candidateId_skillName: { candidateId: candidate.id, skillName } },
+            create: {
+              candidateId: candidate.id,
+              skillName,
+              category: "technical",
+              score: score / 10,
+              source: "assessment",
+              isValidated: true,
+              validatedAt: now,
+              validationSource: "assessment",
+              lastVerifiedAt: now,
+            },
+            update: {
+              score: score / 10,
+              isValidated: true,
+              validatedAt: now,
+              validationSource: "assessment",
+              lastVerifiedAt: now,
+            },
+          })
+        );
+      }
+    }
+
+    if (result.score >= 60 && attempt.assessment.language) {
+      const lang = attempt.assessment.language;
       skillUpserts.push(
         prisma.candidateSkill.upsert({
-          where: { candidateId_skillName: { candidateId: candidate.id, skillName } },
+          where: { candidateId_skillName: { candidateId: candidate.id, skillName: lang } },
           create: {
             candidateId: candidate.id,
-            skillName,
+            skillName: lang,
             category: "technical",
-            score: score / 10,
+            score: result.score / 10,
             source: "assessment",
             isValidated: true,
-            validatedAt: now2,
+            validatedAt: now,
             validationSource: "assessment",
-            lastVerifiedAt: now2,
+            lastVerifiedAt: now,
           },
           update: {
-            score: score / 10,
+            score: result.score / 10,
             isValidated: true,
-            validatedAt: now2,
+            validatedAt: now,
             validationSource: "assessment",
-            lastVerifiedAt: now2,
+            lastVerifiedAt: now,
           },
         })
       );
     }
+
+    await Promise.all(skillUpserts);
+
+    // Compute fraud risk from accumulated proctoring flags
+    const flags = await prisma.proctoringFlag.findMany({
+      where: { assessmentId: attempt.assessmentId },
+      select: { severity: true },
+    });
+    const HIGH = flags.filter(f => f.severity === 'high').length;
+    const MED  = flags.filter(f => f.severity === 'medium').length;
+    const fraudRiskScore = Math.min(1, HIGH * 0.3 + MED * 0.1);
+
+    await prisma.$transaction([
+      prisma.assessmentAttempt.update({
+        where: { id: attemptId },
+        data: { score: result.score, submittedAt: now, fraudRiskScore },
+      }),
+      prisma.assessment.update({
+        where: { id: attempt.assessmentId },
+        data: { score: result.score, timeTaken },
+      }),
+    ]);
+
+    return NextResponse.json({ result });
+  } catch (err) {
+    console.error('[assessment/submit]', err);
+    return NextResponse.json({ error: 'Submission failed' }, { status: 500 });
   }
-
-  // Also validate the assessment language if overall score ≥ 60
-  if (result.score >= 60 && attempt.assessment.language) {
-    const lang = attempt.assessment.language;
-    skillUpserts.push(
-      prisma.candidateSkill.upsert({
-        where: { candidateId_skillName: { candidateId: candidate.id, skillName: lang } },
-        create: {
-          candidateId: candidate.id,
-          skillName: lang,
-          category: "technical",
-          score: result.score / 10,
-          source: "assessment",
-          isValidated: true,
-          validatedAt: now2,
-          validationSource: "assessment",
-          lastVerifiedAt: now2,
-        },
-        update: {
-          score: Math.max(result.score / 10, 0),
-          isValidated: true,
-          validatedAt: now2,
-          validationSource: "assessment",
-          lastVerifiedAt: now2,
-        },
-      })
-    );
-  }
-
-  await Promise.all(skillUpserts);
-
-  // Compute fraud risk from accumulated proctoring flags
-  const flags = await prisma.proctoringFlag.findMany({
-    where: { assessmentId: attempt.assessmentId },
-    select: { severity: true },
-  });
-  const HIGH = flags.filter(f => f.severity === 'high').length;
-  const MED  = flags.filter(f => f.severity === 'medium').length;
-  const fraudRiskScore = Math.min(1, HIGH * 0.3 + MED * 0.1);
-
-  // Persist score on attempt + assessment
-  await prisma.$transaction([
-    prisma.assessmentAttempt.update({
-      where: { id: attemptId },
-      data: { score: result.score, submittedAt: now, fraudRiskScore },
-    }),
-    prisma.assessment.update({
-      where: { id: attempt.assessmentId },
-      data: { score: result.score, timeTaken },
-    }),
-  ]);
-
-  return NextResponse.json({ result });
 }

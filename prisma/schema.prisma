@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  // To migrate to Postgres: change provider to "postgresql" here, set DATABASE_URL=postgresql://...
-  // in .env, update prisma.config.ts datasource.url, then: prisma migrate deploy
-  provider = "sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import NewNavbar from "@/components/landing/NewNavbar";
 import NewFooter from "@/components/landing/NewFooter";
@@ -17,9 +17,42 @@ type Blog = {
   excerpt?: string;
 };
 
+const BLOGS: Blog[] = [
+  {
+    id: 1,
+    title: "Have you heard? WorkCrew, a new job portal is your best way to grow and find a Tech Job!",
+    date: "January 15, 2024",
+    readTime: "8 min read",
+    category: "Career growth",
+    image: "/images/blog/jobmatchmaker.png",
+  },
+  {
+    id: 2,
+    title: "The Human Algorithm: How Technology Reshapes Personal Identity",
+    date: "January 15, 2024",
+    readTime: "8 min read",
+    category: "AI & technology",
+    image: "/images/blog/humanalgo.png",
+  },
+  {
+    id: 3,
+    title: "Navigating the Digital Self: The Impact of Technology on Personal Identity",
+    date: "January 15, 2024",
+    readTime: "8 min read",
+    category: "Diversity & inclusion",
+    image: "/images/blog/digitalself.png",
+  },
+  {
+    id: 4,
+    title: "Reimagining Community: Building Connections in a Virtual World",
+    date: "January 15, 2024",
+    readTime: "8 min read",
+    category: "Remote work",
+    image: "/images/blog/virtualworld.png",
+  },
+];
+
 export default function BlogsPage() {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const tags = [
@@ -30,62 +63,9 @@ export default function BlogsPage() {
     "Diversity & inclusion",
   ];
 
-  // Simulated API fetch (placeholder)
-  useEffect(() => {
-    async function fetchBlogs() {
-      try {
-        // pretend we called an API
-        throw new Error("No API available yet");
-      } catch {
-        // temporary hardcoded blogs
-        setBlogs([
-          {
-            id: 1,
-            title:
-              "Have you heard? WorkCrew, a new job portal is your best way to grow and find a Tech Job!",
-            date: "January 15, 2024",
-            readTime: "8 min read",
-            category: "Career growth",
-            image: "/images/blog/jobmatchmaker.png",
-          },
-          {
-            id: 2,
-            title:
-              "The Human Algorithm: How Technology Reshapes Personal Identity",
-            date: "January 15, 2024",
-            readTime: "8 min read",
-            category: "AI & technology",
-            image: "/images/blog/humanalgo.png",
-          },
-          {
-            id: 3,
-            title:
-              "Navigating the Digital Self: The Impact of Technology on Personal Identity",
-            date: "January 15, 2024",
-            readTime: "8 min read",
-            category: "Diversity & inclusion",
-            image: "/images/blog/digitalself.png",
-          },
-          {
-            id: 4,
-            title:
-              "Reimagining Community: Building Connections in a Virtual World",
-            date: "January 15, 2024",
-            readTime: "8 min read",
-            category: "Remote work",
-            image: "/images/blog/virtualworld.png",
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBlogs();
-  }, []);
-
   const filteredBlogs = activeTag
-    ? blogs.filter((b) => b.category === activeTag)
-    : blogs;
+    ? BLOGS.filter((b) => b.category === activeTag)
+    : BLOGS;
 
   return (
     <main className="min-h-screen flex flex-col bg-white">
@@ -202,13 +182,8 @@ export default function BlogsPage() {
         </div>
 
         {/* List */}
-        {loading ? (
-          <p className="text-gray-500">Loading articles…</p>
-        ) : filteredBlogs.length === 0 ? (
-          <p className="text-gray-500">
-            No articles match this category yet. (API not ready — showing
-            placeholder content.)
-          </p>
+        {filteredBlogs.length === 0 ? (
+          <p className="text-gray-500">No articles match this category yet.</p>
         ) : (
           <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 text-left">
             {filteredBlogs.map((blog) => (

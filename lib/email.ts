@@ -197,6 +197,45 @@ export const emailTemplates = {
     };
   },
 
+  applicationStageChanged(jobTitle: string, company: string, stage: string, status: string): { subject: string; html: string } {
+    const isRejected = status === 'rejected';
+    const isHired = status === 'hired';
+    const STAGE_LABELS: Record<string, string> = {
+      screening: 'Screening', interview: 'Interview', offer: 'Offer', hired: 'Hired',
+    };
+    const stageLabel = STAGE_LABELS[stage] ?? stage;
+    if (isRejected) {
+      return {
+        subject: `Update on your application — ${jobTitle} at ${company}`,
+        html: layout('Application update', `
+          ${h1('Application update')}
+          ${p(`Thank you for your interest in <strong>${jobTitle}</strong> at <strong>${company}</strong>.`)}
+          ${p('After careful consideration, the team has decided to move forward with other candidates at this time. We appreciate the time you invested and encourage you to apply for future openings.')}
+          ${btn('Browse more jobs', `${APP_URL}/jobs`)}
+        `),
+      };
+    }
+    if (isHired) {
+      return {
+        subject: `Congratulations — offer accepted for ${jobTitle} at ${company}`,
+        html: layout('Offer accepted', `
+          ${h1('Congratulations!')}
+          ${p(`Your application for <strong>${jobTitle}</strong> at <strong>${company}</strong> has been marked as hired. The recruiting team will be in touch with next steps.`)}
+          ${btn('View your applications', `${APP_URL}/dashboard/applications`)}
+        `),
+      };
+    }
+    return {
+      subject: `Your application has moved to ${stageLabel} — ${jobTitle}`,
+      html: layout('Application update', `
+        ${h1(`You've advanced to ${stageLabel}`)}
+        ${p(`Great news! Your application for <strong>${jobTitle}</strong> at <strong>${company}</strong> has moved to the <strong>${stageLabel}</strong> stage.`)}
+        ${p('The recruiting team will reach out with more details. Keep an eye on your inbox.')}
+        ${btn('Track your application', `${APP_URL}/dashboard/applications`)}
+      `),
+    };
+  },
+
   contactReceived(data: {
     company: string;
     contactPerson: string;

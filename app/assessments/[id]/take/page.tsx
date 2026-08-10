@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 
 type Question = {
   id: string;
@@ -11,13 +11,10 @@ type Question = {
   weightage: number;
 };
 
-type Assessment = {
+type AssessmentMeta = {
   id: string;
   difficulty: string;
   language: string;
-  report: { title?: string } | null;
-  job: { title: string } | null;
-  questions: Question[];
 };
 
 export default function TakeAssessmentPage() {
@@ -26,47 +23,112 @@ export default function TakeAssessmentPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [meta, setMeta] = useState<AssessmentMeta | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [title, setTitle] = useState("Skill Assessment");
+  const proctoring = useRef(false);
 
   // Timer
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (!assessment || result) return;
+    if (!meta || submitting) return;
     const t = setInterval(() => setElapsed(s => s + 1), 1000);
     return () => clearInterval(t);
-  }, [assessment, result]);
+  }, [meta, submitting]);
 
   useEffect(() => { if (status === "unauthenticated") router.push("/login"); }, [status, router]);
 
+  // Start assessment via new API — gets attemptId + questions
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch(`/api/assessments/${id}`)
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(d => setAssessment(d.assessment))
-      .catch(() => setError("Assessment not found or you don't have access."))
-      .finally(() => setLoading(false));
+    fetch("/api/assessment/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assessmentId: id }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { setError(d.error); return; }
+        setAttemptId(d.attemptId);
+        setQuestions(d.questions ?? []);
+        setMeta(d.assessment);
+        // Fetch title from existing route for display
+        return fetch(`/api/assessments/${id}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => { if (data?.assessment?.report?.title) setTitle(data.assessment.report.title); });
+      })
+      .catch(() => setError("Failed to load assessment."))
+      .finally(() => { setLoading(false); proctoring.current = true; });
   }, [id, status]);
 
+  // Proctoring event listeners
+  useEffect(() => {
+    if (!attemptId) return;
+
+    function log(eventType: string) {
+      if (!proctoring.current) return;
+      fetch("/api/assessment/proctoring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assessmentId: id, eventType, details: { ts: Date.now() } }),
+      }).catch(() => {});
+    }
+
+    const onVisibility = () => { if (document.hidden) log("tab_switch"); };
+    const onBlur = () => log("window_blur");
+    const onContextMenu = (e: MouseEvent) => { e.preventDefault(); log("right_click"); };
+    const onCopy = () => log("copy_attempt");
+    const onPaste = () => log("paste_attempt");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase()))) {
+        log("devtools_open");
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("contextmenu", onContextMenu);
+    document.addEventListener("copy", onCopy);
+    document.addEventListener("paste", onPaste);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("copy", onCopy);
+      document.removeEventListener("paste", onPaste);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [attemptId, id]);
+
   const handleSubmit = useCallback(async () => {
-    if (!assessment) return;
+    if (!attemptId || !questions.length) return;
+    proctoring.current = false;
     setSubmitting(true);
-    const res = await fetch(`/api/assessments/${id}`, {
+
+    const res = await fetch("/api/assessment/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        answers: assessment.questions.map(q => ({ questionId: q.id, answerText: answers[q.id] ?? "" })),
+        attemptId,
+        answers: questions.map(q => ({ questionId: q.id, answerText: answers[q.id] ?? "" })),
       }),
     });
     setSubmitting(false);
-    if (res.ok) { const d = await res.json(); setResult(d.result); }
-    else { const d = await res.json().catch(() => ({})); setError(d.error ?? "Submission failed"); }
-  }, [assessment, answers, id]);
+    if (res.ok) {
+      router.push(`/assessments/${id}/results?attemptId=${attemptId}`);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? "Submission failed");
+    }
+  }, [attemptId, questions, answers, id, router]);
 
   if (status === "loading" || loading) {
     return <main className="flex min-h-screen items-center justify-center"><p className="text-gray-400">Loading assessment…</p></main>;
@@ -86,54 +148,14 @@ export default function TakeAssessmentPage() {
     );
   }
 
-  if (!assessment) return null;
+  if (!meta || questions.length === 0) return null;
 
-  const title = (assessment.report as any)?.title ?? "Skill Assessment";
-  const questions = assessment.questions;
   const q = questions[current];
   const isLast = current === questions.length - 1;
   const allAnswered = questions.every(q => (answers[q.id] ?? "").trim().length > 0);
   const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const secs = String(elapsed % 60).padStart(2, "0");
 
-  // ── Results screen ───────────────────────────────────────────────────────
-  if (result) {
-    const pct = Math.round(result.percentage ?? 0);
-    const passed = result.passed;
-    return (
-      <main className="min-h-screen bg-[#F7F8FC] flex items-center justify-center px-4">
-        <div className="w-full max-w-lg">
-          <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm text-center">
-            <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-3xl font-bold ${passed ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-              {pct}%
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">{passed ? "Assessment Passed! 🎉" : "Assessment Complete"}</h1>
-            <p className="mt-2 text-sm text-gray-500">{result.feedback}</p>
-
-            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-              {[
-                { label: "Score", value: `${pct}%` },
-                { label: "Time", value: `${mins}:${secs}` },
-                { label: "Questions", value: questions.length },
-              ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl bg-gray-50 py-3">
-                  <p className="text-lg font-bold text-gray-900">{value}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={() => router.push("/dashboard")}
-              className="mt-6 w-full rounded-lg bg-[#4D31EC] py-2.5 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // ── Take screen ──────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-[#F7F8FC]">
       {/* Header */}
@@ -141,14 +163,13 @@ export default function TakeAssessmentPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
           <div>
             <p className="text-sm font-semibold text-gray-800">{title}</p>
-            <p className="text-xs text-gray-400">{assessment.job?.title} · {assessment.difficulty} · {assessment.language}</p>
+            <p className="text-xs text-gray-400 capitalize">{meta.difficulty} · {meta.language}</p>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-mono text-sm text-gray-500">{mins}:{secs}</span>
             <span className="text-xs text-gray-400">{current + 1} / {questions.length}</span>
           </div>
         </div>
-        {/* Progress bar */}
         <div className="h-1 bg-gray-100">
           <div className="h-1 bg-[#4D31EC] transition-all" style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
         </div>
@@ -184,15 +205,13 @@ export default function TakeAssessmentPage() {
                 }`}>{q.questionType}</span>
                 <span className="text-xs text-gray-400">Weight: {q.weightage}</span>
               </div>
-
               <h2 className="mt-3 text-base font-semibold text-gray-900 leading-relaxed">{q.questionText}</h2>
-
               <div className="mt-5">
                 {q.questionType === "coding" ? (
                   <textarea
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 resize-none transition-all"
                     rows={14}
-                    placeholder={`// Write your ${assessment.language} solution here\n`}
+                    placeholder={`// Write your ${meta.language} solution here\n`}
                     value={answers[q.id] ?? ""}
                     onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
                     spellCheck={false}
@@ -209,13 +228,11 @@ export default function TakeAssessmentPage() {
               </div>
             </div>
 
-            {/* Navigation */}
             <div className="mt-4 flex items-center justify-between">
               <button onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
                 ← Previous
               </button>
-
               <div className="flex items-center gap-3">
                 {!isLast && (
                   <button onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
@@ -231,7 +248,6 @@ export default function TakeAssessmentPage() {
                 )}
               </div>
             </div>
-
             {!allAnswered && isLast && (
               <p className="mt-2 text-center text-xs text-gray-400">Answer all questions to submit.</p>
             )}

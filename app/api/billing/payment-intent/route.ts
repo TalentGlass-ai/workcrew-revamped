@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { auth } from '../../../../auth';
 
 export async function POST(request: NextRequest) {
@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    // Determine region (default to global for now, can be enhanced)
-    const region = 'global'; // TODO: detect based on user/org location
+    const region = await resolveRegionForUser(session.user.id, request);
     const paymentService = getPaymentServiceForRegion(region);
 
     // Create payment intent

@@ -55,8 +55,6 @@ export default function ContactUs(): React.ReactElement {
             <p className="text-lg font-semibold text-emerald-700">Thanks! We'll be in touch soon.</p>
           </div>
         ) : (
-
-        {/*  Form  */}
         <form
           className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
           onSubmit={handleSubmit}

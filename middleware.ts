@@ -12,6 +12,8 @@ const PROTECTED_PREFIXES = [
   "/api/assessment",
   "/api/billing",
   "/api/assessments",
+  "/api/interview",
+  "/ai-interviewer",
 ];
 
 // API routes that have their own auth check — skip middleware to avoid double lookup

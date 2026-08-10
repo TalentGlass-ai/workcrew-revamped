@@ -105,6 +105,7 @@ export interface SkillMatch {
   average?: number; // Average level of top candidates
   evidence?: string[]; // Links to GitHub, tests, projects, etc.
   description?: string; // AI-generated description of proficiency
+  isValidated?: boolean; // true when confirmed by an assessment or AI interview
 }
 
 export interface SkillInsight {

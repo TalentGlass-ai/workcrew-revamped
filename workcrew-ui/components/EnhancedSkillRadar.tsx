@@ -52,7 +52,14 @@ const EnhancedSkillRadar: React.FC<EnhancedSkillRadarProps> = ({
 
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg max-w-xs">
-          <h4 className="font-semibold text-gray-900 mb-2">{label}</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="font-semibold text-gray-900">{label}</h4>
+            {skillData?.isValidated && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                ✓ Validated
+              </span>
+            )}
+          </div>
 
           <div className="space-y-1 mb-3">
             {payload.map((entry: any, index: number) => (

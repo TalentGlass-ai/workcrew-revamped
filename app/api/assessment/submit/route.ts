@@ -60,11 +60,20 @@ export async function POST(req: NextRequest) {
   const now = new Date();
   const timeTaken = Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000);
 
+  // Compute fraud risk from accumulated proctoring flags
+  const flags = await prisma.proctoringFlag.findMany({
+    where: { assessmentId: attempt.assessmentId },
+    select: { severity: true },
+  });
+  const HIGH = flags.filter(f => f.severity === 'high').length;
+  const MED  = flags.filter(f => f.severity === 'medium').length;
+  const fraudRiskScore = Math.min(1, HIGH * 0.3 + MED * 0.1);
+
   // Persist score on attempt + assessment
   await prisma.$transaction([
     prisma.assessmentAttempt.update({
       where: { id: attemptId },
-      data: { score: result.score, submittedAt: now },
+      data: { score: result.score, submittedAt: now, fraudRiskScore },
     }),
     prisma.assessment.update({
       where: { id: attempt.assessmentId },

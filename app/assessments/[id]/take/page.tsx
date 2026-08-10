@@ -23,10 +23,11 @@ export default function TakeAssessmentPage() {
   const params = useParams();
   const id = params.id as string;
 
+  const [consent, setConsent] = useState(true); // show consent before starting
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [meta, setMeta] = useState<AssessmentMeta | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -44,9 +45,10 @@ export default function TakeAssessmentPage() {
 
   useEffect(() => { if (status === "unauthenticated") router.push("/login"); }, [status, router]);
 
-  // Start assessment via new API — gets attemptId + questions
+  // Start assessment via new API — gets attemptId + questions (only after consent)
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || consent) return;
+    setLoading(true);
     fetch("/api/assessment/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -65,9 +67,9 @@ export default function TakeAssessmentPage() {
       })
       .catch(() => setError("Failed to load assessment."))
       .finally(() => { setLoading(false); proctoring.current = true; });
-  }, [id, status]);
+  }, [id, status, consent]);
 
-  // Proctoring event listeners
+  // Proctoring event listeners + fullscreen enforcement
   useEffect(() => {
     if (!attemptId) return;
 
@@ -80,11 +82,17 @@ export default function TakeAssessmentPage() {
       }).catch(() => {});
     }
 
+    // Request fullscreen when assessment begins
+    document.documentElement.requestFullscreen?.().catch(() => {});
+
     const onVisibility = () => { if (document.hidden) log("tab_switch"); };
     const onBlur = () => log("window_blur");
     const onContextMenu = (e: MouseEvent) => { e.preventDefault(); log("right_click"); };
     const onCopy = () => log("copy_attempt");
     const onPaste = () => log("paste_attempt");
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) log("fullscreen_exit");
+    };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase()))) {
         log("devtools_open");
@@ -96,6 +104,7 @@ export default function TakeAssessmentPage() {
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
     document.addEventListener("paste", onPaste);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
@@ -104,13 +113,16 @@ export default function TakeAssessmentPage() {
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("copy", onCopy);
       document.removeEventListener("paste", onPaste);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("keydown", onKeyDown);
+      document.exitFullscreen?.().catch(() => {});
     };
   }, [attemptId, id]);
 
   const handleSubmit = useCallback(async () => {
     if (!attemptId || !questions.length) return;
     proctoring.current = false;
+    document.exitFullscreen?.().catch(() => {});
     setSubmitting(true);
 
     const res = await fetch("/api/assessment/submit", {
@@ -132,6 +144,53 @@ export default function TakeAssessmentPage() {
 
   if (status === "loading" || loading) {
     return <main className="flex min-h-screen items-center justify-center"><p className="text-gray-400">Loading assessment…</p></main>;
+  }
+
+  // Consent gate — shown before assessment begins
+  if (consent) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F7F8FC] px-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4D31EC]/10">
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Before you begin</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            This assessment uses integrity monitoring. By starting, you agree that the following will be recorded:
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-gray-700">
+            {[
+              "Tab switches and window focus changes",
+              "Copy and paste actions",
+              "Right-click attempts",
+              "Browser DevTools opening",
+              "Exiting fullscreen mode",
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#4D31EC]">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-xs text-gray-400">
+            The assessment will open in fullscreen. Exiting fullscreen will be flagged. Your activity is only visible to the recruiter who assigned this assessment.
+          </p>
+          {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+          <button
+            onClick={() => setConsent(false)}
+            className="mt-6 w-full rounded-lg bg-[#4D31EC] py-3 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors"
+          >
+            I understand — Start Assessment
+          </button>
+          <button
+            onClick={() => router.push("/assessments")}
+            className="mt-2 w-full rounded-lg py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </main>
+    );
   }
 
   if (error) {

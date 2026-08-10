@@ -119,13 +119,15 @@ export class StripeService implements PaymentService {
 
   async addPaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethodResult> {
     try {
-      await this.stripe.paymentMethods.attach(paymentMethodId, {
-        customer: customerId,
-      });
-
+      const pm = await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
       return {
         success: true,
         paymentMethodId,
+        type: pm.type,
+        last4: pm.card?.last4 ?? null,
+        brand: pm.card?.brand ?? null,
+        expiryMonth: pm.card?.exp_month ?? null,
+        expiryYear: pm.card?.exp_year ?? null,
       };
     } catch (error) {
       throw new Error(`Stripe payment method attachment failed: ${error instanceof Error ? error.message : String(error)}`);

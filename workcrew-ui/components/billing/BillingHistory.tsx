@@ -34,8 +34,8 @@ export default function BillingHistory({ invoices }: BillingHistoryProps) {
     }).format(amount)
   }
 
-  const handleDownload = (_invoiceId: string) => {
-    window.print()
+  const handleDownload = (invoiceId: string) => {
+    window.open(`/api/billing/invoices/${invoiceId}`, '_blank')
   }
 
   return (

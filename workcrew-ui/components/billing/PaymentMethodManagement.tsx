@@ -86,7 +86,7 @@ export default function PaymentMethodManagement({ paymentMethods: initial }: Pay
       const res = await fetch('/api/billing/payment-methods', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethodId: id }),
+        body: JSON.stringify({ paymentMethodId: id, setAsDefault: true }),
       })
       if (!res.ok) throw new Error('Failed to update default')
       setMethods(prev => prev.map(m => ({ ...m, isDefault: m.id === id })))

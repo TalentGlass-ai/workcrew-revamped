@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimiter";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 const schema = z.object({ email: z.string().email() });
 
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
     await prisma.verificationToken.deleteMany({ where: { identifier: email } });
     await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
 
-    // TODO: send email via Resend/SendGrid — POST to email service with reset link
-    // e.g. await sendEmail({ to: email, subject: "Reset your password", resetUrl: `/reset-password?token=${token}` })
+    const tpl = emailTemplates.passwordReset(token);
+    await sendEmail(email, tpl.subject, tpl.html);
   }
 
   // Always 200 — don't reveal whether email is registered

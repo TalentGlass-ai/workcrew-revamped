@@ -3,6 +3,7 @@ import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
 import { prisma } from '../../../../lib/prisma';
 import { SecurityUtils } from '../../../../lib/utils/security';
 import { AuditLogger } from '../../../../lib/services/audit-logger';
+import { sendEmail, emailTemplates, getBillingEmail } from '../../../../lib/email';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -206,6 +207,16 @@ async function handleSubscriptionEvent(sub: any, _gateway: 'stripe' | 'razorpay'
       currentPeriodEnd: sub.current_end ? new Date(sub.current_end * 1000) : undefined,
     },
   });
+
+  const subscription = await prisma.subscription.findFirst({ where: { razorpaySubscriptionId: sub.id } });
+  if (subscription) {
+    const email = await getBillingEmail(subscription);
+    if (email) {
+      const tpl = emailTemplates.subscriptionUpdated(subscription.planId, sub.status);
+      await sendEmail(email, tpl.subject, tpl.html);
+    }
+  }
+
   console.log(`Updated Razorpay subscription ${sub.id} to ${sub.status}`);
 }
 
@@ -266,6 +277,12 @@ async function handlePaymentSucceeded(data: any, _gateway: 'stripe' | 'razorpay'
     },
   });
 
+  const email = await getBillingEmail(subscription);
+  if (email) {
+    const tpl = emailTemplates.paymentSucceeded(Number(payment.amount) / 100, payment.currency ?? 'INR', new Date());
+    await sendEmail(email, tpl.subject, tpl.html);
+  }
+
   console.log(`Recorded Razorpay payment ${payment.id}`);
 }
 
@@ -303,6 +320,15 @@ async function handlePaymentFailed(data: any, _gateway: 'stripe' | 'razorpay') {
         },
       });
     }
+  }
+
+  const email = await getBillingEmail(subscription);
+  if (email) {
+    const tpl = emailTemplates.paymentFailed(
+      payment ? Number(payment.amount) / 100 : undefined,
+      payment?.currency ?? 'INR',
+    );
+    await sendEmail(email, tpl.subject, tpl.html);
   }
 
   console.log(`Recorded Razorpay payment failure for subscription ${subscriptionId}`);

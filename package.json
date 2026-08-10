@@ -47,6 +47,7 @@
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.72.1",
     "recharts": "^3.8.1",
+    "resend": "^6.18.1",
     "sonner": "^2.0.7",
     "stripe": "^22.0.2",
     "typesense": "^3.0.5",

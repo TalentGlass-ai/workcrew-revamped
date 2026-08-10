@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { evaluateAssessment } from '@/lib/evaluator';
+import { updateCandidateSkillIntelligence } from '@/lib/services/skill-updater';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -61,65 +62,20 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const timeTaken = Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000);
 
-    // Write validated CandidateSkill records for skills scored ≥ 60
-    const skillUpserts: Promise<unknown>[] = [];
-
-    for (const [skillName, score] of Object.entries(result.skillScores)) {
-      if (score >= 60) {
-        skillUpserts.push(
-          prisma.candidateSkill.upsert({
-            where: { candidateId_skillName: { candidateId: candidate.id, skillName } },
-            create: {
-              candidateId: candidate.id,
-              skillName,
-              category: "technical",
-              score: score / 10,
-              source: "assessment",
-              isValidated: true,
-              validatedAt: now,
-              validationSource: "assessment",
-              lastVerifiedAt: now,
-            },
-            update: {
-              score: score / 10,
-              isValidated: true,
-              validatedAt: now,
-              validationSource: "assessment",
-              lastVerifiedAt: now,
-            },
-          })
-        );
-      }
-    }
-
-    if (result.score >= 60 && attempt.assessment.language) {
-      const lang = attempt.assessment.language;
-      skillUpserts.push(
-        prisma.candidateSkill.upsert({
-          where: { candidateId_skillName: { candidateId: candidate.id, skillName: lang } },
-          create: {
-            candidateId: candidate.id,
-            skillName: lang,
-            category: "technical",
-            score: result.score / 10,
-            source: "assessment",
-            isValidated: true,
-            validatedAt: now,
-            validationSource: "assessment",
-            lastVerifiedAt: now,
-          },
-          update: {
-            score: result.score / 10,
-            isValidated: true,
-            validatedAt: now,
-            validationSource: "assessment",
-            lastVerifiedAt: now,
-          },
-        })
+    // Build skill scores: per-skill breakdown + the assessment language itself
+    const skillScores: Record<string, number> = { ...result.skillScores };
+    if (attempt.assessment.language) {
+      skillScores[attempt.assessment.language] = Math.max(
+        skillScores[attempt.assessment.language] ?? 0,
+        result.score,
       );
     }
 
-    await Promise.all(skillUpserts);
+    // Validate skills, write SkillAssessment records, refresh skill intelligence snapshot
+    await updateCandidateSkillIntelligence(candidate.id, skillScores, 'assessment', {
+      assessmentId: attempt.assessmentId,
+      attemptId,
+    });
 
     // Compute fraud risk from accumulated proctoring flags
     const flags = await prisma.proctoringFlag.findMany({

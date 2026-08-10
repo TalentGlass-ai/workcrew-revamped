@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { aiInterviewer, interviewSessions } from '@/workcrew-ui/lib/aiInterviewer';
 import { prisma } from '@/lib/prisma';
+import { updateCandidateSkillIntelligence } from '@/lib/services/skill-updater';
 
 export async function POST(request: NextRequest) {
   const authSession = await auth();
@@ -74,6 +75,24 @@ export async function POST(request: NextRequest) {
             completedAt: new Date(),
           },
         });
+
+        // Build skill scores from interview skill signals (0-10 scale → 0-100)
+        const skillScores: Record<string, number> = {};
+        for (const sig of (finalEvaluation as any)?.skillSignals ?? []) {
+          if (sig.name && typeof sig.score === 'number') {
+            skillScores[sig.name] = Math.min(100, Math.max(0, sig.score * 10));
+          }
+        }
+        // Roll overall score into the assessment language if present
+        if (session.language && avgScore > 0) {
+          skillScores[session.language] = Math.max(skillScores[session.language] ?? 0, avgScore * 10);
+        }
+
+        if (Object.keys(skillScores).length > 0) {
+          updateCandidateSkillIntelligence(session.candidateId, skillScores, 'ai_interview', {
+            sessionId,
+          }).catch((err: unknown) => console.error('[interview/answer] skill update error:', err));
+        }
       } else {
         session.currentQuestionIndex++;
         nextQuestion = session.questions[session.currentQuestionIndex];

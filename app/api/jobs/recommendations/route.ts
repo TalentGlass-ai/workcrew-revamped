@@ -26,22 +26,24 @@ export async function GET(request: NextRequest) {
 
     const candidate = await prisma.candidate.findUnique({
       where: { id: candidateId },
-      include: { skills: { select: { skillName: true } } }
+      include: { skills: { select: { skillName: true, isValidated: true } } }
     })
 
     if (!candidate) {
       return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
     }
 
-    const candidateSkills = new Set(candidate.skills.map((s) => s.skillName.toLowerCase()))
+    const skillMap = new Map(candidate.skills.map((s) => [s.skillName.toLowerCase(), s.isValidated]))
 
     const scored = jobs.map((job) => {
       const required: string[] = Array.isArray(job.requiredSkills) ? job.requiredSkills as string[] : []
-      const matched = required.filter((s) => candidateSkills.has(s.toLowerCase()))
-      return { ...job, matchScore: required.length ? Math.round((matched.length / required.length) * 100) : 0 }
+      const matched = required.filter((s) => skillMap.has(s.toLowerCase()))
+      const weightedMatch = matched.reduce((sum, s) => sum + (skillMap.get(s.toLowerCase()) ? 1.5 : 1), 0)
+      const maxWeight = required.length * 1.5
+      return { ...job, matchScore: required.length ? Math.round((weightedMatch / maxWeight) * 100) : 0 }
     }).sort((a, b) => b.matchScore - a.matchScore)
 
-    return NextResponse.json({ jobs: scored, type: 'personalized', candidateSkills: [...candidateSkills] })
+    return NextResponse.json({ jobs: scored, type: 'personalized', candidateSkills: [...skillMap.keys()] })
   } catch (error) {
     console.error('Recommendations error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

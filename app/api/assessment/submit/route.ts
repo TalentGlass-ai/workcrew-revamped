@@ -60,6 +60,69 @@ export async function POST(req: NextRequest) {
   const now = new Date();
   const timeTaken = Math.round((now.getTime() - attempt.startedAt.getTime()) / 1000);
 
+  // Write validated CandidateSkill records for skills scored ≥ 60
+  const now2 = new Date();
+  const skillUpserts: Promise<unknown>[] = [];
+
+  // Skills from question rubric tags
+  for (const [skillName, score] of Object.entries(result.skillScores)) {
+    if (score >= 60) {
+      skillUpserts.push(
+        prisma.candidateSkill.upsert({
+          where: { candidateId_skillName: { candidateId: candidate.id, skillName } },
+          create: {
+            candidateId: candidate.id,
+            skillName,
+            category: "technical",
+            score: score / 10,
+            source: "assessment",
+            isValidated: true,
+            validatedAt: now2,
+            validationSource: "assessment",
+            lastVerifiedAt: now2,
+          },
+          update: {
+            score: score / 10,
+            isValidated: true,
+            validatedAt: now2,
+            validationSource: "assessment",
+            lastVerifiedAt: now2,
+          },
+        })
+      );
+    }
+  }
+
+  // Also validate the assessment language if overall score ≥ 60
+  if (result.score >= 60 && attempt.assessment.language) {
+    const lang = attempt.assessment.language;
+    skillUpserts.push(
+      prisma.candidateSkill.upsert({
+        where: { candidateId_skillName: { candidateId: candidate.id, skillName: lang } },
+        create: {
+          candidateId: candidate.id,
+          skillName: lang,
+          category: "technical",
+          score: result.score / 10,
+          source: "assessment",
+          isValidated: true,
+          validatedAt: now2,
+          validationSource: "assessment",
+          lastVerifiedAt: now2,
+        },
+        update: {
+          score: Math.max(result.score / 10, 0),
+          isValidated: true,
+          validatedAt: now2,
+          validationSource: "assessment",
+          lastVerifiedAt: now2,
+        },
+      })
+    );
+  }
+
+  await Promise.all(skillUpserts);
+
   // Compute fraud risk from accumulated proctoring flags
   const flags = await prisma.proctoringFlag.findMany({
     where: { assessmentId: attempt.assessmentId },

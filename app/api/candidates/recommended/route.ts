@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const candidates = await prisma.candidate.findMany({
       include: {
-        skills: { select: { skillName: true, score: true } },
+        skills: { select: { skillName: true, score: true, isValidated: true } },
         applications: { where: { jobId }, select: { id: true } },
       },
       take: limit * 3,
@@ -38,12 +38,16 @@ export async function GET(request: NextRequest) {
     const scored = candidates
       .filter((c) => c.applications.length === 0)
       .map((c) => {
-        const candidateSkills = new Set(c.skills.map((s) => s.skillName.toLowerCase()))
-        const matched = requiredSkills.filter((s) => candidateSkills.has(s.toLowerCase()))
+        const skillMap = new Map(c.skills.map((s) => [s.skillName.toLowerCase(), s.isValidated]))
+        const matched = requiredSkills.filter((s) => skillMap.has(s.toLowerCase()))
+        // Validated skills count 1.5×, self-reported count 1×
+        const weightedMatch = matched.reduce((sum, s) => sum + (skillMap.get(s.toLowerCase()) ? 1.5 : 1), 0)
+        const maxWeight = requiredSkills.length * 1.5
         return {
           ...c,
-          matchScore: requiredSkills.length ? Math.round((matched.length / requiredSkills.length) * 100) : 0,
+          matchScore: requiredSkills.length ? Math.round((weightedMatch / maxWeight) * 100) : 0,
           matchedSkills: matched,
+          validatedSkills: matched.filter((s) => skillMap.get(s.toLowerCase())),
         }
       })
       .sort((a, b) => b.matchScore - a.matchScore)

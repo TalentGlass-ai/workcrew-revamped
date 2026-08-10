@@ -25,15 +25,16 @@ function CheckoutContent() {
   const price = billing === 'yearly' ? plan.yearly : plan.monthly
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  // price used for display only; subscription amount is determined server-side
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    fetch('/api/billing/payment-intent', {
+    fetch('/api/billing/subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: price, currency: 'USD', metadata: { plan: planKey, billing } }),
+      body: JSON.stringify({ planKey, billing }),
     })
       .then(r => r.json())
       .then(data => {
@@ -42,7 +43,7 @@ function CheckoutContent() {
       })
       .catch(() => setError('Network error'))
       .finally(() => setLoading(false))
-  }, [price, planKey, billing])
+  }, [planKey, billing])
 
   const handleSuccess = () => {
     setSuccess(true)

@@ -109,6 +109,11 @@ export interface PaymentResult {
 export interface PaymentMethodResult {
   success: boolean;
   paymentMethodId: string;
+  type?: string;
+  last4?: string | null;
+  brand?: string | null;
+  expiryMonth?: number | null;
+  expiryYear?: number | null;
 }
 
 export interface SubscriptionDetails {

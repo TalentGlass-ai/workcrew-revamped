@@ -14,7 +14,7 @@ type Assessment = {
   report: { title?: string; status?: string } | null;
   job: { title: string } | null;
   candidate?: { user: { name: string | null; email: string | null } };
-  _count?: { assessmentAttempts: number };
+  _count?: { assessmentAttempts: number; proctoringFlags: number };
   questions?: { id: string }[];
 };
 
@@ -199,15 +199,38 @@ export default function AssessmentsPage() {
                     </p>
                   </div>
                   <div className="ml-4 flex flex-shrink-0 items-center gap-3">
-                    {!isRecruiter && isPending ? (
+                    {isRecruiter ? (
+                      <>
+                        {(a._count?.proctoringFlags ?? 0) > 0 && (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                            ⚑ {a._count!.proctoringFlags} flag{a._count!.proctoringFlags !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isPending ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"}`}>
+                          {isPending ? "Pending" : `Score: ${Math.round(a.score ?? 0)}%`}
+                        </span>
+                        {!isPending && (
+                          <Link href={`/assessments/${a.id}/results`}
+                            className="rounded-lg border border-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
+                            View Results
+                          </Link>
+                        )}
+                      </>
+                    ) : isPending ? (
                       <Link href={`/assessments/${a.id}/take`}
                         className="rounded-lg bg-[#4D31EC] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
                         Start →
                       </Link>
                     ) : (
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isPending ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"}`}>
-                        {isPending ? "Pending" : `Score: ${Math.round(a.score ?? 0)}%`}
-                      </span>
+                      <>
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                          Score: {Math.round(a.score ?? 0)}%
+                        </span>
+                        <Link href={`/assessments/${a.id}/results`}
+                          className="rounded-lg border border-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
+                          View Results
+                        </Link>
+                      </>
                     )}
                   </div>
                 </div>

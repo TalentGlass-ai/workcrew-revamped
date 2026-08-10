@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       include: {
         candidate: { include: { user: { select: { name: true, email: true } } } },
         job: { select: { title: true } },
-        _count: { select: { assessmentAttempts: true } },
+        _count: { select: { assessmentAttempts: true, proctoringFlags: true } },
       },
       orderBy: { createdAt: "desc" },
     });

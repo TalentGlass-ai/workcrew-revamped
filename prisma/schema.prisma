@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
@@ -181,6 +180,7 @@ model Candidate {
   assessments      Assessment[]
   assessmentAttempts AssessmentAttempt[]
   interviewSessions InterviewSession[]
+  aiInterviews      AiInterview[]
   jobMatches       JobCandidateMatch[]
   actions          CandidateAction[]
   proctoringEvents ProctoringEvent[]
@@ -305,6 +305,7 @@ model Job {
   applications       CandidateApplication[]
   assessments        Assessment[]
   interviews         InterviewSession[]
+  aiInterviews       AiInterview[]
   candidateMatches   JobCandidateMatch[]
   actions            CandidateAction[]
   scores             CandidateScore[]
@@ -989,4 +990,31 @@ model CandidateScore {
   @@index([recommendation])
   @@index([processedAt])
   @@map("candidate_scores")
+}
+
+// -----------------------------------------------------------------------------
+// AI INTERVIEWER
+// -----------------------------------------------------------------------------
+
+model AiInterview {
+  id          String    @id @default(uuid())
+  candidateId String    @map("candidate_id")
+  jobId       String?   @map("job_id")
+  language    String
+  code        String
+  analysis    Json
+  questions   Json
+  answers     Json      @default("[]")
+  evaluations Json      @default("[]")
+  finalScore  Float?    @map("final_score")
+  finalEval   Json?     @map("final_eval")
+  status      String    @default("in_progress")
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job         Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([candidateId])
+  @@map("ai_interviews")
 }

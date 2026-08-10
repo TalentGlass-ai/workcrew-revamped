@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Button from '@/workcrew-ui/components/primitives/Button'
 import { Textarea } from '@/workcrew-ui/components/primitives/Textarea'
 import Card, { CardContent, CardHeader, CardTitle } from '@/workcrew-ui/components/primitives/Card'
@@ -47,7 +48,8 @@ interface InterviewResponse {
   }
 }
 
-export default function AIInterviewer() {
+export default function AIInterviewer({ candidateId }: { candidateId?: string }) {
+  const router = useRouter()
   const [code, setCode] = useState('')
   const [language, setLanguage] = useState('javascript')
   const [session, setSession] = useState<InterviewSession | null>(null)
@@ -70,7 +72,7 @@ export default function AIInterviewer() {
       const response = await fetch('/api/interview/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language })
+        body: JSON.stringify({ code, language, candidateId })
       })
 
       const data = await response.json()
@@ -124,6 +126,7 @@ export default function AIInterviewer() {
       if (data.isComplete) {
         setIsComplete(true)
         setFinalEvaluation(data.finalEvaluation)
+        if (session?.sessionId) router.push(`/ai-interviewer/${session.sessionId}`)
       } else if (data.nextQuestion) {
         setConversation(prev => [
           ...prev,

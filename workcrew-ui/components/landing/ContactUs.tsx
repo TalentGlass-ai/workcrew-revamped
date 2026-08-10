@@ -1,8 +1,37 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 
 export default function ContactUs(): React.ReactElement {
+  const [status, setStatus] = useState<"idle" | "submitting" | "ok" | "error">("idle");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setStatus("submitting");
+    const fd = new FormData(e.currentTarget);
+    const body = {
+      company:       fd.get("company") as string,
+      contactPerson: fd.get("contactPerson") as string,
+      email:         fd.get("email") as string,
+      countryCode:   fd.get("countryCode") as string,
+      phone:         fd.get("phone") as string,
+      companySize:   fd.get("companySize") as string,
+      role:          fd.get("role") as string,
+      desc:          fd.get("desc") as string,
+    };
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      setStatus(res.ok ? "ok" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
   return (
     <section id="contact" className="relative">
       <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
@@ -21,27 +50,30 @@ export default function ContactUs(): React.ReactElement {
           company's talent acquisition and HR operations.
         </p>
 
+        {status === "ok" ? (
+          <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-8 py-12 text-center">
+            <p className="text-lg font-semibold text-emerald-700">Thanks! We'll be in touch soon.</p>
+          </div>
+        ) : (
+
         {/*  Form  */}
         <form
           className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            // TODO: handle submit
-          }}
+          onSubmit={handleSubmit}
         >
           {/* Company name */}
           <Field label="Company name" required htmlFor="company">
-            <Input id="company" placeholder="Enter your company name" />
+            <Input id="company" name="company" placeholder="Enter your company name" required />
           </Field>
 
           {/* Contact person */}
           <Field label="Contact person" required htmlFor="contactPerson">
-            <Input id="contactPerson" placeholder="Your full name" />
+            <Input id="contactPerson" name="contactPerson" placeholder="Your full name" required />
           </Field>
 
           {/* Business email */}
           <Field label="Business email" required htmlFor="email">
-            <Input id="email" type="email" placeholder="you@company.com" />
+            <Input id="email" name="email" type="email" placeholder="you@company.com" required />
           </Field>
 
           {/* Phone number */}
@@ -49,6 +81,7 @@ export default function ContactUs(): React.ReactElement {
             <div className="flex gap-3">
               <Select
                 aria-label="Country code"
+                name="countryCode"
                 className="w-[86px]"
                 defaultValue="+91"
                 options={[
@@ -58,7 +91,7 @@ export default function ContactUs(): React.ReactElement {
                   { value: "+61", label: "+61" },
                 ]}
               />
-              <Input id="phone" placeholder="123456790" inputMode="numeric" />
+              <Input id="phone" name="phone" placeholder="123456790" inputMode="numeric" required />
             </div>
           </Field>
 
@@ -66,6 +99,7 @@ export default function ContactUs(): React.ReactElement {
           <Field label="Company size" required htmlFor="companySize">
             <Select
               id="companySize"
+              name="companySize"
               placeholder="Select company size"
               options={[
                 { value: "1-10", label: "1–10" },
@@ -81,6 +115,7 @@ export default function ContactUs(): React.ReactElement {
           <Field label="Your role" required htmlFor="role">
             <Select
               id="role"
+              name="role"
               placeholder="Select your role"
               options={[
                 { value: "founder", label: "Founder / CXO" },
@@ -96,27 +131,37 @@ export default function ContactUs(): React.ReactElement {
             <Field label="Description" htmlFor="desc">
               <Textarea
                 id="desc"
+                name="desc"
                 placeholder="Tell us more about your hiring needs"
                 rows={5}
               />
             </Field>
           </div>
 
+          {status === "error" && (
+            <div className="md:col-span-2">
+              <p className="text-sm text-red-600 text-center">Something went wrong. Please try again.</p>
+            </div>
+          )}
+
           {/* Submit */}
           <div className="md:col-span-2 flex justify-center pt-2">
             <button
               type="submit"
+              disabled={status === "submitting"}
               className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-white
                          bg-[#5A3BFF] hover:bg-[#4F35E6] active:bg-[#442ECC]
-                         shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition"
+                         shadow-[0_8px_24px_rgba(90,59,255,0.35)] transition
+                         disabled:opacity-60"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="font-medium">Get in touch</span>
+              <span className="font-medium">{status === "submitting" ? "Sending…" : "Get in touch"}</span>
             </button>
           </div>
         </form>
+        )}
       </div>
     </section>
   );

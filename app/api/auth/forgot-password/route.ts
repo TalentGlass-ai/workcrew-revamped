@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
     await prisma.verificationToken.deleteMany({ where: { identifier: email } });
     await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
 
-    // ponytail: log token — wire to email service (Resend/SendGrid) when ready
-    console.log(`[forgot-password] reset link: /reset-password?token=${token}`);
+    // TODO: send email via Resend/SendGrid — POST to email service with reset link
+    // e.g. await sendEmail({ to: email, subject: "Reset your password", resetUrl: `/reset-password?token=${token}` })
   }
 
   // Always 200 — don't reveal whether email is registered

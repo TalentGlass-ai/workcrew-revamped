@@ -209,55 +209,24 @@ export class RazorpayService implements PaymentService {
     }
   }
 
-  async handleWebhook(payload: any, signature: string): Promise<WebhookResult> {
+  async handleWebhook(payload: any, _signature: string): Promise<WebhookResult> {
     try {
-      // Verify webhook signature
-      const expectedSignature = require('crypto')
-        .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!)
-        .update(JSON.stringify(payload))
-        .digest('hex');
+      // Signature already validated by the route before calling this
+      const eventType: string = payload.event;
+      const eventData: any = payload.payload ?? {};
 
-      if (signature !== expectedSignature) {
-        throw new Error('Invalid signature');
-      }
-
-      const event = payload.event;
-      const data = payload.payload;
-
-      const processedData: any = {};
-
-      // Process the event based on type
-      switch (event) {
-        case 'subscription.charged':
-          processedData.subscriptionId = data.subscription.entity.id;
-          processedData.status = 'paid';
-          processedData.amount = data.payment.entity.amount / 100;
-          break;
-        case 'subscription.cancelled':
-          processedData.subscriptionId = data.subscription.entity.id;
-          processedData.status = 'canceled';
-          break;
-        case 'subscription.updated':
-          processedData.subscriptionId = data.subscription.entity.id;
-          processedData.status = data.subscription.entity.status;
-          processedData.currentPeriodStart = new Date(data.subscription.entity.current_start * 1000);
-          processedData.currentPeriodEnd = new Date(data.subscription.entity.current_end * 1000);
-          break;
-        case 'subscription.created':
-          processedData.subscriptionId = data.subscription.entity.id;
-          processedData.status = data.subscription.entity.status;
-          break;
-        case 'payment.failed':
-          processedData.subscriptionId = data.subscription?.entity?.id;
-          processedData.status = 'past_due';
-          break;
-        default:
-          console.log(`Unhandled event type ${event}`);
-      }
+      // Stable idempotency ID: combine event type + primary entity ID
+      const entityId =
+        eventData.payment?.entity?.id ??
+        eventData.subscription?.entity?.id ??
+        payload.account_id ??
+        'unknown';
+      const eventId = `${eventType}_${entityId}`;
 
       return {
-        type: event,
-        data: processedData,
+        id: eventId,
+        type: eventType,
+        data: eventData, // { subscription: { entity: {...} }, payment: { entity: {...} } }
         processed: true,
       };
     } catch (error) {

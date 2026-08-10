@@ -132,6 +132,7 @@ export interface Invoice {
 }
 
 export interface WebhookResult {
+  id: string;
   type: string;
   data: any;
   processed: boolean;

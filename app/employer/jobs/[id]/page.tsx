@@ -25,7 +25,11 @@ type Application = {
   };
 };
 
-type Job = { id: string; title: string; status: string };
+type Job = {
+  id: string; title: string; status: string;
+  description: string | null; location: string | null;
+  jobType: string | null; salaryMin: number | null; salaryMax: number | null;
+};
 
 type SuggestedCandidate = {
   id: string;
@@ -249,6 +253,9 @@ export default function JobPipelinePage() {
   const [tab, setTab] = useState<"pipeline" | "suggested">("pipeline");
   const [suggested, setSuggested] = useState<SuggestedCandidate[]>([]);
   const [suggestedLoading, setSuggestedLoading] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -288,6 +295,29 @@ export default function JobPipelinePage() {
     }
   };
 
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEditSaving(true);
+    setEditError("");
+    const fd = new FormData(e.currentTarget);
+    const body = {
+      title: fd.get("title") as string,
+      description: fd.get("description") as string,
+      location: (fd.get("location") as string) || undefined,
+      jobType: (fd.get("jobType") as string) || undefined,
+      salaryMin: fd.get("salaryMin") ? Number(fd.get("salaryMin")) : null,
+      salaryMax: fd.get("salaryMax") ? Number(fd.get("salaryMax")) : null,
+    };
+    const res = await fetch(`/api/employer/jobs/${jobId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    setEditSaving(false);
+    if (res.ok) { setShowEdit(false); load(); }
+    else { const d = await res.json().catch(() => ({})); setEditError(d.error ?? "Failed to save"); }
+  }
+
   if (status === "loading" || loading) {
     return (
       <main className="min-h-screen bg-[#F7F8FC] flex items-center justify-center">
@@ -318,9 +348,18 @@ export default function JobPipelinePage() {
               <h1 className="text-xl font-bold text-gray-900">{job?.title ?? "Pipeline"}</h1>
               <p className="mt-0.5 text-sm text-gray-500">
                 {active.length} active · {applications.length} total applicants
+                {job?.location && ` · ${job.location}`}
+                {job?.jobType && ` · ${job.jobType}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setShowEdit(v => !v); setEditError(""); }}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
+                  ${showEdit ? "border-gray-300 bg-gray-100 text-gray-700" : "border-gray-200 bg-white text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
+              >
+                {showEdit ? "Cancel edit" : "✏️ Edit job"}
+              </button>
               {tab === "pipeline" && (
                 <button
                   onClick={() => setShowRejected((v) => !v)}
@@ -343,6 +382,67 @@ export default function JobPipelinePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit form */}
+      {showEdit && job && (
+        <div className="border-b border-gray-100 bg-white">
+          <div className="mx-auto max-w-3xl px-6 py-6">
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Job title *</label>
+                <input name="title" required defaultValue={job.title}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Description *</label>
+                <textarea name="description" required rows={5} defaultValue={job.description ?? ""}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Location</label>
+                  <input name="location" defaultValue={job.location ?? ""}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Job type</label>
+                  <select name="jobType" defaultValue={job.jobType ?? ""}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all">
+                    <option value="">— select —</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                    <option value="internship">Internship</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary min (USD)</label>
+                  <input name="salaryMin" type="number" defaultValue={job.salaryMin ?? ""}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary max (USD)</label>
+                  <input name="salaryMax" type="number" defaultValue={job.salaryMax ?? ""}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
+                </div>
+              </div>
+              {editError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{editError}</p>}
+              <div className="flex gap-3">
+                <button type="submit" disabled={editSaving}
+                  className="rounded-lg bg-[#4D31EC] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-60 transition-colors">
+                  {editSaving ? "Saving…" : "Save changes"}
+                </button>
+                <button type="button" onClick={() => setShowEdit(false)}
+                  className="rounded-lg border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-600 hover:border-gray-300 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Suggested candidates tab */}
       {tab === "suggested" && (

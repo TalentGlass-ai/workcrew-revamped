@@ -4,7 +4,13 @@ import { auth } from "../../../../../auth";
 import { getPrisma } from "../../../../../lib/prisma";
 
 const patchSchema = z.object({
-  status: z.enum(["draft", "published", "closed", "archived"]),
+  status: z.enum(["draft", "published", "closed", "archived"]).optional(),
+  title: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  location: z.string().optional(),
+  jobType: z.string().optional(),
+  salaryMin: z.number().nullable().optional(),
+  salaryMax: z.number().nullable().optional(),
 });
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -32,11 +38,17 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
+  const { status, title, description, location, jobType, salaryMin, salaryMax } = parsed.data;
   const updated = await prisma.job.update({
     where: { id },
     data: {
-      status: parsed.data.status,
-      publishedAt: parsed.data.status === "published" ? (job.publishedAt ?? new Date()) : job.publishedAt,
+      ...(status !== undefined && { status, publishedAt: status === "published" ? (job.publishedAt ?? new Date()) : job.publishedAt }),
+      ...(title !== undefined && { title }),
+      ...(description !== undefined && { description }),
+      ...(location !== undefined && { location }),
+      ...(jobType !== undefined && { jobType }),
+      ...(salaryMin !== undefined && { salaryMin }),
+      ...(salaryMax !== undefined && { salaryMax }),
     },
   });
 

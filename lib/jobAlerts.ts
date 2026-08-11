@@ -47,6 +47,7 @@ export async function processJobAlerts(): Promise<{ sent: number; errors: number
           id: true,
           title: true,
           location: true,
+          seoSlug: true,
           requiredSkills: true,
           organization: { select: { name: true } },
         },
@@ -79,6 +80,7 @@ export async function processJobAlerts(): Promise<{ sent: number; errors: number
           title: j.title,
           company: j.organization.name,
           location: j.location ?? undefined,
+          slug: j.seoSlug,
         })),
       );
 

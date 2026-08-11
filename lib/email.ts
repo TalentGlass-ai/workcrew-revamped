@@ -175,11 +175,11 @@ export const emailTemplates = {
     };
   },
 
-  jobAlert(alertId: string, jobs: Array<{ title: string; company: string; location?: string; id: string }>): { subject: string; html: string } {
+  jobAlert(alertId: string, jobs: Array<{ title: string; company: string; location?: string; id: string; slug?: string | null }>): { subject: string; html: string } {
     const rows = jobs.slice(0, 10).map(j => `
       <tr>
         <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;">
-          <a href="${APP_URL}/jobs/${j.id}" style="font-weight:600;color:#5A3BFF;text-decoration:none;">${j.title}</a>
+          <a href="${APP_URL}/jobs/${j.slug ?? j.id}" style="font-weight:600;color:#5A3BFF;text-decoration:none;">${j.title}</a>
           <br><span style="font-size:13px;color:#6b7280;">${j.company}${j.location ? ` · ${j.location}` : ''}</span>
         </td>
       </tr>`).join('');
@@ -189,9 +189,9 @@ export const emailTemplates = {
         ${h1(`${jobs.length} new job${jobs.length === 1 ? '' : 's'} for you`)}
         ${p('We found new jobs matching your saved alert:')}
         <table style="width:100%;border-collapse:collapse;">${rows}</table>
-        ${btn('View all jobs', `${APP_URL}/jobs`)}
+        ${btn('View all jobs', `${APP_URL}/find-jobs`)}
         <p style="margin-top:24px;font-size:12px;color:#9ca3af;">
-          <a href="${APP_URL}/settings/alerts/${alertId}" style="color:#9ca3af;">Manage this alert</a>
+          <a href="${APP_URL}/dashboard/alerts" style="color:#9ca3af;">Manage your alerts</a>
         </p>
       `),
     };

@@ -26,6 +26,16 @@ type Application = {
 
 type Job = { id: string; title: string; status: string };
 
+type SuggestedCandidate = {
+  id: string;
+  currentRole: string | null;
+  location: string | null;
+  primarySkills: string[] | Record<string, unknown>;
+  matchScore: number;
+  matchedSkills: string[];
+  user: { name: string | null; email: string | null };
+};
+
 // ─── Stage config ────────────────────────────────────────────────────────────
 
 const STAGES = [
@@ -229,6 +239,9 @@ export default function JobPipelinePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [showRejected, setShowRejected] = useState(false);
+  const [tab, setTab] = useState<"pipeline" | "suggested">("pipeline");
+  const [suggested, setSuggested] = useState<SuggestedCandidate[]>([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -244,6 +257,15 @@ export default function JobPipelinePage() {
   }, [status, jobId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (tab !== "suggested" || suggested.length > 0 || status !== "authenticated") return;
+    setSuggestedLoading(true);
+    fetch(`/api/employer/jobs/${jobId}/recommended-candidates`)
+      .then(r => r.ok ? r.json() : { candidates: [] })
+      .then(d => setSuggested(d.candidates ?? []))
+      .finally(() => setSuggestedLoading(false));
+  }, [tab, jobId, status, suggested.length]);
 
   const handleAction = async (appId: string, payload: { stage?: string; status?: string }) => {
     setBusy(appId);
@@ -292,19 +314,86 @@ export default function JobPipelinePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowRejected((v) => !v)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
-                  ${showRejected ? "border-red-300 bg-red-50 text-red-600" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"}`}
-              >
-                {showRejected ? "Hide" : "Show"} rejected ({rejected.length})
-              </button>
+              {tab === "pipeline" && (
+                <button
+                  onClick={() => setShowRejected((v) => !v)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
+                    ${showRejected ? "border-red-300 bg-red-50 text-red-600" : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"}`}
+                >
+                  {showRejected ? "Hide" : "Show"} rejected ({rejected.length})
+                </button>
+              )}
+              <div className="flex rounded-lg border border-gray-200 bg-white p-0.5">
+                {(["pipeline", "suggested"] as const).map((t) => (
+                  <button key={t} onClick={() => setTab(t)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition-colors
+                      ${tab === t ? "bg-[#4D31EC] text-white" : "text-gray-500 hover:text-gray-800"}`}>
+                    {t === "suggested" ? "✨ Suggested" : "Pipeline"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Suggested candidates tab */}
+      {tab === "suggested" && (
+        <div className="mx-auto max-w-5xl px-6 py-6">
+          {suggestedLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100" />)}
+            </div>
+          ) : suggested.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-20 text-center">
+              <p className="text-gray-400">No matching candidates found.</p>
+              <p className="mt-1 text-xs text-gray-400">Candidates appear here when their skills overlap with this job's requirements.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {suggested.map((c) => {
+                const skills: string[] = Array.isArray(c.primarySkills)
+                  ? c.primarySkills as string[]
+                  : Object.keys(c.primarySkills ?? {});
+                return (
+                  <div key={c.id} className="flex items-start justify-between gap-4 rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link href={`/employer/candidates/${c.id}`}
+                          className="font-semibold text-gray-900 hover:text-[#4D31EC] transition-colors">
+                          {c.user.name ?? "—"}
+                        </Link>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold
+                          ${c.matchScore >= 70 ? "bg-emerald-50 text-emerald-700" : c.matchScore >= 40 ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                          {c.matchScore}% match
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {[c.currentRole, c.location].filter(Boolean).join(" · ")}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {c.matchedSkills.slice(0, 5).map(s => (
+                          <span key={s} className="rounded-md bg-[#4D31EC]/10 px-2 py-0.5 text-xs font-medium text-[#4D31EC]">{s}</span>
+                        ))}
+                        {skills.filter(s => !c.matchedSkills.includes(s)).slice(0, 3).map(s => (
+                          <span key={s} className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <Link href={`/employer/candidates/${c.id}`}
+                      className="flex-shrink-0 rounded-lg border border-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
+                      View profile
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pipeline board */}
+      {tab === "pipeline" && (
       <div className="mx-auto max-w-7xl px-6 py-6 overflow-x-auto">
         {applications.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-20 text-center">
@@ -380,6 +469,7 @@ export default function JobPipelinePage() {
           </div>
         )}
       </div>
+      )}
     </main>
   );
 }

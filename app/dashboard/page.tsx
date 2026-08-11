@@ -17,8 +17,8 @@ type Assessment = {
 const QUICK_LINKS = [
   { href: "/find-jobs", label: "Find Jobs", desc: "Browse AI-matched roles tailored to your skills.", icon: "🔍" },
   { href: "/dashboard/applications", label: "My Applications", desc: "Track the status of every job you've applied to.", icon: "📋" },
+  { href: "/dashboard/saved", label: "Saved Jobs", desc: "Jobs you've bookmarked while browsing.", icon: "🔖" },
   { href: "/dashboard/alerts", label: "Job Alerts", desc: "Get emailed when new jobs match your criteria.", icon: "🔔" },
-  { href: "/onboarding/personal-details", label: "Update Profile", desc: "Keep your personal details and resume up to date.", icon: "✏️" },
 ];
 
 const DIFFICULTY_COLOR: Record<string, string> = {

@@ -98,6 +98,7 @@ model User {
   paymentMethods PaymentMethod[]
   actions        CandidateAction[] // As recruiter
   jobAlerts      JobAlert[]
+  savedJobs      SavedJob[]
 
   @@map("users")
 }
@@ -329,8 +330,22 @@ model Job {
   candidateMatches   JobCandidateMatch[]
   actions            CandidateAction[]
   scores             CandidateScore[]
+  savedBy            SavedJob[]
 
   @@map("jobs")
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  savedAt   DateTime @default(now()) @map("saved_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
 }
 
 model JobPipelineStage {

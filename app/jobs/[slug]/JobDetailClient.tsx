@@ -59,6 +59,25 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
   const [applied, setApplied] = useState(false)
   const [applying, setApplying] = useState(false)
   const [applyError, setApplyError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!session) { router.push('/login'); return; }
+    setSaving(true);
+    if (saved) {
+      await fetch(`/api/saved-jobs?jobId=${job.id}`, { method: 'DELETE' });
+      setSaved(false);
+    } else {
+      await fetch('/api/saved-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job.id }),
+      });
+      setSaved(true);
+    }
+    setSaving(false);
+  }
 
   const handleApply = async () => {
     if (!session) { router.push('/login'); return; }
@@ -141,21 +160,35 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
               </div>
             </div>
 
-            <div className="flex-shrink-0">
-              <button
-                onClick={handleApply}
-                disabled={applied || applying}
-                className={`px-8 py-3 rounded-lg font-medium transition-colors ${
-                  applied
-                    ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60'
-                }`}
-              >
-                {applied ? 'Applied ✓' : applying ? 'Applying…' : 'Apply Now'}
-              </button>
-              {applyError && <p className="mt-2 text-xs text-red-500">{applyError}</p>}
+            <div className="flex-shrink-0 flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  title={saved ? "Remove from saved" : "Save job"}
+                  className={`rounded-lg border px-3 py-3 text-sm transition-colors disabled:opacity-50 ${
+                    saved
+                      ? 'border-[#4D31EC] bg-[#4D31EC]/10 text-[#4D31EC]'
+                      : 'border-gray-200 text-gray-400 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]'
+                  }`}
+                >
+                  {saved ? '🔖' : '🔖'}
+                </button>
+                <button
+                  onClick={handleApply}
+                  disabled={applied || applying}
+                  className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                    applied
+                      ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60'
+                  }`}
+                >
+                  {applied ? 'Applied ✓' : applying ? 'Applying…' : 'Apply Now'}
+                </button>
+              </div>
+              {applyError && <p className="text-xs text-red-500">{applyError}</p>}
               {applied && (
-                <Link href="/dashboard/applications" className="mt-2 block text-center text-xs text-blue-600 hover:underline">
+                <Link href="/dashboard/applications" className="text-xs text-blue-600 hover:underline">
                   View application →
                 </Link>
               )}

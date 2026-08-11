@@ -8,8 +8,15 @@ export async function GET() {
 
   const candidate = await prisma.candidate.findUnique({
     where: { userId: session.user.id },
-    select: { id: true, resumeUrl: true, currentRole: true, location: true },
+    select: { id: true, resumeUrl: true, currentRole: true, location: true, user: { select: { name: true } } },
   });
 
-  return NextResponse.json(candidate ?? { id: null, resumeUrl: null });
+  if (!candidate) return NextResponse.json({ id: null, resumeUrl: null });
+
+  const namePart = (candidate.user.name ?? 'candidate')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const suffix = candidate.id.slice(-8);
+  const profileSlug = `${namePart}-${suffix}`;
+
+  return NextResponse.json({ ...candidate, profileSlug });
 }

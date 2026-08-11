@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [assLoading, setAssLoading] = useState(true);
   const [activeApps, setActiveApps] = useState<number | null>(null);
   const [recommended, setRecommended] = useState<RecommendedJob[]>([]);
+  const [profileSlug, setProfileSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -65,6 +66,9 @@ export default function DashboardPage() {
     fetch("/api/jobs/recommendations?limit=4")
       .then((r) => r.ok ? r.json() : { jobs: [] })
       .then((d) => setRecommended(d.jobs ?? []));
+    fetch("/api/candidates/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.profileSlug) setProfileSlug(d.profileSlug); });
   }, [status]);
 
   if (status === "loading") {
@@ -91,6 +95,31 @@ export default function DashboardPage() {
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-8 space-y-8">
+        {/* Public profile link */}
+        {profileSlug && (
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#4D31EC]/10 text-lg">🔗</span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">Your public profile</p>
+                <p className="text-xs text-gray-400 truncate">/profile/{profileSlug}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+              <button
+                onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/profile/${profileSlug}`); }}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors"
+              >
+                Copy link
+              </button>
+              <Link href={`/profile/${profileSlug}`} target="_blank"
+                className="rounded-lg bg-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3b25b5] transition-colors">
+                View ↗
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Active applications summary */}
         {activeApps !== null && activeApps > 0 && (
           <Link href="/dashboard/applications"

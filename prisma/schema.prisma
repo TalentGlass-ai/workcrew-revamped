@@ -392,8 +392,25 @@ model CandidateApplication {
 
   job            Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interview      InterviewProposal?
 
   @@map("candidate_applications")
+}
+
+model InterviewProposal {
+  id            String    @id @default(cuid())
+  applicationId String    @unique @map("application_id")
+  proposedSlots Json      @map("proposed_slots") // ISO string[]
+  confirmedSlot DateTime? @map("confirmed_slot")
+  status        String    @default("proposed") // proposed | confirmed | cancelled
+  meetingLink   String?   @map("meeting_link")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  application   CandidateApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("interview_proposals")
 }
 
 // -----------------------------------------------------------------------------

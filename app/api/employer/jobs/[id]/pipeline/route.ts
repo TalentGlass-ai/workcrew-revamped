@@ -46,6 +46,9 @@ export async function GET(
           },
         },
       },
+      interview: {
+        select: { id: true, proposedSlots: true, confirmedSlot: true, status: true, meetingLink: true },
+      },
     },
   });
 

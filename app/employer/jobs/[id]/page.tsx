@@ -7,12 +7,21 @@ import React, { useCallback, useEffect, useState } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+type InterviewProposal = {
+  id: string;
+  proposedSlots: string[];
+  confirmedSlot: string | null;
+  status: string;
+  meetingLink: string | null;
+};
+
 type Application = {
   id: string;
   currentStage: string;
   status: string;
   aiMatchScore: number | null;
   appliedAt: string;
+  interview: InterviewProposal | null;
   candidate: {
     id: string;
     currentRole: string | null;
@@ -102,6 +111,85 @@ function AssessForm({ jobId, candidateId, onSent }: { jobId: string; candidateId
   );
 }
 
+function fmtSlot(iso: string) {
+  return new Date(iso).toLocaleString("en-US", {
+    weekday: "short", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+}
+
+function ScheduleForm({ appId, jobId, existing, onDone }: {
+  appId: string;
+  jobId: string;
+  existing: InterviewProposal | null;
+  onDone: () => void;
+}) {
+  const [slots, setSlots] = useState<string[]>(
+    existing?.proposedSlots?.length ? existing.proposedSlots : [""]
+  );
+  const [meetingLink, setMeetingLink] = useState(existing?.meetingLink ?? "");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  function setSlot(i: number, v: string) {
+    setSlots(prev => prev.map((s, idx) => idx === i ? v : s));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const valid = slots.filter(Boolean);
+    if (!valid.length) return;
+    setSaving(true);
+    await fetch(`/api/employer/applications/${appId}/interview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slots: valid, meetingLink: meetingLink || null, notes: notes || null }),
+    }).catch(() => null);
+    setSaving(false);
+    onDone();
+  }
+
+  async function cancel() {
+    setCancelling(true);
+    await fetch(`/api/employer/applications/${appId}/interview`, { method: "DELETE" }).catch(() => null);
+    setCancelling(false);
+    onDone();
+  }
+
+  const inp = "w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all";
+  return (
+    <form onSubmit={submit} className="mt-2 rounded-lg border border-[#4D31EC]/20 bg-[#4D31EC]/5 p-3 space-y-2">
+      <p className="text-xs font-semibold text-[#4D31EC]">Propose interview times</p>
+      {slots.map((s, i) => (
+        <input key={i} type="datetime-local" value={s} onChange={e => setSlot(i, e.target.value)} className={inp} required={i === 0} />
+      ))}
+      {slots.length < 3 && (
+        <button type="button" onClick={() => setSlots(prev => [...prev, ""])}
+          className="text-xs font-semibold text-[#4D31EC] hover:underline">
+          + Add another slot
+        </button>
+      )}
+      <input type="url" value={meetingLink} onChange={e => setMeetingLink(e.target.value)}
+        placeholder="Meeting link (optional)" className={inp} />
+      <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
+        placeholder="Note to candidate (optional)" className={inp} />
+      <div className="flex gap-2 pt-1">
+        <button type="submit" disabled={saving}
+          className="flex-1 rounded-lg bg-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors">
+          {saving ? "Sending…" : "Send proposal"}
+        </button>
+        {existing && (
+          <button type="button" onClick={cancel} disabled={cancelling}
+            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors">
+            {cancelling ? "…" : "Cancel"}
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
 function CandidateCard({
   app,
   jobId,
@@ -112,13 +200,14 @@ function CandidateCard({
 }: {
   app: Application;
   jobId: string;
-  onAction: (id: string, payload: { stage?: string; status?: string }) => void;
+  onAction: (id: string, payload: { stage?: string; status?: string; reload?: boolean }) => void;
   busy: string | null;
   saved: boolean;
   onToggleSave: (candidateId: string) => void;
 }) {
   const [showAssess, setShowAssess] = useState(false);
   const [assessSent, setAssessSent] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
 
   const skills: string[] = Array.isArray(app.candidate.primarySkills)
     ? (app.candidate.primarySkills as string[])
@@ -193,10 +282,18 @@ function CandidateCard({
         </div>
       )}
 
-      {/* Applied date */}
-      <p className="text-xs text-gray-400 mb-3">
+      {/* Applied date + interview status */}
+      <p className="text-xs text-gray-400 mb-1">
         Applied {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
       </p>
+      {app.interview && (
+        <div className={`mb-2 rounded-lg px-2 py-1 text-xs font-medium
+          ${app.interview.status === "confirmed" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+          {app.interview.status === "confirmed"
+            ? `Interview: ${fmtSlot(app.interview.confirmedSlot!)}`
+            : `⏳ Awaiting confirmation (${app.interview.proposedSlots.length} slot${app.interview.proposedSlots.length !== 1 ? "s" : ""})`}
+        </div>
+      )}
 
       {/* Actions */}
       {!isTerminal && (
@@ -230,6 +327,14 @@ function CandidateCard({
               </button>
             )}
             <button
+              onClick={() => setShowSchedule(v => !v)}
+              className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors
+                ${showSchedule ? "border-[#4D31EC]/40 bg-[#4D31EC]/5 text-[#4D31EC]" : "border-gray-200 text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
+              title="Schedule interview"
+            >
+              📅
+            </button>
+            <button
               onClick={() => onAction(app.id, { status: "rejected" })}
               disabled={isBusy}
               className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
@@ -242,6 +347,14 @@ function CandidateCard({
               jobId={jobId}
               candidateId={app.candidate.id}
               onSent={() => { setAssessSent(true); setShowAssess(false); }}
+            />
+          )}
+          {showSchedule && (
+            <ScheduleForm
+              appId={app.id}
+              jobId={jobId}
+              existing={app.interview}
+              onDone={() => { setShowSchedule(false); onAction(app.id, { reload: true }); }}
             />
           )}
         </>
@@ -302,7 +415,8 @@ export default function JobPipelinePage() {
       .finally(() => setSuggestedLoading(false));
   }, [tab, jobId, status, suggested.length]);
 
-  const handleAction = async (appId: string, payload: { stage?: string; status?: string }) => {
+  const handleAction = async (appId: string, payload: { stage?: string; status?: string; reload?: boolean }) => {
+    if (payload.reload) { load(); return; }
     setBusy(appId);
     try {
       const res = await fetch(`/api/applications/${appId}`, {

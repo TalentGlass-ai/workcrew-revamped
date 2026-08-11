@@ -1,16 +1,34 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "@/components/../lib/stores/onboardingStore";
 
 export default function ReviewPage() {
   const router = useRouter();
   const { personalDetails, workExperience, education, professionalSummary, clearOnboardingState } = useOnboardingStore();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function complete() {
-    clearOnboardingState();
-    router.push("/find-jobs");
+  async function complete() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/onboarding/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalDetails, workExperience, professionalSummary }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? "Failed to save profile. Please try again.");
+        return;
+      }
+      clearOnboardingState();
+      router.push("/dashboard");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -85,11 +103,19 @@ export default function ReviewPage() {
             <p className="text-sm">{professionalSummary.summary || "—"}</p>
           </div>
 
+          {error && (
+            <p className="text-sm font-medium text-red-600">{error}</p>
+          )}
+
           {/* Actions */}
           <div className="flex justify-between">
             <button onClick={() => router.back()} className="px-6 py-3 rounded-full border hover:border-[#4D31EC]">← Previous</button>
-            <button onClick={complete} className="bg-[#4D31EC] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#3b25b5]">
-              Complete resume ✓
+            <button
+              onClick={complete}
+              disabled={saving}
+              className="bg-[#4D31EC] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#3b25b5] disabled:opacity-60 transition-colors"
+            >
+              {saving ? "Saving…" : "Complete profile ✓"}
             </button>
           </div>
         </div>

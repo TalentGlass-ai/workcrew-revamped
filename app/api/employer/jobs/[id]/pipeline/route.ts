@@ -42,7 +42,7 @@ export async function GET(
           assessments: {
             orderBy: { createdAt: 'desc' },
             take: 1,
-            select: { score: true, language: true },
+            select: { score: true, language: true, difficulty: true, report: true },
           },
         },
       },

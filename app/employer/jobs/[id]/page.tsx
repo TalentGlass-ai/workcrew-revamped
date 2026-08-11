@@ -30,7 +30,7 @@ type Application = {
     fitScore: number | null;
     resumeUrl: string | null;
     user: { name: string | null; email: string | null };
-    assessments: { score: number | null; language: string }[];
+    assessments: { score: number | null; language: string; difficulty: string; report: { title?: string; status?: string } | null }[];
   };
 };
 
@@ -259,12 +259,16 @@ function CandidateCard({
             </span>
           )}
           {score != null ? (
-            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
-              {Math.round(score)}% assessed
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+              score >= 70 ? "bg-emerald-50 text-emerald-700" :
+              score >= 50 ? "bg-amber-50 text-amber-700" :
+              "bg-red-50 text-red-600"
+            }`}>
+              {Math.round(score)}%
             </span>
           ) : assessSent || (assessment != null && score == null) ? (
             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600">
-              Assessment pending
+              ⏳ Pending
             </span>
           ) : null}
         </div>
@@ -292,6 +296,27 @@ function CandidateCard({
           {app.interview.status === "confirmed"
             ? `Interview: ${fmtSlot(app.interview.confirmedSlot!)}`
             : `⏳ Awaiting confirmation (${app.interview.proposedSlots.length} slot${app.interview.proposedSlots.length !== 1 ? "s" : ""})`}
+        </div>
+      )}
+
+      {/* Assessment detail row */}
+      {assessment && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          {assessment.report?.title && (
+            <span className="text-xs text-gray-500 truncate max-w-[120px]" title={assessment.report.title}>
+              {assessment.report.title}
+            </span>
+          )}
+          <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500 font-medium">
+            {assessment.language}
+          </span>
+          <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${
+            assessment.difficulty === "hard" ? "bg-red-50 text-red-600" :
+            assessment.difficulty === "medium" ? "bg-amber-50 text-amber-600" :
+            "bg-emerald-50 text-emerald-600"
+          }`}>
+            {assessment.difficulty}
+          </span>
         </div>
       )}
 

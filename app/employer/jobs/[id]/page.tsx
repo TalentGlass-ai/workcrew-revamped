@@ -47,24 +47,71 @@ const ADVANCE_TO: Partial<Record<StageKey, StageKey>> = {
 
 // ─── Candidate card ───────────────────────────────────────────────────────────
 
+function AssessForm({ jobId, candidateId, onSent }: { jobId: string; candidateId: string; onSent: () => void }) {
+  const [language, setLanguage] = useState("javascript");
+  const [difficulty, setDifficulty] = useState("medium");
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
+    setSending(true);
+    try {
+      await fetch(`/api/employer/jobs/${jobId}/assign-assessment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateId, language, difficulty }),
+      });
+      onSent();
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const sel = "rounded-md border border-gray-200 bg-white px-2 py-1 text-xs outline-none focus:border-[#4D31EC]";
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-[#4D31EC]/20 bg-[#4D31EC]/5 p-2">
+      <select value={language} onChange={e => setLanguage(e.target.value)} className={sel}>
+        <option value="javascript">JavaScript</option>
+        <option value="typescript">TypeScript</option>
+        <option value="python">Python</option>
+      </select>
+      <select value={difficulty} onChange={e => setDifficulty(e.target.value)} className={sel}>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <button onClick={send} disabled={sending}
+        className="rounded-md bg-[#4D31EC] px-3 py-1 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors">
+        {sending ? "Sending…" : "Send"}
+      </button>
+    </div>
+  );
+}
+
 function CandidateCard({
   app,
+  jobId,
   onAction,
   busy,
 }: {
   app: Application;
+  jobId: string;
   onAction: (id: string, payload: { stage?: string; status?: string }) => void;
   busy: string | null;
 }) {
+  const [showAssess, setShowAssess] = useState(false);
+  const [assessSent, setAssessSent] = useState(false);
+
   const skills: string[] = Array.isArray(app.candidate.primarySkills)
     ? (app.candidate.primarySkills as string[])
     : Object.keys(app.candidate.primarySkills ?? {});
 
-  const score = app.candidate.assessments[0]?.score;
+  const assessment = app.candidate.assessments[0];
+  const score = assessment?.score;
   const matchPct = app.aiMatchScore != null ? Math.round(app.aiMatchScore * 100) : null;
   const nextStage = ADVANCE_TO[app.currentStage as StageKey];
   const isBusy = busy === app.id;
   const isTerminal = app.status === "rejected" || app.status === "hired";
+  const hasAssessment = assessment != null || assessSent;
 
   return (
     <div className={`rounded-xl border bg-white p-4 shadow-sm text-sm ${isTerminal ? "opacity-60" : ""}`}>
@@ -87,11 +134,15 @@ function CandidateCard({
               {matchPct}% match
             </span>
           )}
-          {score != null && (
+          {score != null ? (
             <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
               {Math.round(score)}% assessed
             </span>
-          )}
+          ) : assessSent || (assessment != null && score == null) ? (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600">
+              Assessment pending
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -114,33 +165,51 @@ function CandidateCard({
 
       {/* Actions */}
       {!isTerminal && (
-        <div className="flex gap-2">
-          {nextStage && (
+        <>
+          <div className="flex gap-2">
+            {nextStage && (
+              <button
+                onClick={() => onAction(app.id, { stage: nextStage })}
+                disabled={isBusy}
+                className="flex-1 rounded-lg bg-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors"
+              >
+                {isBusy ? "…" : `→ ${STAGES.find(s => s.key === nextStage)?.label}`}
+              </button>
+            )}
+            {app.currentStage === "offer" && (
+              <button
+                onClick={() => onAction(app.id, { status: "hired" })}
+                disabled={isBusy}
+                className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              >
+                {isBusy ? "…" : "Hire"}
+              </button>
+            )}
+            {!hasAssessment && (
+              <button
+                onClick={() => setShowAssess(v => !v)}
+                className="rounded-lg border border-[#4D31EC]/40 px-2 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors"
+                title="Send coding assessment"
+              >
+                📝
+              </button>
+            )}
             <button
-              onClick={() => onAction(app.id, { stage: nextStage })}
+              onClick={() => onAction(app.id, { status: "rejected" })}
               disabled={isBusy}
-              className="flex-1 rounded-lg bg-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors"
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
             >
-              {isBusy ? "…" : `→ ${STAGES.find(s => s.key === nextStage)?.label}`}
+              ✕
             </button>
+          </div>
+          {showAssess && !hasAssessment && (
+            <AssessForm
+              jobId={jobId}
+              candidateId={app.candidate.id}
+              onSent={() => { setAssessSent(true); setShowAssess(false); }}
+            />
           )}
-          {app.currentStage === "offer" && (
-            <button
-              onClick={() => onAction(app.id, { status: "hired" })}
-              disabled={isBusy}
-              className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-            >
-              {isBusy ? "…" : "Hire"}
-            </button>
-          )}
-          <button
-            onClick={() => onAction(app.id, { status: "rejected" })}
-            disabled={isBusy}
-            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+        </>
       )}
     </div>
   );
@@ -259,7 +328,7 @@ export default function JobPipelinePage() {
                     </div>
                     <div className="space-y-3">
                       {hiredApps.map((app) => (
-                        <CandidateCard key={app.id} app={app} onAction={handleAction} busy={busy} />
+                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
                       ))}
                     </div>
                   </div>
@@ -282,7 +351,7 @@ export default function JobPipelinePage() {
                       </div>
                     ) : (
                       cards.map((app) => (
-                        <CandidateCard key={app.id} app={app} onAction={handleAction} busy={busy} />
+                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
                       ))
                     )}
                   </div>
@@ -302,7 +371,7 @@ export default function JobPipelinePage() {
                 </div>
                 <div className="space-y-3">
                   {rejected.map((app) => (
-                    <CandidateCard key={app.id} app={app} onAction={handleAction} busy={busy} />
+                    <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
                   ))}
                 </div>
               </div>

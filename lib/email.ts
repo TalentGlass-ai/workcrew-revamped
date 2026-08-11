@@ -197,6 +197,23 @@ export const emailTemplates = {
     };
   },
 
+  assessmentAssigned(jobTitle: string, company: string, assessmentId: string, language: string, difficulty: string): { subject: string; html: string } {
+    const takeUrl = `${APP_URL}/assessments/${assessmentId}/take`;
+    const lang = language.charAt(0).toUpperCase() + language.slice(1);
+    const diff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    return {
+      subject: `You've been invited to complete a ${lang} assessment — ${jobTitle}`,
+      html: layout('Assessment invitation', `
+        ${h1('You have a new assessment')}
+        ${p(`<strong>${company}</strong> has invited you to complete a coding assessment as part of your application for <strong>${jobTitle}</strong>.`)}
+        ${p(`<strong>Language:</strong> ${lang} &nbsp;·&nbsp; <strong>Difficulty:</strong> ${diff}`)}
+        ${p('Complete it at your own pace — there\'s no fixed deadline, but finishing promptly helps keep your application moving forward.')}
+        ${btn('Start assessment', takeUrl)}
+        ${p('<span style="color:#6b7280;font-size:13px;">If you\'re not expecting this, you can safely ignore it.</span>')}
+      `),
+    };
+  },
+
   applicationStageChanged(jobTitle: string, company: string, stage: string, status: string): { subject: string; html: string } {
     const isRejected = status === 'rejected';
     const isHired = status === 'hired';

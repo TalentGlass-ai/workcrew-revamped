@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-type Summary = { publishedJobs: number; total: number; active: number; hired: number; rejected: number; withdrawn: number };
+type Summary = { publishedJobs: number; total: number; active: number; hired: number; rejected: number; withdrawn: number; avgDaysToHire: number | null };
 type FunnelRow = { stage: string; count: number };
 type JobRow = { id: string; title: string; total: number; active: number; hired: number; rejected: number };
 type WeekRow = { label: string; count: number };
@@ -86,13 +86,14 @@ export default function EmployerAnalyticsPage() {
       <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
         {/* Summary cards */}
         {summary && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {[
-              { label: "Live jobs",          value: summary.publishedJobs,                        color: "text-gray-900" },
-              { label: "Total applicants",   value: summary.total,                                color: "text-[#4D31EC]" },
-              { label: "Active in pipeline", value: summary.active,                               color: "text-emerald-600" },
-              { label: "Withdrawn",          value: summary.withdrawn,                            color: "text-amber-600" },
-              { label: "Hire rate",          value: hireRate != null ? `${hireRate}%` : "—",     color: "text-emerald-700" },
+              { label: "Live jobs",          value: summary.publishedJobs,                                    color: "text-gray-900" },
+              { label: "Total applicants",   value: summary.total,                                            color: "text-[#4D31EC]" },
+              { label: "Active in pipeline", value: summary.active,                                           color: "text-emerald-600" },
+              { label: "Withdrawn",          value: summary.withdrawn,                                        color: "text-amber-600" },
+              { label: "Hire rate",          value: hireRate != null ? `${hireRate}%` : "—",                 color: "text-emerald-700" },
+              { label: "Avg days to hire",   value: summary.avgDaysToHire != null ? `${summary.avgDaysToHire}d` : "—", color: "text-gray-700" },
             ].map(({ label, value, color }) => (
               <div key={label} className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
                 <p className={`text-2xl font-bold ${color}`}>{value}</p>

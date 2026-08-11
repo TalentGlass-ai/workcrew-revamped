@@ -25,6 +25,7 @@ export async function GET() {
         status: true,
         currentStage: true,
         appliedAt: true,
+        updatedAt: true,
         job: { select: { id: true, title: true } },
       },
     }),
@@ -36,6 +37,11 @@ export async function GET() {
   const hired = applications.filter(a => a.status === 'hired').length;
   const rejected = applications.filter(a => a.status === 'rejected').length;
   const withdrawn = applications.filter(a => a.status === 'withdrawn').length;
+
+  const hiredApps = applications.filter(a => a.status === 'hired');
+  const avgDaysToHire = hiredApps.length > 0
+    ? Math.round(hiredApps.reduce((sum, a) => sum + (new Date(a.updatedAt).getTime() - new Date(a.appliedAt).getTime()) / 86_400_000, 0) / hiredApps.length)
+    : null;
 
   // Pipeline distribution: active applications by currentStage + hired bucket
   const stageCounts = Object.fromEntries(STAGES.map(s => [s, 0])) as Record<string, number>;
@@ -76,7 +82,7 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    summary: { publishedJobs, total, active, hired, rejected, withdrawn },
+    summary: { publishedJobs, total, active, hired, rejected, withdrawn, avgDaysToHire },
     funnel,
     byJob,
     weeks,

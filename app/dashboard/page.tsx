@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import NotificationBell from "../components/NotificationBell";
 
 type Assessment = {
   id: string;
@@ -88,10 +89,15 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-[#F7F8FC]">
       {/* Hero greeting */}
       <div className="bg-gradient-to-br from-[#4D31EC] to-[#6D56F0] px-6 py-10 text-white">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-medium text-white/70">{greeting},</p>
-          <h1 className="mt-1 text-3xl font-bold">{firstName} 👋</h1>
-          <p className="mt-2 text-sm text-white/70">Here's what you can do today.</p>
+        <div className="mx-auto max-w-3xl flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-white/70">{greeting},</p>
+            <h1 className="mt-1 text-3xl font-bold">{firstName} 👋</h1>
+            <p className="mt-2 text-sm text-white/70">Here's what you can do today.</p>
+          </div>
+          <div className="mt-1 flex-shrink-0">
+            <NotificationBell />
+          </div>
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import NotificationBell from "../components/NotificationBell";
 
 type Job = {
   id: string;
@@ -92,6 +93,7 @@ export default function EmployerPage() {
               <Link href="/assessments" className="rounded-lg border border-[#4D31EC] px-4 py-2 text-sm font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
                 Assessments
               </Link>
+              <NotificationBell allHref="/employer/notifications" />
               <button onClick={() => { setShowForm(!showForm); setError(""); setPublishIntent(false); }}
                 className="rounded-lg bg-[#4D31EC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
                 {showForm ? "Cancel" : "+ Post a Job"}

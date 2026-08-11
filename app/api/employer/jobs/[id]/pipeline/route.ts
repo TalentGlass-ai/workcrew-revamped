@@ -37,6 +37,7 @@ export async function GET(
           location: true,
           primarySkills: true,
           fitScore: true,
+          resumeUrl: true,
           user: { select: { name: true, email: true } },
           assessments: {
             orderBy: { createdAt: 'desc' },

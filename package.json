@@ -33,6 +33,7 @@
     "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@types/ws": "^8.18.1",
+    "@vercel/blob": "^2.8.0",
     "better-sqlite3": "^12.9.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",

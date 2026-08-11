@@ -19,6 +19,7 @@ type Application = {
     location: string | null;
     primarySkills: string[] | Record<string, unknown>;
     fitScore: number | null;
+    resumeUrl: string | null;
     user: { name: string | null; email: string | null };
     assessments: { score: number | null; language: string }[];
   };
@@ -135,6 +136,12 @@ function CandidateCard({
           <p className="text-xs text-gray-400 truncate">{app.candidate.user.email}</p>
           {app.candidate.currentRole && (
             <p className="text-xs text-gray-500 mt-0.5 truncate">{app.candidate.currentRole}</p>
+          )}
+          {app.candidate.resumeUrl && (
+            <a href={app.candidate.resumeUrl} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-[#4D31EC] hover:underline mt-0.5 inline-block">
+              📄 Resume ↗
+            </a>
           )}
         </div>
 

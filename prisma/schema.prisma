@@ -180,6 +180,11 @@ model Candidate {
   stackoverflowUrl String?  @map("stackoverflow_url")
   hackerrankUrl    String?  @map("hackerrank_url")
 
+  // Compensation & availability
+  currentCtc       Int?     @map("current_ctc")      // annual, in USD cents or local currency smallest unit
+  expectedCtc      Int?     @map("expected_ctc")
+  noticePeriod     Int?     @map("notice_period")    // days
+
   // Derived AI fields (from skill intelligence engine)
   fitScore         Float?   @map("fit_score")
   recommendation   RecommendationType?

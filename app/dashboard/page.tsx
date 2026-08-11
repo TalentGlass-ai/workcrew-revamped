@@ -33,6 +33,7 @@ const QUICK_LINKS = [
   { href: "/dashboard/alerts", label: "Job Alerts", desc: "Get emailed when new jobs match your criteria.", icon: "🔔" },
   { href: "/dashboard/resume", label: "Resume", desc: "Upload or replace the resume recruiters see.", icon: "📄" },
   { href: "/dashboard/skills", label: "Skills", desc: "Add skills to power job recommendations and matching.", icon: "⚡" },
+  { href: "/dashboard/profile", label: "Profile", desc: "Edit your public profile, CTC, and notice period.", icon: "👤" },
 ];
 
 const DIFFICULTY_COLOR: Record<string, string> = {

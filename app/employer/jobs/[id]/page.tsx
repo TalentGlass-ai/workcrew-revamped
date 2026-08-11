@@ -107,11 +107,15 @@ function CandidateCard({
   jobId,
   onAction,
   busy,
+  saved,
+  onToggleSave,
 }: {
   app: Application;
   jobId: string;
   onAction: (id: string, payload: { stage?: string; status?: string }) => void;
   busy: string | null;
+  saved: boolean;
+  onToggleSave: (candidateId: string) => void;
 }) {
   const [showAssess, setShowAssess] = useState(false);
   const [assessSent, setAssessSent] = useState(false);
@@ -133,10 +137,19 @@ function CandidateCard({
       {/* Name + email */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0">
-          <Link href={`/employer/candidates/${app.candidate.id}`}
-            className="font-semibold text-gray-900 hover:text-[#4D31EC] truncate block transition-colors">
-            {app.candidate.user.name ?? "—"}
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link href={`/employer/candidates/${app.candidate.id}`}
+              className="font-semibold text-gray-900 hover:text-[#4D31EC] truncate transition-colors">
+              {app.candidate.user.name ?? "—"}
+            </Link>
+            <button
+              onClick={() => onToggleSave(app.candidate.id)}
+              title={saved ? "Remove from saved" : "Save candidate"}
+              className={`flex-shrink-0 text-base leading-none transition-colors ${saved ? "text-[#4D31EC]" : "text-gray-300 hover:text-[#4D31EC]"}`}
+            >
+              {saved ? "★" : "☆"}
+            </button>
+          </div>
           <p className="text-xs text-gray-400 truncate">{app.candidate.user.email}</p>
           {app.candidate.currentRole && (
             <p className="text-xs text-gray-500 mt-0.5 truncate">{app.candidate.currentRole}</p>
@@ -256,6 +269,7 @@ export default function JobPipelinePage() {
   const [showEdit, setShowEdit] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -271,6 +285,13 @@ export default function JobPipelinePage() {
   }, [status, jobId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/employer/saved-candidates")
+      .then(r => r.ok ? r.json() : { saved: [] })
+      .then(d => setSavedIds(new Set((d.saved ?? []).map((s: { candidate: { id: string } }) => s.candidate.id))));
+  }, [status]);
 
   useEffect(() => {
     if (tab !== "suggested" || suggested.length > 0 || status !== "authenticated") return;
@@ -294,6 +315,20 @@ export default function JobPipelinePage() {
       setBusy(null);
     }
   };
+
+  async function toggleSave(candidateId: string) {
+    const isSaved = savedIds.has(candidateId);
+    setSavedIds(prev => {
+      const next = new Set(prev);
+      isSaved ? next.delete(candidateId) : next.add(candidateId);
+      return next;
+    });
+    await fetch("/api/employer/saved-candidates", {
+      method: isSaved ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateId }),
+    }).catch(() => null);
+  }
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -487,6 +522,13 @@ export default function JobPipelinePage() {
                         ))}
                       </div>
                     </div>
+                    <button
+                      onClick={() => toggleSave(c.id)}
+                      title={savedIds.has(c.id) ? "Remove from saved" : "Save candidate"}
+                      className={`text-xl leading-none transition-colors ${savedIds.has(c.id) ? "text-[#4D31EC]" : "text-gray-300 hover:text-[#4D31EC]"}`}
+                    >
+                      {savedIds.has(c.id) ? "★" : "☆"}
+                    </button>
                     <Link href={`/employer/candidates/${c.id}`}
                       className="flex-shrink-0 rounded-lg border border-[#4D31EC] px-3 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
                       View profile
@@ -525,7 +567,7 @@ export default function JobPipelinePage() {
                     </div>
                     <div className="space-y-3">
                       {hiredApps.map((app) => (
-                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
+                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} saved={savedIds.has(app.candidate.id)} onToggleSave={toggleSave} />
                       ))}
                     </div>
                   </div>
@@ -548,7 +590,7 @@ export default function JobPipelinePage() {
                       </div>
                     ) : (
                       cards.map((app) => (
-                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
+                        <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} saved={savedIds.has(app.candidate.id)} onToggleSave={toggleSave} />
                       ))
                     )}
                   </div>
@@ -568,7 +610,7 @@ export default function JobPipelinePage() {
                 </div>
                 <div className="space-y-3">
                   {rejected.map((app) => (
-                    <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} />
+                    <CandidateCard key={app.id} app={app} jobId={jobId} onAction={handleAction} busy={busy} saved={savedIds.has(app.candidate.id)} onToggleSave={toggleSave} />
                   ))}
                 </div>
               </div>

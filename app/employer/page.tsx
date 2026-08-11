@@ -83,6 +83,9 @@ export default function EmployerPage() {
               <Link href="/employer/analytics" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors">
                 Analytics
               </Link>
+              <Link href="/employer/saved-candidates" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors">
+                ★ Saved
+              </Link>
               <Link href="/assessments" className="rounded-lg border border-[#4D31EC] px-4 py-2 text-sm font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors">
                 Assessments
               </Link>

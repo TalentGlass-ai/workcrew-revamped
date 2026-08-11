@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { jobId } = await request.json();
+  const { jobId, coverLetter } = await request.json();
   if (!jobId) return NextResponse.json({ error: 'jobId required' }, { status: 400 });
 
   const candidate = await prisma.candidate.findUnique({
@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       candidateId: candidate.id,
       currentStage: 'applied',
       status: 'active',
+      coverLetter: typeof coverLetter === 'string' && coverLetter.trim() ? coverLetter.trim().slice(0, 5000) : null,
     },
   });
 

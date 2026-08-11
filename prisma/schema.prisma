@@ -389,6 +389,7 @@ model CandidateApplication {
   jobId          String   @map("job_id") 
   candidateId    String   @map("candidate_id") 
   currentStage   String   @map("current_stage")
+  coverLetter    String?  @map("cover_letter")
   aiMatchScore   Float?   @map("ai_match_score")
   fraudRiskScore Float?   @map("fraud_risk_score")
   recruiterRating Int?    @map("recruiter_rating")

@@ -21,6 +21,7 @@ type Application = {
   status: string;
   aiMatchScore: number | null;
   appliedAt: string;
+  coverLetter: string | null;
   interview: InterviewProposal | null;
   candidate: {
     id: string;
@@ -208,6 +209,7 @@ function CandidateCard({
   const [showAssess, setShowAssess] = useState(false);
   const [assessSent, setAssessSent] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showCover, setShowCover] = useState(false);
 
   const skills: string[] = Array.isArray(app.candidate.primarySkills)
     ? (app.candidate.primarySkills as string[])
@@ -296,6 +298,23 @@ function CandidateCard({
           {app.interview.status === "confirmed"
             ? `Interview: ${fmtSlot(app.interview.confirmedSlot!)}`
             : `⏳ Awaiting confirmation (${app.interview.proposedSlots.length} slot${app.interview.proposedSlots.length !== 1 ? "s" : ""})`}
+        </div>
+      )}
+
+      {/* Cover letter */}
+      {app.coverLetter && (
+        <div className="mb-2">
+          <button
+            onClick={() => setShowCover(v => !v)}
+            className="text-xs font-semibold text-[#4D31EC] hover:underline"
+          >
+            {showCover ? "Hide cover letter" : "✉️ Cover letter"}
+          </button>
+          {showCover && (
+            <p className="mt-1 whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600 max-h-48 overflow-y-auto">
+              {app.coverLetter}
+            </p>
+          )}
         </div>
       )}
 

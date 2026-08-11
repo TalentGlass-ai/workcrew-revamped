@@ -61,6 +61,9 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
   const [applyError, setApplyError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showCover, setShowCover] = useState(false)
+  const [coverLetter, setCoverLetter] = useState('')
+  const [generating, setGenerating] = useState(false)
 
   const handleSave = async () => {
     if (!session) { router.push('/login'); return; }
@@ -79,6 +82,25 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
     setSaving(false);
   }
 
+  const handleGenerateCover = async () => {
+    if (!session) { router.push('/login'); return; }
+    setShowCover(true)
+    if (coverLetter) return
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/candidates/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job.id }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && d.coverLetter) setCoverLetter(d.coverLetter)
+      else setApplyError(d.error ?? 'Could not generate a draft. You can still apply.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   const handleApply = async () => {
     if (!session) { router.push('/login'); return; }
     setApplying(true)
@@ -87,7 +109,7 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
       const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: job.id }),
+        body: JSON.stringify({ jobId: job.id, coverLetter: showCover ? coverLetter : undefined }),
       })
       if (res.status === 409) { setApplied(true); return; }
       if (!res.ok) {
@@ -174,6 +196,20 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
                 >
                   {saved ? '🔖' : '🔖'}
                 </button>
+                {!applied && (
+                  <button
+                    onClick={handleGenerateCover}
+                    disabled={generating}
+                    title="Generate an AI cover letter draft from your profile"
+                    className={`rounded-lg border px-3 py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
+                      showCover
+                        ? 'border-[#4D31EC] bg-[#4D31EC]/10 text-[#4D31EC]'
+                        : 'border-gray-200 text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]'
+                    }`}
+                  >
+                    ✨ Cover letter
+                  </button>
+                )}
                 <button
                   onClick={handleApply}
                   disabled={applied || applying}
@@ -183,7 +219,7 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
                       : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60'
                   }`}
                 >
-                  {applied ? 'Applied ✓' : applying ? 'Applying…' : 'Apply Now'}
+                  {applied ? 'Applied ✓' : applying ? 'Applying…' : showCover ? 'Apply with cover letter' : 'Apply Now'}
                 </button>
               </div>
               {applyError && <p className="text-xs text-red-500">{applyError}</p>}
@@ -196,6 +232,48 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Cover letter draft */}
+      {showCover && !applied && (
+        <div className="border-b bg-[#F7F8FC]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="rounded-xl border border-[#4D31EC]/20 bg-white p-5 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800">✨ Cover letter</h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => { setCoverLetter(''); handleGenerateCover(); }}
+                    disabled={generating}
+                    className="text-xs font-semibold text-[#4D31EC] hover:underline disabled:opacity-50"
+                  >
+                    {generating ? 'Generating…' : 'Regenerate'}
+                  </button>
+                  <button
+                    onClick={() => setShowCover(false)}
+                    className="text-xs font-semibold text-gray-400 hover:text-gray-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+              {generating && !coverLetter ? (
+                <div className="h-40 animate-pulse rounded-lg bg-gray-100" />
+              ) : (
+                <textarea
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  rows={10}
+                  placeholder="Your cover letter draft will appear here…"
+                  className="w-full resize-y rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all"
+                />
+              )}
+              <p className="mt-2 text-xs text-gray-400">
+                AI-generated from your profile — review and edit before applying. It's sent to the recruiter with your application.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -63,6 +63,10 @@ export default function EmployerAnalyticsPage() {
   const hireRate = summary && (summary.hired + summary.rejected) > 0
     ? Math.round((summary.hired / (summary.hired + summary.rejected)) * 100)
     : null;
+  // Conversion rate from each stage to the next (using applied count as base)
+  const appliedCount = funnel.find(f => f.stage === "applied")?.count ?? 0;
+  const conversionRate = (count: number) =>
+    appliedCount > 0 ? Math.round((count / appliedCount) * 100) : null;
 
   return (
     <main className="min-h-screen bg-[#F7F8FC]">
@@ -82,12 +86,13 @@ export default function EmployerAnalyticsPage() {
       <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
         {/* Summary cards */}
         {summary && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
-              { label: "Live jobs",       value: summary.publishedJobs, color: "text-gray-900" },
-              { label: "Total applicants", value: summary.total,         color: "text-[#4D31EC]" },
-              { label: "Active in pipeline", value: summary.active,      color: "text-emerald-600" },
-              { label: "Hire rate",        value: hireRate != null ? `${hireRate}%` : "—", color: "text-emerald-700" },
+              { label: "Live jobs",          value: summary.publishedJobs,                        color: "text-gray-900" },
+              { label: "Total applicants",   value: summary.total,                                color: "text-[#4D31EC]" },
+              { label: "Active in pipeline", value: summary.active,                               color: "text-emerald-600" },
+              { label: "Withdrawn",          value: summary.withdrawn,                            color: "text-amber-600" },
+              { label: "Hire rate",          value: hireRate != null ? `${hireRate}%` : "—",     color: "text-emerald-700" },
             ].map(({ label, value, color }) => (
               <div key={label} className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
                 <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -105,18 +110,27 @@ export default function EmployerAnalyticsPage() {
               <p className="text-sm text-gray-400">No applications yet.</p>
             ) : (
               <div className="space-y-3">
-                {funnel.map(({ stage, count }) => (
-                  <div key={stage} className="flex items-center gap-3">
-                    <span className="w-20 flex-shrink-0 text-xs text-gray-500 text-right">{STAGE_LABEL[stage]}</span>
-                    <div className="flex-1 rounded-full bg-gray-100 h-2.5 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${STAGE_COLOR[stage] ?? "bg-gray-400"}`}
-                        style={{ width: `${Math.round((count / funnelMax) * 100)}%` }}
-                      />
+                {funnel.map(({ stage, count }) => {
+                  const conv = stage !== "applied" ? conversionRate(count) : null;
+                  return (
+                    <div key={stage} className="flex items-center gap-3">
+                      <span className="w-20 flex-shrink-0 text-xs text-gray-500 text-right">{STAGE_LABEL[stage]}</span>
+                      <div className="flex-1 rounded-full bg-gray-100 h-2.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${STAGE_COLOR[stage] ?? "bg-gray-400"}`}
+                          style={{ width: `${Math.round((count / funnelMax) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="w-6 flex-shrink-0 text-xs font-semibold text-gray-700 text-right">{count}</span>
+                      <span className="w-12 flex-shrink-0 text-right">
+                        {conv != null
+                          ? <span className={`text-[10px] font-semibold ${conv >= 30 ? "text-emerald-600" : "text-gray-400"}`}>{conv}%</span>
+                          : <span className="text-[10px] text-gray-300">—</span>}
+                      </span>
                     </div>
-                    <span className="w-6 flex-shrink-0 text-xs font-semibold text-gray-700 text-right">{count}</span>
-                  </div>
-                ))}
+                  );
+                })}
+                <p className="text-[10px] text-gray-400 mt-1">% column = share of applied candidates reaching each stage</p>
               </div>
             )}
           </div>

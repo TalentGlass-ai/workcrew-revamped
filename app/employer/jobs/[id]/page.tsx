@@ -118,9 +118,10 @@ function CandidateCard({
       {/* Name + email */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0">
-          <p className="font-semibold text-gray-900 truncate">
+          <Link href={`/employer/candidates/${app.candidate.id}`}
+            className="font-semibold text-gray-900 hover:text-[#4D31EC] truncate block transition-colors">
             {app.candidate.user.name ?? "—"}
-          </p>
+          </Link>
           <p className="text-xs text-gray-400 truncate">{app.candidate.user.email}</p>
           {app.candidate.currentRole && (
             <p className="text-xs text-gray-500 mt-0.5 truncate">{app.candidate.currentRole}</p>

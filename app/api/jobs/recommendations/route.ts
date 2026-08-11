@@ -1,24 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '../../../../auth'
 import { getPrisma } from '../../../../lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const prisma = await getPrisma()
-    if (!prisma) {
-      return NextResponse.json({ recommendations: [] })
-    }
+    if (!prisma) return NextResponse.json({ jobs: [], type: 'general' })
 
     const { searchParams } = new URL(request.url)
-    const candidateId = searchParams.get('candidateId')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 20)
 
-    // Return recent published jobs; personalisation requires candidateId
     const jobs = await prisma.job.findMany({
       where: { status: 'published' },
-      include: { organization: { select: { id: true, name: true, logo: true } } },
+      include: {
+        organization: { select: { id: true, name: true, logo: true } },
+        _count: { select: { applications: true } },
+      },
       take: limit,
       orderBy: { createdAt: 'desc' },
     })
+
+    // Resolve candidateId: prefer explicit param, fall back to session
+    let candidateId = searchParams.get('candidateId')
+    if (!candidateId) {
+      const session = await auth()
+      if (session?.user?.id) {
+        const c = await prisma.candidate.findUnique({
+          where: { userId: session.user.id },
+          select: { id: true },
+        })
+        candidateId = c?.id ?? null
+      }
+    }
 
     if (!candidateId) {
       return NextResponse.json({ jobs, type: 'general' })
@@ -26,12 +39,9 @@ export async function GET(request: NextRequest) {
 
     const candidate = await prisma.candidate.findUnique({
       where: { id: candidateId },
-      include: { skills: { select: { skillName: true, isValidated: true } } }
+      include: { skills: { select: { skillName: true, isValidated: true } } },
     })
-
-    if (!candidate) {
-      return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
-    }
+    if (!candidate) return NextResponse.json({ jobs, type: 'general' })
 
     const skillMap = new Map(candidate.skills.map((s) => [s.skillName.toLowerCase(), s.isValidated]))
 
@@ -40,10 +50,10 @@ export async function GET(request: NextRequest) {
       const matched = required.filter((s) => skillMap.has(s.toLowerCase()))
       const weightedMatch = matched.reduce((sum, s) => sum + (skillMap.get(s.toLowerCase()) ? 1.5 : 1), 0)
       const maxWeight = required.length * 1.5
-      return { ...job, matchScore: required.length ? Math.round((weightedMatch / maxWeight) * 100) : 0 }
+      return { ...job, matchScore: required.length ? Math.round((weightedMatch / maxWeight) * 100) : 50 }
     }).sort((a, b) => b.matchScore - a.matchScore)
 
-    return NextResponse.json({ jobs: scored, type: 'personalized', candidateSkills: [...skillMap.keys()] })
+    return NextResponse.json({ jobs: scored, type: 'personalized' })
   } catch (error) {
     console.error('Recommendations error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

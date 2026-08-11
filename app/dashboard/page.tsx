@@ -14,6 +14,18 @@ type Assessment = {
   job: { title: string } | null;
 };
 
+type RecommendedJob = {
+  id: string;
+  title: string;
+  location: string | null;
+  jobType: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  seoSlug: string | null;
+  matchScore: number;
+  organization: { name: string };
+};
+
 const QUICK_LINKS = [
   { href: "/find-jobs", label: "Find Jobs", desc: "Browse AI-matched roles tailored to your skills.", icon: "🔍" },
   { href: "/dashboard/applications", label: "My Applications", desc: "Track the status of every job you've applied to.", icon: "📋" },
@@ -33,6 +45,7 @@ export default function DashboardPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [assLoading, setAssLoading] = useState(true);
   const [activeApps, setActiveApps] = useState<number | null>(null);
+  const [recommended, setRecommended] = useState<RecommendedJob[]>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -47,6 +60,9 @@ export default function DashboardPage() {
     fetch("/api/applications")
       .then((r) => r.ok ? r.json() : { applications: [] })
       .then((d) => setActiveApps((d.applications ?? []).filter((a: any) => a.status === "active").length));
+    fetch("/api/jobs/recommendations?limit=4")
+      .then((r) => r.ok ? r.json() : { jobs: [] })
+      .then((d) => setRecommended(d.jobs ?? []));
   }, [status]);
 
   if (status === "loading") {
@@ -88,6 +104,39 @@ export default function DashboardPage() {
             </div>
             <span className="text-sm font-semibold text-[#4D31EC]">View all →</span>
           </Link>
+        )}
+
+        {/* Recommended jobs */}
+        {recommended.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-800">Recommended for you</h2>
+              <Link href="/dashboard/recommendations" className="text-xs font-semibold text-[#4D31EC] hover:underline">See all →</Link>
+            </div>
+            <div className="space-y-2">
+              {recommended.map((job) => {
+                const jobUrl = job.seoSlug ? `/jobs/${job.seoSlug}` : `/jobs/${job.id}`;
+                const sal = job.salaryMin && job.salaryMax
+                  ? `$${Math.round(job.salaryMin / 1000)}k–$${Math.round(job.salaryMax / 1000)}k`
+                  : null;
+                return (
+                  <Link key={job.id} href={jobUrl}
+                    className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-5 py-3.5 shadow-sm hover:border-[#4D31EC]/20 transition-colors">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{job.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">
+                        {[job.organization.name, job.location, sal].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                    <span className={`ml-3 flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold
+                      ${job.matchScore >= 70 ? "bg-emerald-50 text-emerald-700" : job.matchScore >= 40 ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                      {job.matchScore}% match
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         {/* Pending assessments */}

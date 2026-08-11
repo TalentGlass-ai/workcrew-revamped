@@ -41,7 +41,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id: applicationId } = await params;
   const app = await prisma.candidateApplication.findFirst({
     where: { id: applicationId, candidateId },
-    select: { id: true, interview: { select: { id: true, proposedSlots: true } } },
+    select: {
+      id: true,
+      jobId: true,
+      interview: { select: { id: true, proposedSlots: true } },
+      candidate: { select: { user: { select: { name: true } } } },
+      job: { select: { title: true, createdBy: true } },
+    },
   });
   if (!app?.interview) return NextResponse.json({ error: 'No proposal found' }, { status: 404 });
 
@@ -55,6 +61,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     where: { id: app.interview.id },
     data: { confirmedSlot: new Date(confirmedSlot), status: 'confirmed' },
   });
+
+  // Close the loop: notify the recruiter who created the job
+  const when = new Date(confirmedSlot).toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+  });
+  prisma.notification.create({
+    data: {
+      userId: app.job.createdBy,
+      type: 'interview_confirmed',
+      title: 'Interview time confirmed',
+      body: `${app.candidate.user.name ?? 'A candidate'} confirmed ${when} for ${app.job.title}.`,
+      link: `/employer/jobs/${app.jobId}`,
+    },
+  }).catch(() => null);
 
   return NextResponse.json({ proposal: updated });
 }

@@ -32,6 +32,7 @@ const QUICK_LINKS = [
   { href: "/dashboard/saved", label: "Saved Jobs", desc: "Jobs you've bookmarked while browsing.", icon: "🔖" },
   { href: "/dashboard/alerts", label: "Job Alerts", desc: "Get emailed when new jobs match your criteria.", icon: "🔔" },
   { href: "/dashboard/resume", label: "Resume", desc: "Upload or replace the resume recruiters see.", icon: "📄" },
+  { href: "/dashboard/skills", label: "Skills", desc: "Add skills to power job recommendations and matching.", icon: "⚡" },
 ];
 
 const DIFFICULTY_COLOR: Record<string, string> = {

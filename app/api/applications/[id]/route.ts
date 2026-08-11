@@ -45,23 +45,40 @@ export async function PATCH(
 
   const updated = await prisma.candidateApplication.update({ where: { id }, data });
 
-  // Fire-and-forget: email the candidate on any stage/status change
+  // Fire-and-forget: email + in-app notification to the candidate
   prisma.candidateApplication.findUnique({
     where: { id },
     include: {
-      candidate: { include: { user: { select: { email: true } } } },
+      candidate: { include: { user: { select: { id: true, email: true } } } },
       job: { include: { organization: { select: { name: true } } } },
     },
-  }).then((full) => {
-    const email = full?.candidate?.user?.email;
-    if (!email) return;
-    const tpl = emailTemplates.applicationStageChanged(
-      full?.job?.title ?? 'the role',
-      full?.job?.organization?.name ?? 'the company',
-      updated.currentStage,
-      updated.status,
-    );
-    return sendEmail(email, tpl.subject, tpl.html);
+  }).then(async (full) => {
+    if (!full) return;
+    const userId = full.candidate?.user?.id;
+    const email = full.candidate?.user?.email;
+    const jobTitle = full.job?.title ?? 'the role';
+    const company = full.job?.organization?.name ?? 'the company';
+
+    const notifTitle =
+      updated.status === 'hired' ? `You've been hired at ${company}!` :
+      updated.status === 'rejected' ? `Application update from ${company}` :
+      `Your application moved to ${updated.currentStage}`;
+    const notifBody =
+      updated.status === 'hired' ? `Congratulations! Your application for ${jobTitle} has been accepted.` :
+      updated.status === 'rejected' ? `Your application for ${jobTitle} was not selected to move forward.` :
+      `Your application for ${jobTitle} at ${company} has advanced to the ${updated.currentStage} stage.`;
+
+    const tasks: Promise<any>[] = [];
+    if (userId) {
+      tasks.push(prisma.notification.create({
+        data: { userId, type: updated.status === 'hired' ? 'hired' : updated.status === 'rejected' ? 'rejected' : 'stage_change', title: notifTitle, body: notifBody, link: '/dashboard/applications' },
+      }));
+    }
+    if (email) {
+      const tpl = emailTemplates.applicationStageChanged(jobTitle, company, updated.currentStage, updated.status);
+      tasks.push(sendEmail(email, tpl.subject, tpl.html));
+    }
+    await Promise.all(tasks);
   }).catch(() => null);
 
   return NextResponse.json({ application: updated });

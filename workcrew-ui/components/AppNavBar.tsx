@@ -1,10 +1,20 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+
+type Notification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+};
 
 // Public/marketing routes that have their own navigation
 const HIDDEN_PREFIXES = ["/", "/login", "/signup", "/forgot-password", "/reset-password", "/about", "/blogs", "/pricing"];
@@ -30,7 +40,52 @@ const RECRUITER_LINKS = [
 export function AppNavBar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = useCallback(() => {
+    fetch("/api/notifications")
+      .then((r) => r.ok ? r.json() : { notifications: [], unreadCount: 0 })
+      .then((d) => { setNotifications(d.notifications ?? []); setUnreadCount(d.unreadCount ?? 0); })
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(interval);
+  }, [status, fetchNotifications]);
+
+  // Close notif dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [notifOpen]);
+
+  function openNotifPanel() {
+    setNotifOpen((o) => !o);
+    setMenuOpen(false);
+    if (!notifOpen && unreadCount > 0) {
+      fetch("/api/notifications", { method: "PATCH" })
+        .then(() => { setUnreadCount(0); setNotifications((ns) => ns.map((n) => ({ ...n, read: true }))); })
+        .catch(() => null);
+    }
+  }
+
+  function handleNotifClick(n: Notification) {
+    setNotifOpen(false);
+    if (n.link) router.push(n.link);
+  }
 
   if (shouldHide(pathname) || status === "unauthenticated" || status === "loading") return null;
 
@@ -64,6 +119,53 @@ export function AppNavBar() {
           ))}
         </nav>
 
+        {/* Notification bell */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={openNotifPanel}
+            aria-label="Notifications"
+            className="relative flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#4D31EC] text-[10px] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-10 z-50 w-80 rounded-xl border border-gray-100 bg-white shadow-xl">
+              <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                {notifications.length > 0 && (
+                  <span className="text-xs text-gray-400">{notifications.filter(n => !n.read).length === 0 ? "All read" : `${notifications.filter(n => !n.read).length} unread`}</span>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                {notifications.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-sm text-gray-400">No notifications yet</p>
+                ) : notifications.map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => handleNotifClick(n)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!n.read ? "bg-[#4D31EC]/5" : ""}`}
+                  >
+                    <p className={`text-sm font-medium ${!n.read ? "text-gray-900" : "text-gray-700"}`}>{n.title}</p>
+                    <p className="mt-0.5 text-xs text-gray-400 line-clamp-2">{n.body}</p>
+                    <p className="mt-1 text-[10px] text-gray-300">
+                      {new Date(n.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* User menu */}
         <div className="relative flex items-center gap-3">
           <div className="hidden text-sm text-gray-500 md:block">
@@ -87,6 +189,10 @@ export function AppNavBar() {
                   {label}
                 </Link>
               ))}
+              <Link href="/settings" onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                Settings
+              </Link>
               <button
                 onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/login" }); }}
                 className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"

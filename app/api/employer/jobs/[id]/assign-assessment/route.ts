@@ -51,7 +51,7 @@ export async function POST(
 
   const candidate = await prisma.candidate.findUnique({
     where: { id: candidateId },
-    include: { user: { select: { email: true } } },
+    include: { user: { select: { id: true, email: true } } },
   });
   if (!candidate) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 });
 
@@ -87,12 +87,26 @@ export async function POST(
     select: { id: true },
   });
 
-  // Fire-and-forget email
+  // Fire-and-forget: email + in-app notification
+  const candidateUserId = candidate.user?.id;
   const email = candidate.user?.email;
+  const tasks: Promise<any>[] = [];
   if (email) {
     const tpl = emailTemplates.assessmentAssigned(job.title, job.organization.name, assessment.id, language, difficulty);
-    sendEmail(email, tpl.subject, tpl.html);
+    tasks.push(sendEmail(email, tpl.subject, tpl.html));
   }
+  if (candidateUserId) {
+    tasks.push(prisma.notification.create({
+      data: {
+        userId: candidateUserId,
+        type: 'assessment_assigned',
+        title: `New assessment from ${job.organization.name}`,
+        body: `You've been assigned a ${difficulty} ${language} assessment for ${job.title}.`,
+        link: `/assessments/${assessment.id}/take`,
+      },
+    }));
+  }
+  Promise.all(tasks).catch(() => null);
 
   return NextResponse.json({ assessmentId: assessment.id }, { status: 201 });
 }

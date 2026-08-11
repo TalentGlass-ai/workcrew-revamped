@@ -1,62 +1,56 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getPrisma } from '../../../../lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import { getPrisma } from '../../../../lib/prisma';
 
 interface RouteParams {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(request: NextRequest, context: RouteParams) {
+export async function GET(_request: NextRequest, context: RouteParams) {
   try {
-    const prisma = await getPrisma()
-    if (!prisma) {
-      return NextResponse.json({ error: 'Database not available' }, { status: 503 })
-    }
+    const prisma = await getPrisma();
+    if (!prisma) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
 
-    const { id } = await context.params
+    const { id } = await context.params;
 
-    const org = await prisma.organization.findUnique({
-      where: { id },
-      include: {
-        jobs: {
-          where: { status: 'published' },
+    // Support full UUID or 8-char suffix (used by slug links: "company-name-abcd1234")
+    const org = id.length === 8
+      ? await prisma.organization.findFirst({
+          where: { id: { endsWith: id } },
           include: {
-            _count: { select: { applications: true } }
+            jobs: {
+              where: { status: 'published' },
+              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+            },
+            _count: { select: { jobs: { where: { status: 'published' } } } },
           },
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        },
-        _count: {
-          select: { jobs: { where: { status: 'published' } } }
-        }
-      }
-    })
+        })
+      : await prisma.organization.findUnique({
+          where: { id },
+          include: {
+            jobs: {
+              where: { status: 'published' },
+              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+            },
+            _count: { select: { jobs: { where: { status: 'published' } } } },
+          },
+        });
 
-    if (!org) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 })
-    }
+    if (!org) return NextResponse.json({ error: 'Company not found' }, { status: 404 });
 
     return NextResponse.json({
       ...org,
-      slug: createSlug(org.name, org.id),
-      url: `/companies/${createSlug(org.name, org.id)}`,
+      slug: `${org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${org.id.slice(-8)}`,
       jobs: org.jobs.map((job) => ({
         ...job,
-        slug: createJobSlug(job.title, job.id),
-        url: `/jobs/${createJobSlug(job.title, job.id)}`
-      }))
-    })
+        url: `/jobs/${job.seoSlug ?? job.id}`,
+      })),
+    });
   } catch (error) {
-    console.error('Company fetch error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Company fetch error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
-
-function createSlug(name: string, id: string): string {
-  const slug = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
-  return `${slug}-${id.slice(-8)}`
-}
-
-function createJobSlug(title: string, id: string): string {
-  const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
-  return `${slug}-${id.slice(-8)}`
 }

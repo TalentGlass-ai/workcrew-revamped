@@ -115,14 +115,10 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 }
 
 function extractCompanyIdFromSlug(slug: string): string | null {
-  // Slug format: "company-name-12345678" where 12345678 is last 8 chars of ID
+  // Slug format: "company-name-abcd1234" where last segment is final 8 chars of UUID
   const parts = slug.split('-')
-  if (parts.length < 2) return null
-
-  const idPart = parts[parts.length - 1]
-  if (idPart.length !== 8) return null
-
-  return idPart.padStart(24, '0') // Pad to make it look like a full ID
+  const last = parts[parts.length - 1]
+  return last.length === 8 ? last : null
 }
 
 function generateOrganizationStructuredData(company: any, companyUrl: string) {

@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+function useDebounce<T>(value: T, ms: number): T {
+  const [d, setD] = useState(value);
+  useEffect(() => { const t = setTimeout(() => setD(value), ms); return () => clearTimeout(t); }, [value, ms]);
+  return d;
+}
 import Image from "next/image";
 import { Search, MapPin, ChevronDown, IndianRupee } from "lucide-react";
 
@@ -19,7 +25,7 @@ import T from "@/components/primitives/Typography";
 import bg from "@/public/bg.png";
 
 /* Types  */
-import type { Job, JobsEnvelope, Option } from '@/types/index';
+import type { Job, Option } from '@/types/index';
 
 /* Utils */
 import { getCompanyName, formatSalary, extractCity, normalizeSkills, getSalaryBucket, inferExperience, inferCategory, normalizeCompanySize } from '@/workcrew-ui/lib/utils/jobUtils';
@@ -234,9 +240,12 @@ const JobCard: React.FC<{ job: Job }> = ({ job }) => {
 
         {/* Right */}
         <div className="shrink-0">
-          <button className="bg-[#4D31EC] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#3b25b5] whitespace-nowrap">
+          <a
+            href={`/jobs/${(job as any).seoSlug ?? job.id ?? ""}`}
+            className="bg-[#4D31EC] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#3b25b5] whitespace-nowrap inline-block"
+          >
             Apply Now
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -283,62 +292,54 @@ export default function FindJobsPage() {
   const PAGE_SIZE = 6;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      setLoading(true);
-      try {
-        const pages = [1, 2];
-        const chunked: Job[] = [];
-        for (const p of pages) {
-          const res = await fetch(`/api/jobs?page=${p}&limit=10`, {
-            cache: "no-store",
-          });
-          if (!res.ok) continue;
-          const js: JobsEnvelope = await res.json();
-          const list: Job[] =
-            (Array.isArray(js)
-              ? js
-              : js.data ?? js.jobposts ?? js.jobs ?? js.result) || [];
+  const debouncedSearch = useDebounce(search, 350);
+  const debouncedLocation = useDebounce(locationText, 350);
 
-          const normalized = list.map((j, i) => ({
-            _id: j._id,
-            id:
-              j.id ??
-              j._id ??
-              `${j.title ?? "job"}|${getCompanyName(j.company)}|${
-                j.location
-              }|${p}-${i}`,
-            title: j.title ?? "Untitled Role",
-            description: j.description ?? "",
-            type: j.type ?? "",
-            location: j.location ?? "",
-            salaryRange: j.salaryRange ?? j.salary ?? "",
-            salary: j.salary ?? "",
-            company: j.company ?? (j as any).organization ?? null,
-            tags: j.tags ?? [],
-            skills: normalizeSkills(j),
-            experienceLevel: j.experienceLevel,
-            category: j.category,
-            companySize:
-              j.companySize ??
-              (typeof j.company === "object" ? j.company?.size : undefined),
-          }));
-          chunked.push(...normalized);
-        }
-        if (!cancelled) setAllJobs(chunked);
-      } catch (e) {
-        console.error("Error fetching jobs:", e);
-        if (!cancelled) setAllJobs([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const fetchJobs = useCallback(async (q: string, loc: string, cancelled: { v: boolean }) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: "50" });
+      if (q) params.set("q", q);
+      if (loc) params.set("location", loc);
+      const res = await fetch(`/api/jobs/search?${params}`, { cache: "no-store" });
+      if (!res.ok || cancelled.v) return;
+      const json = await res.json();
+      const list: any[] = json.jobs ?? [];
+      const normalized: Job[] = list.map((j) => ({
+        _id: j._id,
+        id: j.id ?? j._id,
+        title: j.title ?? "Untitled Role",
+        description: j.description ?? "",
+        type: j.type ?? j.jobType ?? "",
+        location: j.location ?? "",
+        salaryRange: j.salaryMin && j.salaryMax
+          ? `${Math.round(j.salaryMin / 100000)}–${Math.round(j.salaryMax / 100000)} LPA`
+          : j.salaryRange ?? j.salary ?? "",
+        salary: j.salary ?? "",
+        company: j.organization
+          ? { companyName: j.organization.name, size: j.organization.size, ...j.organization }
+          : j.company ?? null,
+        tags: j.tags ?? [],
+        skills: Array.isArray(j.requiredSkills) ? j.requiredSkills : (j.skills ?? j.tags ?? []),
+        experienceLevel: j.experienceLevel ?? j.experienceRequired,
+        category: j.category,
+        companySize: j.companySize ?? (typeof j.company === "object" ? (j.company as any)?.size : undefined),
+        // pass-through for Apply Now link
+        ...(j.seoSlug ? { seoSlug: j.seoSlug } : {}),
+      }));
+      if (!cancelled.v) setAllJobs(normalized);
+    } catch {
+      if (!cancelled.v) setAllJobs([]);
+    } finally {
+      if (!cancelled.v) setLoading(false);
     }
-    run();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    const cancelled = { v: false };
+    fetchJobs(debouncedSearch, debouncedLocation, cancelled);
+    return () => { cancelled.v = true; };
+  }, [debouncedSearch, debouncedLocation, fetchJobs]);
 
   /* Dynamic filter options */
   const dynamicTypeOpts: Option[] = useMemo(() => {
@@ -471,18 +472,7 @@ export default function FindJobsPage() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [
-    search,
-    locationText,
-    selectedChips,
-    fType,
-    fCities,
-    fSkills,
-    fPay,
-    fExperience,
-    fCategory,
-    fSize,
-  ]);
+  }, [debouncedSearch, debouncedLocation, selectedChips, fType, fCities, fSkills, fPay, fExperience, fCategory, fSize]);
 
   const toggle =
     (setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>

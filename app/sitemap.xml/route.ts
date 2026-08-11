@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const [jobs, orgs, locations] = await Promise.all([
       prisma.job.findMany({
         where: { status: 'published' },
-        select: { id: true, title: true, createdAt: true, updatedAt: true }
+        select: { id: true, title: true, seoSlug: true, createdAt: true, updatedAt: true }
       }),
       prisma.organization.findMany({
         select: { id: true, name: true, updatedAt: true }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   <url><loc>${baseUrl}/jobs</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
   <url><loc>${baseUrl}/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>${baseUrl}/pricing</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  ${jobs.map((job) => `<url><loc>${baseUrl}/jobs/${createSlug(job.title, job.id)}</loc><lastmod>${job.updatedAt.toISOString()}</lastmod><priority>0.8</priority></url>`).join('\n  ')}
+  ${jobs.map((job) => `<url><loc>${baseUrl}/jobs/${job.seoSlug ?? createSlug(job.title, job.id)}</loc><lastmod>${job.updatedAt.toISOString()}</lastmod><priority>0.8</priority></url>`).join('\n  ')}
   ${orgs.map((org) => `<url><loc>${baseUrl}/companies/${createSlug(org.name, org.id)}</loc><lastmod>${org.updatedAt.toISOString()}</lastmod><priority>0.7</priority></url>`).join('\n  ')}
   ${locations.filter((l) => l.location).map((l) => `<url><loc>${baseUrl}/jobs/location/${l.location!.toLowerCase().replace(/\s+/g, '-')}</loc><priority>0.8</priority></url>`).join('\n  ')}
 </urlset>`

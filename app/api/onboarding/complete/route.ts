@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
     prisma.user.update({
       where: { id: session.user.id },
       data: {
+        onboarded: true,
         ...(name ? { name, firstName, lastName } : {}),
         ...(personalDetails?.phone ? { phone: `${personalDetails.phoneCountry ?? ''}${personalDetails.phone}`.trim() } : {}),
       },

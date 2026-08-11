@@ -12,6 +12,7 @@ const STEPS: Step[] = [
   { key: "work",      label: "Work experience" },
   { key: "summary",   label: "Professional summary" },
   { key: "education", label: "Education" },
+  { key: "skills",    label: "Skills" },
 ];
 
 export default function ProfessionalSummaryPage() {
@@ -37,7 +38,7 @@ export default function ProfessionalSummaryPage() {
 
   const onSubmit = (data: ProfessionalSummary) => {
     updateProfessionalSummary(data);
-    router.push("/onboarding/review");
+    router.push("/onboarding/skills");
   };
 
   const handlePrev = () => {

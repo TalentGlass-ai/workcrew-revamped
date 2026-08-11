@@ -85,6 +85,7 @@ model User {
   phone          String?
   country        String?   // ISO 3166-1 alpha-2, e.g. "IN", "US"
   status         String    @default("active")
+  onboarded      Boolean   @default(false)
   lastLogin      DateTime? @map("last_login")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")

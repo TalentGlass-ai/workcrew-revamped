@@ -12,6 +12,7 @@ const STEPS: Step[] = [
   { key: "work",      label: "Work experience" },
   { key: "summary",   label: "Professional summary" },
   { key: "education", label: "Education" },
+  { key: "skills",    label: "Skills" },
 ];
 
 export default function EducationPage() {

@@ -7,7 +7,7 @@ const PROFILE_SELECT = {
   profileSummary: true, linkedinUrl: true, portfolioUrl: true,
   githubUrl: true, totalExperience: true,
   currentCtc: true, expectedCtc: true, noticePeriod: true,
-  user: { select: { name: true, email: true, phone: true } },
+  user: { select: { name: true, email: true, phone: true, onboarded: true } },
 } as const;
 
 export async function GET() {

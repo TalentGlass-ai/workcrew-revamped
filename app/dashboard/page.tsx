@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const [activeApps, setActiveApps] = useState<number | null>(null);
   const [recommended, setRecommended] = useState<RecommendedJob[]>([]);
   const [profileSlug, setProfileSlug] = useState<string | null>(null);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -70,7 +71,10 @@ export default function DashboardPage() {
       .then((d) => setRecommended(d.jobs ?? []));
     fetch("/api/candidates/me")
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.profileSlug) setProfileSlug(d.profileSlug); });
+      .then((d) => {
+        if (d?.profileSlug) setProfileSlug(d.profileSlug);
+        setOnboarded(d?.user?.onboarded ?? true);
+      });
   }, [status]);
 
   if (status === "loading") {
@@ -102,6 +106,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-8 space-y-8">
+        {/* Onboarding nudge */}
+        {onboarded === false && (
+          <Link href="/onboarding/personal-details"
+            className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 transition-colors">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">👋</span>
+              <div>
+                <p className="font-semibold text-amber-900">Complete your profile</p>
+                <p className="text-xs text-amber-700">Finish the setup wizard to unlock better job matches.</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-amber-900 flex-shrink-0">Continue →</span>
+          </Link>
+        )}
+
         {/* Public profile link */}
         {profileSlug && (
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">

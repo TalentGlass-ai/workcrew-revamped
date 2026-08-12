@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteParams) {
       hiringOrganization: {
         '@type': 'Organization',
         name: companyName,
-        sameAs: `${origin}/companies/${job.organization.slug ?? job.organizationId}`,
+        sameAs: `${origin}/companies/${createJobSlug(companyName, job.organizationId)}`,
       },
       jobLocation: job.location
         ? { '@type': 'Place', address: { '@type': 'PostalAddress', addressLocality: job.location } }

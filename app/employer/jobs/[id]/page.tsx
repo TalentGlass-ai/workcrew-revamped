@@ -378,6 +378,13 @@ function CandidateCard({
             >
               📅
             </button>
+            <Link
+              href={`/employer/messages?app=${app.id}`}
+              className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors"
+              title="Message candidate"
+            >
+              💬
+            </Link>
             <button
               onClick={() => onAction(app.id, { status: "rejected" })}
               disabled={isBusy}

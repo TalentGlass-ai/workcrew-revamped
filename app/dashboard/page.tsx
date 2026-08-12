@@ -30,6 +30,7 @@ type RecommendedJob = {
 const QUICK_LINKS = [
   { href: "/find-jobs", label: "Find Jobs", desc: "Browse AI-matched roles tailored to your skills.", icon: "🔍" },
   { href: "/dashboard/applications", label: "My Applications", desc: "Track the status of every job you've applied to.", icon: "📋" },
+  { href: "/dashboard/messages", label: "Messages", desc: "Chat with recruiters about your applications.", icon: "💬" },
   { href: "/dashboard/saved", label: "Saved Jobs", desc: "Jobs you've bookmarked while browsing.", icon: "🔖" },
   { href: "/dashboard/alerts", label: "Job Alerts", desc: "Get emailed when new jobs match your criteria.", icon: "🔔" },
   { href: "/dashboard/resume", label: "Resume", desc: "Upload or replace the resume recruiters see.", icon: "📄" },

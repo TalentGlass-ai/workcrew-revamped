@@ -87,6 +87,9 @@ export default function EmployerPage() {
               <Link href="/employer/team" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors">
                 Team
               </Link>
+              <Link href="/employer/messages" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors">
+                Messages
+              </Link>
               <Link href="/employer/saved-candidates" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors">
                 ★ Saved
               </Link>

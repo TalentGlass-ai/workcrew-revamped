@@ -207,16 +207,20 @@ export default function ApplicationsPage() {
                     <p className="mt-2 text-xs text-gray-400">Applied {appliedDate}</p>
                   )}
 
-                  {/* Withdraw */}
-                  {app.status === "active" && (
-                    <div className="mt-4 border-t border-gray-50 pt-3">
+                  {/* Actions */}
+                  <div className="mt-4 flex items-center gap-4 border-t border-gray-50 pt-3">
+                    <Link href={`/dashboard/messages?app=${app.id}`}
+                      className="text-xs font-medium text-[#4D31EC] hover:underline transition-colors">
+                      💬 Message recruiter
+                    </Link>
+                    {app.status === "active" && (
                       <button onClick={() => withdraw(app.id)}
                         disabled={withdrawing === app.id}
                         className="text-xs text-red-400 hover:text-red-600 font-medium transition-colors disabled:opacity-50">
                         {withdrawing === app.id ? "Withdrawing…" : "Withdraw application"}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}

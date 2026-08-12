@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import NotificationBell from "../components/NotificationBell";
-import { CURRENCIES } from "../../lib/pay";
+import { CURRENCIES, currencyForLocation } from "../../lib/pay";
 import { can } from "../../lib/capabilities";
 
 type Job = {
@@ -37,6 +37,9 @@ export default function EmployerPage() {
   const [filter, setFilter] = useState<string>("all");
   // Track which button was clicked so FormData ambiguity is avoided
   const [publishIntent, setPublishIntent] = useState(false);
+  // Currency is derived from the location the recruiter types, until they pick one manually.
+  const [currency, setCurrency] = useState("USD");
+  const [currencyTouched, setCurrencyTouched] = useState(false);
 
   async function load() {
     const res = await fetch("/api/employer/jobs");
@@ -141,7 +144,8 @@ export default function EmployerPage() {
               <input name="title" required placeholder="Job title *" className={INPUT} />
               <textarea name="description" required rows={4} placeholder="Job description *" className={`${INPUT} resize-none`} />
               <div className="grid grid-cols-2 gap-3">
-                <input name="location" placeholder="Location (e.g. Remote, New York)" className={INPUT} />
+                <input name="location" placeholder="Location (e.g. Remote, New York)" className={INPUT}
+                  onChange={(e) => { if (!currencyTouched) setCurrency(currencyForLocation(e.target.value)); }} />
                 <select name="jobType" className={INPUT}>
                   <option value="">Job type</option>
                   <option value="full-time">Full-time</option>
@@ -151,7 +155,9 @@ export default function EmployerPage() {
                 </select>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <select name="currency" defaultValue="USD" className={INPUT} title="Compensation currency">
+                <select name="currency" value={currency}
+                  onChange={(e) => { setCurrency(e.target.value); setCurrencyTouched(true); }}
+                  className={INPUT} title="Compensation currency">
                   {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <input name="salaryMin" type="number" placeholder="Salary min" className={INPUT} />

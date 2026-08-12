@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useState } from "react";
-import { CURRENCIES } from "../../../../lib/pay";
+import { CURRENCIES, currencyForLocation } from "../../../../lib/pay";
 import { can } from "../../../../lib/capabilities";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -532,6 +532,9 @@ export default function JobPipelinePage() {
   const [showEdit, setShowEdit] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  // Edit-form currency: derived from the location field until the recruiter picks one.
+  const [editCurrency, setEditCurrency] = useState("USD");
+  const [editCurrencyTouched, setEditCurrencyTouched] = useState(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -658,7 +661,7 @@ export default function JobPipelinePage() {
             <div className="flex items-center gap-2">
               {canJobs && (
                 <button
-                  onClick={() => { setShowEdit(v => !v); setEditError(""); }}
+                  onClick={() => { setShowEdit(v => { if (!v) { setEditCurrency(job?.currency ?? "USD"); setEditCurrencyTouched(false); } return !v; }); setEditError(""); }}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
                     ${showEdit ? "border-gray-300 bg-gray-100 text-gray-700" : "border-gray-200 bg-white text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
                 >
@@ -707,6 +710,7 @@ export default function JobPipelinePage() {
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-gray-600">Location</label>
                   <input name="location" defaultValue={job.location ?? ""}
+                    onChange={(e) => { if (!editCurrencyTouched) setEditCurrency(currencyForLocation(e.target.value)); }}
                     className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
                 </div>
                 <div>
@@ -724,7 +728,8 @@ export default function JobPipelinePage() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-gray-600">Currency</label>
-                  <select name="currency" defaultValue={job.currency ?? "USD"}
+                  <select name="currency" value={editCurrency}
+                    onChange={(e) => { setEditCurrency(e.target.value); setEditCurrencyTouched(true); }}
                     className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all">
                     {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>

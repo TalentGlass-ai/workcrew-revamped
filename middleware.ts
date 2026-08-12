@@ -1,6 +1,11 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
+// Edge-safe auth instance — uses the DB-free config so `pg` is never bundled
+// into the Edge middleware runtime. JWT sessions are verified without the DB.
+const { auth } = NextAuth(authConfig);
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = [

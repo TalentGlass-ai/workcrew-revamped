@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "@/auth.config";
 
 const scryptAsync = promisify(scrypt);
 
@@ -24,6 +25,7 @@ async function verifyPassword(plain: string, hash: string): Promise<boolean> {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -51,20 +53,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.role = (user as any).role;
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) (session.user as any).role = token.role;
-      return session;
-    },
-  },
-  session: {
-    strategy: "jwt",
-  },
+  // pages, callbacks, and session strategy come from authConfig (spread above)
 });

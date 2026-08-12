@@ -33,7 +33,7 @@ type Application = {
     resumeUrl: string | null;
     user: { name: string | null; email: string | null };
     assessments: { score: number | null; language: string; difficulty: string; report: { title?: string; status?: string } | null }[];
-    aiInterviews: { id: string; finalScore: number | null; language: string; completedAt: string | null }[];
+    aiInterviews: { id: string; finalScore: number | null; language: string; status: string; completedAt: string | null }[];
   };
 };
 
@@ -110,6 +110,43 @@ function AssessForm({ jobId, candidateId, onSent }: { jobId: string; candidateId
         className="rounded-md bg-[#4D31EC] px-3 py-1 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors">
         {sending ? "Sending…" : "Send"}
       </button>
+    </div>
+  );
+}
+
+function RequestInterviewForm({ jobId, candidateId, onSent }: { jobId: string; candidateId: string; onSent: () => void }) {
+  const [language, setLanguage] = useState("javascript");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  const send = async () => {
+    setSending(true);
+    setError("");
+    const res = await fetch(`/api/employer/jobs/${jobId}/request-ai-interview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateId, language }),
+    }).catch(() => null);
+    setSending(false);
+    if (res && res.ok) onSent();
+    else { const d = res ? await res.json().catch(() => ({})) : {}; setError(d.error ?? "Failed to send"); }
+  };
+
+  const sel = "rounded-md border border-gray-200 bg-white px-2 py-1 text-xs outline-none focus:border-[#4D31EC]";
+  return (
+    <div className="mt-2 rounded-lg border border-[#4D31EC]/20 bg-[#4D31EC]/5 p-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={language} onChange={e => setLanguage(e.target.value)} className={sel}>
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="python">Python</option>
+        </select>
+        <button onClick={send} disabled={sending}
+          className="rounded-md bg-[#4D31EC] px-3 py-1 text-xs font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-50 transition-colors">
+          {sending ? "Sending…" : "Request interview"}
+        </button>
+      </div>
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
 }
@@ -212,6 +249,8 @@ function CandidateCard({
   const [assessSent, setAssessSent] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showCover, setShowCover] = useState(false);
+  const [showRequestInterview, setShowRequestInterview] = useState(false);
+  const [interviewRequested, setInterviewRequested] = useState(false);
 
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -332,8 +371,8 @@ function CandidateCard({
         </div>
       )}
 
-      {/* AI interview result */}
-      {aiInterview && (
+      {/* AI interview (per-job) */}
+      {aiInterview && aiInterview.status === "completed" && (
         <a href={`/ai-interviewer/${aiInterview.id}`} target="_blank" rel="noopener noreferrer"
           className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#4D31EC]/20 bg-[#4D31EC]/5 px-2 py-1 hover:bg-[#4D31EC]/10 transition-colors">
           <span className="text-xs font-medium text-[#4D31EC]">🤖 AI interview</span>
@@ -349,6 +388,11 @@ function CandidateCard({
             <span className="text-xs font-semibold text-[#4D31EC]">View →</span>
           </span>
         </a>
+      )}
+      {aiInterview && aiInterview.status !== "completed" && (
+        <div className="mb-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+          🤖 AI interview {aiInterview.status === "in_progress" ? "in progress" : "invited"}
+        </div>
       )}
 
       {/* Assessment detail row */}
@@ -413,6 +457,16 @@ function CandidateCard({
                 📅
               </button>
             )}
+            {canPipeline && !aiInterview && !interviewRequested && (
+              <button
+                onClick={() => setShowRequestInterview(v => !v)}
+                className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors
+                  ${showRequestInterview ? "border-[#4D31EC]/40 bg-[#4D31EC]/5 text-[#4D31EC]" : "border-gray-200 text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
+                title="Request AI interview"
+              >
+                🤖
+              </button>
+            )}
             <Link
               href={`/employer/messages?app=${app.id}`}
               className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors"
@@ -443,6 +497,13 @@ function CandidateCard({
               jobId={jobId}
               existing={app.interview}
               onDone={() => { setShowSchedule(false); onAction(app.id, { reload: true }); }}
+            />
+          )}
+          {showRequestInterview && (
+            <RequestInterviewForm
+              jobId={jobId}
+              candidateId={app.candidate.id}
+              onSent={() => { setInterviewRequested(true); setShowRequestInterview(false); onAction(app.id, { reload: true }); }}
             />
           )}
         </>

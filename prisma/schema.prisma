@@ -1112,7 +1112,7 @@ model AiInterview {
   candidateId String    @map("candidate_id")
   jobId       String?   @map("job_id")
   language    String
-  code        String
+  code        String?
   analysis    Json
   questions   Json
   answers     Json      @default("[]")

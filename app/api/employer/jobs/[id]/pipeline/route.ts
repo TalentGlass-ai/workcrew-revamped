@@ -45,10 +45,10 @@ export async function GET(
             select: { score: true, language: true, difficulty: true, report: true },
           },
           aiInterviews: {
-            where: { status: 'completed' },
-            orderBy: { completedAt: 'desc' },
+            where: { jobId },
+            orderBy: { startedAt: 'desc' },
             take: 1,
-            select: { id: true, finalScore: true, language: true, completedAt: true },
+            select: { id: true, finalScore: true, language: true, status: true, completedAt: true },
           },
         },
       },

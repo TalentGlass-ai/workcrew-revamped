@@ -48,7 +48,7 @@ interface InterviewResponse {
   }
 }
 
-export default function AIInterviewer({ candidateId }: { candidateId?: string }) {
+export default function AIInterviewer({ candidateId, jobId, inviteId }: { candidateId?: string; jobId?: string; inviteId?: string }) {
   const router = useRouter()
   const [code, setCode] = useState('')
   const [language, setLanguage] = useState('javascript')
@@ -72,7 +72,7 @@ export default function AIInterviewer({ candidateId }: { candidateId?: string })
       const response = await fetch('/api/interview/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language, candidateId })
+        body: JSON.stringify({ code, language, candidateId, jobId, interviewId: inviteId })
       })
 
       const data = await response.json()

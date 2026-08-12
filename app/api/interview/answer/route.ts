@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       session = {
         id: record.id,
         candidateId: record.candidateId,
-        codeSubmission: record.code,
+        codeSubmission: record.code ?? '',
         language: record.language,
         codeAnalysis: record.analysis as any,
         questions: record.questions as any[],

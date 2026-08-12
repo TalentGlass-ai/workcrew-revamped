@@ -30,6 +30,7 @@ const TYPE_ICON: Record<string, string> = {
   rejected: "❌",
   interview_proposed: "📅",
   interview_confirmed: "✅",
+  ai_interview_requested: "🤖",
   new_message: "💬",
   candidate_search_exhausted: "🔍",
 };

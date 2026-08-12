@@ -19,7 +19,7 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Recruiter experience | 🟡 Dashboard ✅, ATS depth untested | Job→candidate visibility verified |
 | Admin | 🔴 Thin | Stats + resume tooling only; no super-admin/mgmt |
 | AI functionality | 🔵 Code-complete, unverified | Needs OPENAI/Typesense keys |
-| Assessment | 🔵 Code-complete, unverified | Take/submit/proctoring not exercised |
+| Assessment | 🟡 Flow works, scoring broken | Take/submit/proctoring VERIFIED; coding auto-grade always 0% (P1-5) |
 | Security | 🟡 Solid primitives, gaps | RBAC ✅, isolation likely ✅, no CSP, in-mem rate limit |
 | Production readiness | 🟡 Not yet | Config + build + CI + verification gaps |
 
@@ -37,7 +37,10 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Candidate | Apply + track | ✅ | — | 201, persists, list 200 | — |
 | Recruiter | Dashboard + job visibility | ✅ | — | Job shows in `/find-jobs` | — |
 | Security | RBAC / cross-role | ✅ | — | 401/403 verified | — |
-| Assessment | Take/submit/proctor | 🔵 | P1 | Code only | E2E test before launch |
+| Assessment | Take/submit/proctor | ✅ | — | Verified E2E 2026-08-12 | Works |
+| Assessment | Coding auto-grade | 🔴 | P1 | Correct code → 0%; schema lacks testCases | Add testCases (P1-5) |
+| Billing | Stripe read paths | ✅ | — | GET subscription → 200 | Works |
+| Billing | Stripe checkout | 🔴 | P1 | setup-intent → 500 w/o keys | Add keys + verify (P1-6) |
 | Billing | Stripe checkout | 🔵 | P1 | Code only, keys absent | E2E test before launch |
 | AI | Interview/parse/match | 🔵 | P2 | Code only | Verify with keys |
 | Admin | Platform management | ⚪ | P2 | Absent | Build if in V2 scope |
@@ -104,12 +107,45 @@ Recommended fix:  Add a workflow: install → typecheck → test → build → (
 Status:           OPEN
 ```
 
-### P1-5 — Assessment & Stripe billing unverified end-to-end
+### P1-5 — Assessment scoring is non-functional (VERIFIED 2026-08-12)
 ```
-Root cause:       Not exercised (no assigned assessment in test; Stripe keys absent)
-Risk:             Core monetization + a headline candidate feature are unproven
-Recommended fix:  E2E test assessment take/submit/results and a full Stripe checkout before launch
-Status:           OPEN
+Verified E2E as candidate@test.com against a seeded assessment:
+  assign → take → submit → results ALL WORK. Confirmed functional: proctoring
+  consent screen + flag capture, live countdown timer, code editor, answer
+  submission, duplicate-submission guard, skill-intelligence update, and
+  fraud-risk-from-proctoring-flags. Results page renders score/time/answers.
+Symptom:          A CORRECT solution ("sum of positives") scored 0% / "Not Passed".
+Root cause:       The AssessmentQuestion model has NO `testCases` field. lib/evaluator.ts
+                  gates code grading on `question.testCases` (and reads .language/.difficulty,
+                  also absent) — always undefined → the sandbox-execution branch is never
+                  taken → every coding submission falls through to the 0-score path. The
+                  sandbox grader (lib/sandbox.ts) is capable but is never fed test cases.
+Impact:           Every candidate scores 0% on coding assessments; recruiter scores are
+                  meaningless. This is the headline feature.
+Recommended fix:  Add `testCases Json?` (+ optional `language`, `difficulty`) to
+                  AssessmentQuestion (migration); populate testCases in
+                  app/api/employer/jobs/[id]/assign-assessment/route.ts. NOTE the sandbox
+                  invokes `solution(...Object.values(input))`, so wrap array inputs in an
+                  object to pass them as a single arg, e.g. {input:{arr:[1,-2,3]}, expected:2}.
+                  AI-review path (aiCodeEvaluator) needs OPENAI_API_KEY (present).
+Status:           OPEN (P1)
+```
+
+### P1-6 — Stripe billing cannot complete without keys (VERIFIED 2026-08-12)
+```
+Verified live (authenticated):
+  GET  /api/billing/subscription → 200 {subscription:null, paymentMethods:[]}  (read paths OK)
+  POST /api/billing/setup-intent → 500 {"error":"Failed to create setup intent"}
+Root cause:       Write/checkout routes call `new Stripe(process.env.STRIPE_SECRET_KEY!)`
+                  inside the handler; with the key absent it throws, caught → generic 500.
+                  Plans also map to STRIPE_PRICE_* env vars, all absent.
+Impact:           No checkout / subscribe / add-card possible without STRIPE_SECRET_KEY +
+                  STRIPE_PRICE_*. App does not crash, but the error is a generic 500 with no
+                  hint that billing is simply unconfigured.
+Recommended fix:  Provide Stripe TEST keys + price IDs and run a full checkout in test mode to
+                  truly verify. Separately, guard the write routes to return 503
+                  "Billing not configured" when the key is missing, instead of a generic 500.
+Status:           OPEN (needs test keys to fully verify checkout)
 ```
 
 ---

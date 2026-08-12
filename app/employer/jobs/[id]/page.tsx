@@ -33,6 +33,7 @@ type Application = {
     resumeUrl: string | null;
     user: { name: string | null; email: string | null };
     assessments: { score: number | null; language: string; difficulty: string; report: { title?: string; status?: string } | null }[];
+    aiInterviews: { id: string; finalScore: number | null; language: string; completedAt: string | null }[];
   };
 };
 
@@ -223,6 +224,7 @@ function CandidateCard({
 
   const assessment = app.candidate.assessments[0];
   const score = assessment?.score;
+  const aiInterview = app.candidate.aiInterviews[0];
   const matchPct = app.aiMatchScore != null ? Math.round(app.aiMatchScore * 100) : null;
   const nextStage = ADVANCE_TO[app.currentStage as StageKey];
   const isBusy = busy === app.id;
@@ -328,6 +330,25 @@ function CandidateCard({
             </p>
           )}
         </div>
+      )}
+
+      {/* AI interview result */}
+      {aiInterview && (
+        <a href={`/ai-interviewer/${aiInterview.id}`} target="_blank" rel="noopener noreferrer"
+          className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#4D31EC]/20 bg-[#4D31EC]/5 px-2 py-1 hover:bg-[#4D31EC]/10 transition-colors">
+          <span className="text-xs font-medium text-[#4D31EC]">🤖 AI interview</span>
+          <span className="flex items-center gap-1.5">
+            {aiInterview.finalScore != null && (
+              <span className={`text-xs font-semibold ${
+                aiInterview.finalScore >= 8 ? "text-emerald-600" :
+                aiInterview.finalScore >= 6 ? "text-amber-600" : "text-red-500"
+              }`}>
+                {aiInterview.finalScore.toFixed(1)}/10
+              </span>
+            )}
+            <span className="text-xs font-semibold text-[#4D31EC]">View →</span>
+          </span>
+        </a>
       )}
 
       {/* Assessment detail row */}

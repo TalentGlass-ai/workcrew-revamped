@@ -44,6 +44,12 @@ export async function GET(
             take: 1,
             select: { score: true, language: true, difficulty: true, report: true },
           },
+          aiInterviews: {
+            where: { status: 'completed' },
+            orderBy: { completedAt: 'desc' },
+            take: 1,
+            select: { id: true, finalScore: true, language: true, completedAt: true },
+          },
         },
       },
       interview: {

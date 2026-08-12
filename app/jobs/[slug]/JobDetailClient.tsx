@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { formatPay } from '@/lib/pay'
 
 interface Job {
   id: string
@@ -15,6 +16,7 @@ interface Job {
   longitude: number | null
   salaryMin: number | null
   salaryMax: number | null
+  currency: string | null
   type: string
   experience: string | null
   skills: string | null
@@ -123,13 +125,8 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
     }
   }
 
-  const formatSalary = (min: number | null, max: number | null) => {
-    if (!min && !max) return 'Salary not disclosed'
-    if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`
-    if (min) return `From $${min.toLocaleString()}`
-    if (max) return `Up to $${max.toLocaleString()}`
-    return 'Salary not disclosed'
-  }
+  const formatSalary = (min: number | null, max: number | null, currency?: string | null) =>
+    formatPay(min, max, currency)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,7 +165,7 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
               <div className="flex items-center space-x-6 text-sm text-gray-600">
                 <div className="flex items-center">
                   <span className="font-medium text-green-600">
-                    {formatSalary(job.salaryMin, job.salaryMax)}
+                    {formatSalary(job.salaryMin, job.salaryMax, job.currency)}
                   </span>
                 </div>
 
@@ -450,7 +447,7 @@ export default function JobDetailClient({ job }: JobDetailClientProps) {
                     <div>{similarJob.location || 'Remote'}</div>
                     <div className="text-green-600 font-medium">
                       {similarJob.salaryMin && similarJob.salaryMax
-                        ? `$${similarJob.salaryMin.toLocaleString()} - $${similarJob.salaryMax.toLocaleString()}`
+                        ? formatPay(similarJob.salaryMin, similarJob.salaryMax, similarJob.currency)
                         : 'Salary not disclosed'
                       }
                     </div>

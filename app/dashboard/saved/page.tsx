@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatPay } from "../../../lib/pay";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -15,19 +16,12 @@ type SavedJob = {
     jobType: string | null;
     salaryMin: number | null;
     salaryMax: number | null;
+    currency: string | null;
     status: string;
     seoSlug: string | null;
     organization: { name: string; logo: string | null };
   };
 };
-
-function salary(min: number | null, max: number | null): string | null {
-  if (!min && !max) return null;
-  const fmt = (n: number) => `$${(n / 1000).toFixed(0)}k`;
-  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (min) return `From ${fmt(min)}`;
-  return `Up to ${fmt(max!)}`;
-}
 
 export default function SavedJobsPage() {
   const { data: session, status } = useSession();
@@ -89,7 +83,7 @@ export default function SavedJobsPage() {
         ) : (
           <div className="space-y-3">
             {saved.map(({ id, savedAt, job }) => {
-              const sal = salary(job.salaryMin, job.salaryMax);
+              const sal = (job.salaryMin || job.salaryMax) ? formatPay(job.salaryMin, job.salaryMax, job.currency) : null;
               const jobUrl = job.seoSlug ? `/jobs/${job.seoSlug}` : `/jobs/${job.id}`;
               const isClosed = job.status !== "published";
               return (

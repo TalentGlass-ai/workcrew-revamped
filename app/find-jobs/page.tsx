@@ -29,6 +29,7 @@ import type { Job, Option } from '@/types/index';
 
 /* Utils */
 import { getCompanyName, formatSalary, extractCity, normalizeSkills, getSalaryBucket, inferExperience, inferCategory, normalizeCompanySize } from '@/workcrew-ui/lib/utils/jobUtils';
+import { formatPay } from '@/lib/pay';
 
 /*  Category Chip (multi-select)  */
 const Chip: React.FC<
@@ -312,10 +313,13 @@ export default function FindJobsPage() {
         description: j.description ?? "",
         type: j.type ?? j.jobType ?? "",
         location: j.location ?? "",
-        salaryRange: j.salaryMin && j.salaryMax
-          ? `$${Math.round(j.salaryMin / 1000)}k–$${Math.round(j.salaryMax / 1000)}k`
+        salaryRange: (j.salaryMin || j.salaryMax)
+          ? formatPay(j.salaryMin, j.salaryMax, j.currency)
           : j.salaryRange ?? j.salary ?? "",
         salary: j.salary ?? "",
+        salaryMin: j.salaryMin ?? null,
+        salaryMax: j.salaryMax ?? null,
+        currency: j.currency ?? null,
         company: j.organization
           ? { companyName: j.organization.name, size: j.organization.size, ...j.organization }
           : j.company ?? null,
@@ -372,7 +376,7 @@ export default function FindJobsPage() {
   const dynamicPayOpts: Option[] = useMemo(() => {
     const counts: Record<string, number> = {};
     allJobs.forEach((j) => {
-      const b = getSalaryBucket(j.salaryRange || j.salary || "");
+      const b = getSalaryBucket(j.salaryMin ?? j.salaryRange ?? j.salary ?? "");
       if (b) counts[b] = (counts[b] || 0) + 1;
     });
     const order: { label: string; value: string }[] = [
@@ -427,7 +431,7 @@ export default function FindJobsPage() {
       }
 
       if (fPay.size) {
-        const b = getSalaryBucket(j.salaryRange || j.salary || "");
+        const b = getSalaryBucket(j.salaryMin ?? j.salaryRange ?? j.salary ?? "");
         if (!b || !fPay.has(b)) return false;
       }
 

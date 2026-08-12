@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest, context: RouteParams) {
           include: {
             jobs: {
               where: { status: 'published' },
-              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
+              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, currency: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
               orderBy: { createdAt: 'desc' },
               take: 10,
             },
@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest, context: RouteParams) {
           include: {
             jobs: {
               where: { status: 'published' },
-              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
+              select: { id: true, title: true, location: true, jobType: true, salaryMin: true, salaryMax: true, currency: true, seoSlug: true, createdAt: true, _count: { select: { applications: true } } },
               orderBy: { createdAt: 'desc' },
               take: 10,
             },

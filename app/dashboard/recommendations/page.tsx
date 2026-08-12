@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { formatPay } from "../../../lib/pay";
 
 type Job = {
   id: string;
@@ -12,6 +13,7 @@ type Job = {
   jobType: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  currency: string | null;
   seoSlug: string | null;
   matchScore: number;
   organization: { name: string; logo: string | null };
@@ -85,7 +87,7 @@ export default function RecommendationsPage() {
             {jobs.map((job) => {
               const jobUrl = job.seoSlug ? `/jobs/${job.seoSlug}` : `/jobs/${job.id}`;
               const sal = job.salaryMin && job.salaryMax
-                ? `$${Math.round(job.salaryMin / 1000)}k–$${Math.round(job.salaryMax / 1000)}k`
+                ? formatPay(job.salaryMin, job.salaryMax, job.currency)
                 : null;
               return (
                 <div key={job.id} className="flex items-start justify-between gap-4 rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm hover:border-[#4D31EC]/20 transition-colors">

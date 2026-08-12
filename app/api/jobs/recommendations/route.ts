@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       where: { status: 'published' },
       select: {
         id: true, title: true, location: true, jobType: true,
-        salaryMin: true, salaryMax: true, seoSlug: true, createdAt: true,
+        salaryMin: true, salaryMax: true, currency: true, seoSlug: true, createdAt: true,
         requiredSkills: true,
         organization: { select: { id: true, name: true, logo: true } },
         _count: { select: { applications: true } },

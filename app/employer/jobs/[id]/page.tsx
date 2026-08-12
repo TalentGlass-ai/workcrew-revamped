@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useState } from "react";
+import { CURRENCIES } from "../../../../lib/pay";
 import { can } from "../../../../lib/capabilities";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ type Application = {
 type Job = {
   id: string; title: string; status: string;
   description: string | null; location: string | null;
-  jobType: string | null; salaryMin: number | null; salaryMax: number | null;
+  jobType: string | null; salaryMin: number | null; salaryMax: number | null; currency: string | null;
 };
 
 type SuggestedCandidate = {
@@ -608,6 +609,7 @@ export default function JobPipelinePage() {
       jobType: (fd.get("jobType") as string) || undefined,
       salaryMin: fd.get("salaryMin") ? Number(fd.get("salaryMin")) : null,
       salaryMax: fd.get("salaryMax") ? Number(fd.get("salaryMax")) : null,
+      currency: (fd.get("currency") as string) || undefined,
     };
     const res = await fetch(`/api/employer/jobs/${jobId}`, {
       method: "PATCH",
@@ -719,14 +721,21 @@ export default function JobPipelinePage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary min (USD)</label>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Currency</label>
+                  <select name="currency" defaultValue={job.currency ?? "USD"}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all">
+                    {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary min</label>
                   <input name="salaryMin" type="number" defaultValue={job.salaryMin ?? ""}
                     className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary max (USD)</label>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">Salary max</label>
                   <input name="salaryMax" type="number" defaultValue={job.salaryMax ?? ""}
                     className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all" />
                 </div>

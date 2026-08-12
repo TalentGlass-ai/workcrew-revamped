@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import NotificationBell from "../components/NotificationBell";
+import { CURRENCIES } from "../../lib/pay";
 import { can } from "../../lib/capabilities";
 
 type Job = {
@@ -57,6 +58,7 @@ export default function EmployerPage() {
       jobType: fd.get("jobType") as string || undefined,
       salaryMin: fd.get("salaryMin") ? Number(fd.get("salaryMin")) : undefined,
       salaryMax: fd.get("salaryMax") ? Number(fd.get("salaryMax")) : undefined,
+      currency: (fd.get("currency") as string) || undefined,
       publish: publishIntent,
     };
     const res = await fetch("/api/employer/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -148,9 +150,12 @@ export default function EmployerPage() {
                   <option value="internship">Internship</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input name="salaryMin" type="number" placeholder="Salary min (USD)" className={INPUT} />
-                <input name="salaryMax" type="number" placeholder="Salary max (USD)" className={INPUT} />
+              <div className="grid grid-cols-3 gap-3">
+                <select name="currency" defaultValue="USD" className={INPUT} title="Compensation currency">
+                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <input name="salaryMin" type="number" placeholder="Salary min" className={INPUT} />
+                <input name="salaryMax" type="number" placeholder="Salary max" className={INPUT} />
               </div>
               {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
               <div className="flex gap-3 pt-1">

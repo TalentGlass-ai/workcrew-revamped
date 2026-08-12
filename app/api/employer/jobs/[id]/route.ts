@@ -12,6 +12,7 @@ const patchSchema = z.object({
   jobType: z.string().optional(),
   salaryMin: z.number().nullable().optional(),
   salaryMax: z.number().nullable().optional(),
+  currency: z.string().length(3).optional(),
 });
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -42,7 +43,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  const { status, title, description, location, jobType, salaryMin, salaryMax } = parsed.data;
+  const { status, title, description, location, jobType, salaryMin, salaryMax, currency } = parsed.data;
   const updated = await prisma.job.update({
     where: { id },
     data: {
@@ -53,6 +54,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       ...(jobType !== undefined && { jobType }),
       ...(salaryMin !== undefined && { salaryMin }),
       ...(salaryMax !== undefined && { salaryMax }),
+      ...(currency !== undefined && { currency }),
     },
   });
 

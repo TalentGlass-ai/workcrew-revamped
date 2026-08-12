@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import NotificationBell from "../components/NotificationBell";
+import { formatPay } from "../../lib/pay";
 
 type Assessment = {
   id: string;
@@ -22,6 +23,7 @@ type RecommendedJob = {
   jobType: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  currency: string | null;
   seoSlug: string | null;
   matchScore: number;
   organization: { name: string };
@@ -176,7 +178,7 @@ export default function DashboardPage() {
               {recommended.map((job) => {
                 const jobUrl = job.seoSlug ? `/jobs/${job.seoSlug}` : `/jobs/${job.id}`;
                 const sal = job.salaryMin && job.salaryMax
-                  ? `$${Math.round(job.salaryMin / 1000)}k–$${Math.round(job.salaryMax / 1000)}k`
+                  ? formatPay(job.salaryMin, job.salaryMax, job.currency)
                   : null;
                 return (
                   <Link key={job.id} href={jobUrl}

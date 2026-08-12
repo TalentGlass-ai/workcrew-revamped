@@ -22,7 +22,7 @@ export async function GET(
 
   const job = await prisma.job.findFirst({
     where: { id: jobId, organizationId: user.organizationId },
-    select: { id: true, title: true, status: true, description: true, location: true, jobType: true, salaryMin: true, salaryMax: true },
+    select: { id: true, title: true, status: true, description: true, location: true, jobType: true, salaryMin: true, salaryMax: true, currency: true },
   });
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

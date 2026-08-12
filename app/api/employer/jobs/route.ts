@@ -42,6 +42,7 @@ const createSchema = z.object({
   jobType: z.string().optional(),
   salaryMin: z.number().optional(),
   salaryMax: z.number().optional(),
+  currency: z.string().length(3).optional(),
   publish: z.boolean().default(false),
 });
 

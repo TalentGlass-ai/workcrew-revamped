@@ -37,15 +37,19 @@ export function normalizeSkills(job: Job): string[] {
 /**
  * Categorize salary into buckets
  */
-// USD annual buckets (in $k). Parses "$120k–$160k" (the display format) as well
-// as raw-dollar strings like "$120,000" (normalised to $k when > 1000).
-export function getSalaryBucket(salary?: string): string | null {
-  if (!salary) return null;
-  const nums = (salary.replace(/,/g, '').match(/\d+/g) || [])
-    .map(Number)
-    .map((n) => (n > 1000 ? n / 1000 : n)); // raw dollars → $k
+// Annual compensation buckets (in thousands). Accepts a raw numeric amount
+// (preferred — currency-agnostic) or a formatted string. Note: buckets are
+// thresholded on the raw number regardless of currency, so cross-currency
+// filtering is approximate. ponytail: convert to a base currency if precise
+// multi-currency salary filtering is ever needed.
+export function getSalaryBucket(salary?: string | number | null): string | null {
+  if (salary == null || salary === '') return null;
+  const nums = (typeof salary === 'number'
+    ? [salary]
+    : (salary.replace(/,/g, '').match(/\d+/g) || []).map(Number)
+  ).map((n) => (n > 1000 ? n / 1000 : n)); // raw amount → thousands
   if (nums.length === 0) return null;
-  const mid = nums.length >= 2 ? (nums[0] + nums[1]) / 2 : nums[0]; // $k
+  const mid = nums.length >= 2 ? (nums[0] + nums[1]) / 2 : nums[0];
   if (mid < 50) return '0-50';
   if (mid < 100) return '50-100';
   if (mid < 150) return '100-150';

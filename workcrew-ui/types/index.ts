@@ -21,6 +21,9 @@ export interface Job {
   type?: string;
   salary?: string;
   salaryRange?: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  currency?: string | null;
   skills?: string[];
   tags?: string[];
   category?: string;

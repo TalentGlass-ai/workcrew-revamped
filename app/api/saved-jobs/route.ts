@@ -18,6 +18,7 @@ export async function GET() {
           jobType: true,
           salaryMin: true,
           salaryMax: true,
+          currency: true,
           status: true,
           seoSlug: true,
           organization: { select: { name: true, logo: true } },

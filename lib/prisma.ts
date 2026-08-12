@@ -1,15 +1,15 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const DB_URL = process.env.DATABASE_URL ?? 'file:./dev.db';
+const DB_URL = process.env.DATABASE_URL;
+if (!DB_URL) throw new Error('DATABASE_URL is not set');
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    // BetterSQLite3 adapter handles SQLite; swap for @prisma/adapter-pg when DATABASE_URL is postgres://
-    adapter: new PrismaBetterSqlite3({ url: DB_URL }),
+    adapter: new PrismaPg({ connectionString: DB_URL }),
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

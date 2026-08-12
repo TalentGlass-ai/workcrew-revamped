@@ -313,7 +313,7 @@ export default function FindJobsPage() {
         type: j.type ?? j.jobType ?? "",
         location: j.location ?? "",
         salaryRange: j.salaryMin && j.salaryMax
-          ? `${Math.round(j.salaryMin / 100000)}–${Math.round(j.salaryMax / 100000)} LPA`
+          ? `$${Math.round(j.salaryMin / 1000)}k–$${Math.round(j.salaryMax / 1000)}k`
           : j.salaryRange ?? j.salary ?? "",
         salary: j.salary ?? "",
         company: j.organization
@@ -376,15 +376,11 @@ export default function FindJobsPage() {
       if (b) counts[b] = (counts[b] || 0) + 1;
     });
     const order: { label: string; value: string }[] = [
-      { label: "0–3 LPA", value: "0-3" },
-      { label: "3–5 LPA", value: "3-5" },
-      { label: "5–7 LPA", value: "5-7" },
-      { label: "7–10 LPA", value: "7-10" },
-      { label: "10–15 LPA", value: "10-15" },
-      { label: "15–20 LPA", value: "15-20" },
-      { label: "20–30 LPA", value: "20-30" },
-      { label: "30–50 LPA", value: "30-50" },
-      { label: "Above 50 LPA", value: "50+" },
+      { label: "< $50k", value: "0-50" },
+      { label: "$50k–$100k", value: "50-100" },
+      { label: "$100k–$150k", value: "100-150" },
+      { label: "$150k–$200k", value: "150-200" },
+      { label: "$200k+", value: "200+" },
     ];
     return order.filter((o) => counts[o.value] > 0);
   }, [allJobs]);

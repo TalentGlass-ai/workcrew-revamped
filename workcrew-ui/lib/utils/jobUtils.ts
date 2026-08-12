@@ -37,45 +37,20 @@ export function normalizeSkills(job: Job): string[] {
 /**
  * Categorize salary into buckets
  */
+// USD annual buckets (in $k). Parses "$120k–$160k" (the display format) as well
+// as raw-dollar strings like "$120,000" (normalised to $k when > 1000).
 export function getSalaryBucket(salary?: string): string | null {
   if (!salary) return null;
-  const str = salary.toLowerCase().replace(/[,₹\s]/g, '');
-
-  // LPA format
-  const lpaMatch = str.match(/(\d+)(?:-|\sto\s)?(\d+)?lpa/);
-  if (lpaMatch) {
-    const a = parseInt(lpaMatch[1], 10);
-    const b = parseInt(lpaMatch[2] || lpaMatch[1], 10);
-    const mid = (a + b) / 2;
-    if (mid <= 3) return '0-3';
-    if (mid <= 5) return '3-5';
-    if (mid <= 7) return '5-7';
-    if (mid <= 10) return '7-10';
-    if (mid <= 15) return '10-15';
-    if (mid <= 20) return '15-20';
-    if (mid <= 30) return '20-30';
-    if (mid <= 50) return '30-50';
-    return '50+';
-  }
-
-  // K format
-  const kMatch = str.match(/(\d+)\s*k(?:-|\sto\s)?(\d+)?\s*k?/);
-  if (kMatch) {
-    const a = parseInt(kMatch[1], 10);
-    const b = parseInt(kMatch[2] || String(a), 10);
-    const mid = (a + b) / 2;
-    if (mid <= 300) return '0-3';
-    if (mid <= 500) return '3-5';
-    if (mid <= 700) return '5-7';
-    if (mid <= 1000) return '7-10';
-    if (mid <= 1500) return '10-15';
-    if (mid <= 2000) return '15-20';
-    if (mid <= 3000) return '20-30';
-    if (mid <= 5000) return '30-50';
-    return '50+';
-  }
-
-  return null;
+  const nums = (salary.replace(/,/g, '').match(/\d+/g) || [])
+    .map(Number)
+    .map((n) => (n > 1000 ? n / 1000 : n)); // raw dollars → $k
+  if (nums.length === 0) return null;
+  const mid = nums.length >= 2 ? (nums[0] + nums[1]) / 2 : nums[0]; // $k
+  if (mid < 50) return '0-50';
+  if (mid < 100) return '50-100';
+  if (mid < 150) return '100-150';
+  if (mid < 200) return '150-200';
+  return '200+';
 }
 
 /**

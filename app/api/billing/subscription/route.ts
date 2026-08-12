@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { auth } from '../../../../auth';
 import { prisma } from '../../../../lib/prisma';
 import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { getStripe, billingNotConfigured } from '../../../../lib/stripe';
 
 // Maps plan keys to Stripe price IDs via env vars.
 // Set STRIPE_PRICE_<PLAN>_<BILLING> in production.
@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
     }
 
     const priceId = PRICE_ID[key];
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const stripe = getStripe();
+    if (!stripe) return billingNotConfigured();
 
     if (!priceId) {
       // Stripe price IDs not configured — fall back to a one-time PaymentIntent
@@ -143,7 +144,8 @@ export async function DELETE(request: NextRequest) {
     if (!sub) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (sub.stripeSubscriptionId) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      const stripe = getStripe();
+      if (!stripe) return billingNotConfigured();
       await stripe.subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: true });
     }
 

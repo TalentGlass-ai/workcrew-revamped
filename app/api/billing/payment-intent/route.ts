@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveRegionForUser, getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { billingNotConfigured } from '../../../../lib/stripe';
 import { auth } from '../../../../auth';
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
 
     const region = await resolveRegionForUser(session.user.id, request);
     const paymentService = getPaymentServiceForRegion(region);
+    if (!paymentService) return billingNotConfigured();
 
     // Create payment intent
     const result = await paymentService.createPaymentIntent({

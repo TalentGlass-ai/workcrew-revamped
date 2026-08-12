@@ -69,15 +69,19 @@ export async function resolveRegionForUser(
 /**
  * Gets the appropriate payment service based on region.
  */
+// Returns the regional payment service, or null when that provider's keys are
+// not configured — callers should return billingNotConfigured() (503).
 export function getPaymentServiceForRegion(region: PaymentRegion) {
   if (region === 'india') {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) return null;
     const { RazorpayService } = require('../services/razorpay-service');
     return new RazorpayService(
-      process.env.RAZORPAY_KEY_ID!,
-      process.env.RAZORPAY_KEY_SECRET!
+      process.env.RAZORPAY_KEY_ID,
+      process.env.RAZORPAY_KEY_SECRET
     );
   } else {
+    if (!process.env.STRIPE_SECRET_KEY) return null;
     const { StripeService } = require('../services/stripe-service');
-    return new StripeService(process.env.STRIPE_SECRET_KEY!);
+    return new StripeService(process.env.STRIPE_SECRET_KEY);
   }
 }

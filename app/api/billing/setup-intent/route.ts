@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { auth } from '../../../../auth';
+import { getStripe, billingNotConfigured } from '../../../../lib/stripe';
 
 export async function POST() {
   try {
@@ -9,7 +9,8 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const stripe = getStripe();
+    if (!stripe) return billingNotConfigured();
 
     // Find or create Stripe customer by userId metadata
     const existing = await stripe.customers.search({

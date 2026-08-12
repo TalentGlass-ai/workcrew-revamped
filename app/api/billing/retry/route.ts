@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentServiceForRegion } from '../../../../lib/utils/region';
+import { billingNotConfigured } from '../../../../lib/stripe';
 import { prisma } from '../../../../lib/prisma';
 import { auth } from '../../../../auth';
 
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     // Determine region and service
     const region = payment.stripePaymentIntentId ? 'global' : 'india';
     const paymentService = getPaymentServiceForRegion(region);
+    if (!paymentService) return billingNotConfigured();
 
     // Retry payment
     const result = await paymentService.retryFailedPayment(paymentId);

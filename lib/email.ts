@@ -79,6 +79,21 @@ function p(text: string): string {
 // ---------------------------------------------------------------------------
 
 export const emailTemplates = {
+  teamInvite(orgName: string, inviterName: string | null, role: string, token: string): { subject: string; html: string } {
+    const acceptUrl = `${APP_URL}/accept-invite?token=${token}`;
+    const roleLabel = role.replace(/_/g, ' ');
+    const who = inviterName ? `${inviterName} has` : 'You have been';
+    return {
+      subject: `Join ${orgName} on WorkCrew.ai`,
+      html: layout(`Join ${orgName}`, `
+        ${h1(`You're invited to join ${orgName}`)}
+        ${p(`${who} invited you to join <strong>${orgName}</strong> on WorkCrew.ai as a <strong>${roleLabel}</strong>. Accept the invite to set up your account and start collaborating on hiring.`)}
+        ${btn('Accept invite', acceptUrl)}
+        ${p('<span style="color:#6b7280;font-size:13px;">This invite expires in 7 days. If you weren\'t expecting it, you can safely ignore this email.</span>')}
+      `),
+    };
+  },
+
   passwordReset(token: string): { subject: string; html: string } {
     const resetUrl = `${APP_URL}/reset-password?token=${token}`;
     return {

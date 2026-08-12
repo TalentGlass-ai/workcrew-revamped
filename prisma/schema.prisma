@@ -42,6 +42,7 @@ model Organization {
 
   settings         OrganizationSettings?
   users            User[]
+  invites          OrgInvite[]
   jobs             Job[]
   jobPipelineStages JobPipelineStage[]
   assessments       Assessment[]
@@ -161,6 +162,23 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model OrgInvite {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  email          String
+  role           String    // recruiter, hiring_manager, interviewer
+  token          String    @unique
+  invitedBy      String    @map("invited_by")
+  expires        DateTime
+  acceptedAt     DateTime? @map("accepted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@map("org_invites")
 }
 
 // -----------------------------------------------------------------------------

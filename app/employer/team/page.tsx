@@ -8,6 +8,7 @@ import { can } from "../../../lib/capabilities";
 
 type Member = { id: string; name: string | null; email: string | null; role: string; createdAt: string };
 type Invite = { id: string; email: string; role: string; expires: string; createdAt: string };
+type Seats = { used: number; limit: number | null; plan: string };
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin", recruiter: "Recruiter", hiring_manager: "Hiring manager", interviewer: "Interviewer",
@@ -26,6 +27,7 @@ export default function TeamPage() {
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [seats, setSeats] = useState<Seats | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +35,8 @@ export default function TeamPage() {
   const [role, setRole] = useState("recruiter");
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const seatsFull = !!seats && seats.limit !== null && seats.used >= seats.limit;
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -45,6 +49,7 @@ export default function TeamPage() {
         if (!d) return;
         setMembers(d.members ?? []);
         setInvites(d.invites ?? []);
+        setSeats(d.seats ?? null);
         setCurrentUserId(d.currentUserId ?? null);
       })
       .finally(() => setLoading(false));
@@ -106,7 +111,28 @@ export default function TeamPage() {
         {/* Invite form */}
         {canManageTeam && (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-gray-800">Invite a teammate</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-gray-800">Invite a teammate</h2>
+            {seats && (
+              <span className="text-xs font-medium text-gray-400">
+                {seats.limit === null
+                  ? `${seats.used} seat${seats.used !== 1 ? "s" : ""} used`
+                  : `${seats.used} of ${seats.limit} seats used`}
+              </span>
+            )}
+          </div>
+
+          {seatsFull && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm text-amber-800">
+                You've used all {seats!.limit} seats on the <span className="font-semibold capitalize">{seats!.plan}</span> plan.
+              </p>
+              <Link href="/billing" className="flex-shrink-0 rounded-lg bg-[#4D31EC] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#3b25b5] transition-colors">
+                Upgrade →
+              </Link>
+            </div>
+          )}
+
           <form onSubmit={invite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Email</label>
@@ -121,7 +147,8 @@ export default function TeamPage() {
                 <option value="interviewer">Interviewer</option>
               </select>
             </div>
-            <button type="submit" disabled={sending}
+            <button type="submit" disabled={sending || seatsFull}
+              title={seatsFull ? "Seat limit reached — upgrade to invite more" : undefined}
               className="rounded-lg bg-[#4D31EC] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#3b25b5] disabled:opacity-60 transition-colors">
               {sending ? "Sending…" : "Send invite"}
             </button>

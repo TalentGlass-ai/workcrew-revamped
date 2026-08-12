@@ -4,6 +4,7 @@ import { auth } from '../../../../auth';
 import { getPrisma } from '../../../../lib/prisma';
 import { sendEmail, emailTemplates } from '../../../../lib/email';
 import { can } from '../../../../lib/employerAuth';
+import { seatLimit, hasSeatAvailable } from '../../../../lib/seats';
 
 const INVITABLE_ROLES = ['recruiter', 'hiring_manager', 'interviewer'] as const;
 
@@ -26,7 +27,7 @@ export async function GET() {
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { prisma, user } = actor;
 
-  const [members, invites] = await Promise.all([
+  const [members, invites, org] = await Promise.all([
     prisma.user.findMany({
       where: { organizationId: user.organizationId },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
@@ -37,9 +38,22 @@ export async function GET() {
       select: { id: true, email: true, role: true, expires: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.organization.findUnique({
+      where: { id: user.organizationId! },
+      select: { subscriptionPlan: true },
+    }),
   ]);
 
-  return NextResponse.json({ members, invites, currentUserId: user.id });
+  const now = Date.now();
+  const activePending = invites.filter(i => new Date(i.expires).getTime() > now).length;
+  const limit = seatLimit(org?.subscriptionPlan);
+  const seats = {
+    used: members.length + activePending,
+    limit: Number.isFinite(limit) ? limit : null, // null = unlimited
+    plan: org?.subscriptionPlan ?? 'free',
+  };
+
+  return NextResponse.json({ members, invites, currentUserId: user.id, seats });
 }
 
 // POST — invite a teammate { email, role }
@@ -68,6 +82,31 @@ export async function POST(req: NextRequest) {
   }
   if (existingUser) {
     return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
+  }
+
+  // Seat enforcement — a new invite consumes a seat unless it just refreshes an
+  // already-counted active pending invite for the same email.
+  const now = new Date();
+  const existingInvite = await prisma.orgInvite.findUnique({
+    where: { organizationId_email: { organizationId: user.organizationId!, email } },
+    select: { acceptedAt: true, expires: true },
+  });
+  const alreadyCounted = existingInvite && existingInvite.acceptedAt === null && existingInvite.expires > now;
+  if (!alreadyCounted) {
+    const org = await prisma.organization.findUnique({
+      where: { id: user.organizationId! },
+      select: { subscriptionPlan: true },
+    });
+    const [memberCount, pendingCount] = await Promise.all([
+      prisma.user.count({ where: { organizationId: user.organizationId! } }),
+      prisma.orgInvite.count({ where: { organizationId: user.organizationId!, acceptedAt: null, expires: { gt: now } } }),
+    ]);
+    if (!hasSeatAvailable(org?.subscriptionPlan, memberCount + pendingCount)) {
+      return NextResponse.json(
+        { error: 'Seat limit reached for your plan. Upgrade to add more teammates.', code: 'SEAT_LIMIT' },
+        { status: 403 },
+      );
+    }
   }
 
   const token = randomBytes(32).toString('hex');

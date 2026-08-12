@@ -541,6 +541,9 @@ model AssessmentQuestion {
   expectedAnswer String?  @map("expected_answer")
   scoringRubric  Json?   @map("scoring_rubric")
   weightage      Float   @default(1.0)
+  testCases      String?  @map("test_cases")   // JSON string: [{ input, expected }] — parsed by lib/evaluator.ts
+  language       String?                       // coding questions: execution language
+  difficulty     String?                       // easy | medium | hard
 
   assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   answers        Answer[]

@@ -42,11 +42,13 @@ export async function evaluateAssessment(
 
     // Get assessment pack for role-based evaluation
     const pack = role ? getPackByRole(role) : null;
+    // Default (no role/pack) — used by recruiter-assigned coding assessments.
+    // No system_design: coding grading never produces it, so including it here
+    // would cap a perfect solution below the pass threshold.
     const evaluationWeights = pack?.evaluation_weights || {
-      correctness: 40,
-      system_design: 20,
+      correctness: 50,
       code_quality: 20,
-      efficiency: 10,
+      efficiency: 20,
       edge_cases: 10
     };
 
@@ -200,10 +202,12 @@ async function evaluateAnswer(
         score: gradingResult.score,
         correct: gradingResult.score >= 60, // Passing threshold
         criteria: {
+          // Keys must match EvaluationResult / evaluation_weights (snake_case),
+          // otherwise the outer weighted-score aggregation silently drops them.
           correctness: gradingResult.breakdown.correctness,
           efficiency: gradingResult.breakdown.efficiency,
-          codeQuality: gradingResult.breakdown.codeQuality,
-          edgeCases: gradingResult.breakdown.edgeCases
+          code_quality: gradingResult.breakdown.codeQuality,
+          edge_cases: gradingResult.breakdown.edgeCases
         }
       };
     } catch (error) {

@@ -15,6 +15,17 @@ const DEFAULT_QUESTION: Record<Language, string> = {
   python: 'Write a function `solution(input)` that solves the problem described below. Your function should be efficient and handle edge cases.\n\nProblem: Given a list of integers, return the sum of all positive numbers.',
 };
 
+// Test cases for the default "sum of positives" problem. The sandbox invokes
+// solution(...Object.values(input)), so the array is wrapped in an object to be
+// passed as a single argument (→ solution([...])). Same data for every language.
+const DEFAULT_TEST_CASES = JSON.stringify([
+  { input: { numbers: [1, 2, 3, 4] }, expected: 10 },
+  { input: { numbers: [-1, -2, 5] }, expected: 5 },
+  { input: { numbers: [-1, -2, -3] }, expected: 0 },
+  { input: { numbers: [] }, expected: 0 },
+  { input: { numbers: [10, -10, 10] }, expected: 20 },
+]);
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -85,6 +96,9 @@ export async function POST(
           questionType: 'coding',
           questionText: DEFAULT_QUESTION[lang],
           weightage: 1,
+          testCases: DEFAULT_TEST_CASES,
+          language: lang,
+          difficulty,
         }],
       },
     },

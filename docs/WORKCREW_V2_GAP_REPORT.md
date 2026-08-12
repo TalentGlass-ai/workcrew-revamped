@@ -20,7 +20,7 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Admin | 🔴 Thin | Stats + resume tooling only; no super-admin/mgmt |
 | AI functionality | 🔵 Code-complete, unverified | Needs OPENAI/Typesense keys |
 | Assessment | 🟡 Flow works, scoring broken | Take/submit/proctoring VERIFIED; coding auto-grade always 0% (P1-5) |
-| Security | 🟡 Solid primitives, gaps | RBAC ✅, isolation likely ✅, no CSP, in-mem rate limit |
+| Security | 🟡 Solid primitives, gaps | RBAC ✅, tenant isolation ✅ PROVEN (2-org test), no CSP, in-mem rate limit |
 | Production readiness | 🟡 Not yet | Config + build + CI + verification gaps |
 
 ---
@@ -174,7 +174,7 @@ Status:           OPEN (needs test keys to fully verify checkout)
 **Backend** — Typed error responses; fire-and-forget notifications. In-memory rate limiter won't span instances.
 **Database** — Now clean Postgres baseline; adapter correct. Confirm indexes/constraints under load.
 **Infrastructure** — Docker present but unbuilt; Vercel-cron won't run under self-host; websocket + rank/alert scripts run out-of-band.
-**Security** — Strong auth primitives + RBAC verified; **no CSP/security headers**; cross-org isolation not exhaustively proven (single-org test).
+**Security** — Strong auth primitives + RBAC verified; cross-org tenant isolation **PROVEN** via a two-org live probe (all cross-org access 403/404, own-org 200) + `__tests__/tenant-isolation.test.ts` in CI. Remaining: **no CSP/security headers**; in-memory rate limiter (won't hold across instances).
 **Performance** — Not load-tested; watch N+1 in pipeline/analytics aggregations (currently in-JS reductions over `findMany`).
 **AI/Integrations** — All gated behind keys with graceful fallbacks; none verified live.
 

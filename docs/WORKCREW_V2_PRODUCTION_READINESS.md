@@ -39,7 +39,7 @@ The application is architecturally substantial (86 API routes, 61 pages, Prisma/
 |---|---|---|
 | Authentication | ✅ | NextAuth JWT + scrypt; timing-safe compare + dummy-hash anti-enumeration. Verified login both roles. |
 | Authorization / RBAC | ✅ | `lib/capabilities.ts` capability gates on mutating employer routes; candidate→employer = 401, candidate→admin = 403 (verified). |
-| Tenant isolation | 🟡→✅ | Employer routes scope by `organizationId`; candidates lack one so are rejected. **Cross-org IDOR not exhaustively tested** (single org in test). Code consistently filters by org. |
+| Tenant isolation | ✅ PROVEN | Two-org live probe (rival@ vs test-org, 2026-08-13): Org B → Org A pipeline/job-edit/assign-assessment/candidate all 404, application PATCH & messages 403, analytics scoped to own org; own-org control 200. Codified in `__tests__/tenant-isolation.test.ts` (CI-guarded). |
 | Middleware gating | ⚠️ | Auth-only, not role-aware; `/employer` and `/admin` not in protected prefixes (rely on API/page checks — which do reject). |
 | Secrets | ⚠️ | No secrets committed; `.env` gitignored. Ensure prod secrets set. |
 | Rate limiting | 🟡 | `lib/rateLimiter` used on signup/forgot-password; in-memory (won't span instances). |
@@ -75,5 +75,5 @@ The application is architecturally substantial (86 API routes, 61 pages, Prisma/
 5. Fix `npm test` exit code (convert or rename the two assert scripts) and add a CI workflow. **[high]**
 6. Add security headers / CSP. **[high]**
 7. E2E-verify: assessment take/submit, Stripe checkout, AI interview, email delivery. **[high]**
-8. Confirm cross-org isolation with a two-org test. **[high]**
+8. ~~Confirm cross-org isolation with a two-org test.~~ ✅ DONE — live two-org probe + `__tests__/tenant-isolation.test.ts` (CI-guarded).
 9. Replace in-memory rate limiter with a shared store if running >1 instance. **[medium]**

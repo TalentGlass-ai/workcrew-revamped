@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import NotificationBell from "../components/NotificationBell";
+import { can } from "../../lib/capabilities";
 
 type Job = {
   id: string;
@@ -24,6 +26,8 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
 const INPUT = "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#4D31EC] focus:ring-2 focus:ring-[#4D31EC]/10 transition-all";
 
 export default function EmployerPage() {
+  const { data: session } = useSession();
+  const canJobs = can((session?.user as { role?: string } | undefined)?.role, "manageJobs");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -100,10 +104,12 @@ export default function EmployerPage() {
                 Assessments
               </Link>
               <NotificationBell allHref="/employer/notifications" />
-              <button onClick={() => { setShowForm(!showForm); setError(""); setPublishIntent(false); }}
-                className="rounded-lg bg-[#4D31EC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
-                {showForm ? "Cancel" : "+ Post a Job"}
-              </button>
+              {canJobs && (
+                <button onClick={() => { setShowForm(!showForm); setError(""); setPublishIntent(false); }}
+                  className="rounded-lg bg-[#4D31EC] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
+                  {showForm ? "Cancel" : "+ Post a Job"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -184,9 +190,11 @@ export default function EmployerPage() {
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-16 text-center">
             <p className="text-lg font-medium text-gray-400">No jobs {filter !== "all" ? `with status "${filter}"` : "yet"}</p>
             <p className="mt-1 text-sm text-gray-400">Post your first job to start receiving applications.</p>
-            <button onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-[#4D31EC] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
-              + Post a Job
-            </button>
+            {canJobs && (
+              <button onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-[#4D31EC] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3b25b5] transition-colors">
+                + Post a Job
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -208,15 +216,15 @@ export default function EmployerPage() {
                       className="text-xs font-semibold text-[#4D31EC] hover:underline">
                       Pipeline →
                     </Link>
-                    {job.status === "draft" && (
+                    {canJobs && job.status === "draft" && (
                       <button onClick={() => setStatus(job.id, "published")}
                         className="text-xs font-semibold text-[#4D31EC] hover:underline">Publish</button>
                     )}
-                    {job.status === "published" && (
+                    {canJobs && job.status === "published" && (
                       <button onClick={() => setStatus(job.id, "closed")}
                         className="text-xs font-semibold text-gray-400 hover:text-gray-700 hover:underline">Close</button>
                     )}
-                    {job.status === "closed" && (
+                    {canJobs && job.status === "closed" && (
                       <button onClick={() => setStatus(job.id, "archived")}
                         className="text-xs font-semibold text-gray-400 hover:text-gray-700 hover:underline">Archive</button>
                     )}

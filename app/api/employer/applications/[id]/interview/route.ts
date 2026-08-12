@@ -1,30 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../../../auth';
 import { getPrisma } from '../../../../../../lib/prisma';
+import { can } from '../../../../../../lib/employerAuth';
 
-async function getOrgId(): Promise<string | null> {
+// Returns { organizationId, role } for the signed-in employer, or null.
+async function getOrgActor(): Promise<{ organizationId: string; role: string } | null> {
   const session = await auth();
   if (!session?.user?.email) return null;
   const prisma = await getPrisma();
   if (!prisma) return null;
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { organizationId: true },
+    select: { organizationId: true, role: true },
   });
-  return user?.organizationId ?? null;
+  if (!user?.organizationId) return null;
+  return { organizationId: user.organizationId, role: user.role };
 }
 
 // POST — create/replace proposal { slots: string[], meetingLink?, notes? }
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId();
-  if (!orgId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const actor = await getOrgActor();
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!can(actor.role, 'manageInterviews')) {
+    return NextResponse.json({ error: 'Your role does not permit scheduling interviews' }, { status: 403 });
+  }
 
   const prisma = await getPrisma();
   if (!prisma) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
 
   const { id: applicationId } = await params;
   const app = await prisma.candidateApplication.findFirst({
-    where: { id: applicationId, job: { organizationId: orgId } },
+    where: { id: applicationId, job: { organizationId: actor.organizationId } },
     select: { id: true, candidate: { select: { userId: true, user: { select: { name: true } } } }, job: { select: { title: true } } },
   });
   if (!app) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -56,15 +62,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 // DELETE — cancel proposal
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId();
-  if (!orgId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const actor = await getOrgActor();
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!can(actor.role, 'manageInterviews')) {
+    return NextResponse.json({ error: 'Your role does not permit cancelling interviews' }, { status: 403 });
+  }
 
   const prisma = await getPrisma();
   if (!prisma) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
 
   const { id: applicationId } = await params;
   const app = await prisma.candidateApplication.findFirst({
-    where: { id: applicationId, job: { organizationId: orgId } },
+    where: { id: applicationId, job: { organizationId: actor.organizationId } },
     select: { id: true },
   });
   if (!app) return NextResponse.json({ error: 'Not found' }, { status: 404 });

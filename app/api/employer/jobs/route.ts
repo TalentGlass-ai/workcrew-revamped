@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../../../auth";
 import { getPrisma } from "../../../../lib/prisma";
+import { can } from "../../../../lib/employerAuth";
 
 async function getOrgUser() {
   const session = await auth();
@@ -48,6 +49,10 @@ export async function POST(req: NextRequest) {
   const ctx = await getOrgUser();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { prisma, user } = ctx;
+
+  if (!can(user.role, "manageJobs")) {
+    return NextResponse.json({ error: "Your role does not permit posting jobs" }, { status: 403 });
+  }
 
   let body: unknown;
   try { body = await req.json(); } catch {

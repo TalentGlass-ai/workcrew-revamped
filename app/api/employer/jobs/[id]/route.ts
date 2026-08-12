@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../../../../auth";
 import { getPrisma } from "../../../../../lib/prisma";
+import { can } from "../../../../../lib/employerAuth";
 
 const patchSchema = z.object({
   status: z.enum(["draft", "published", "closed", "archived"]).optional(),
@@ -22,9 +23,12 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true, organizationId: true },
+    select: { id: true, organizationId: true, role: true },
   });
   if (!user?.organizationId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!can(user.role, "manageJobs")) {
+    return NextResponse.json({ error: "Your role does not permit editing jobs" }, { status: 403 });
+  }
 
   const { id } = await context.params;
   const job = await prisma.job.findFirst({ where: { id, organizationId: user.organizationId } });

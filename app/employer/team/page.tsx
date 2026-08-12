@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { can } from "../../../lib/capabilities";
 
 type Member = { id: string; name: string | null; email: string | null; role: string; createdAt: string };
 type Invite = { id: string; email: string; role: string; expires: string; createdAt: string };
@@ -19,8 +20,9 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 export default function TeamPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+  const canManageTeam = can((session?.user as { role?: string } | undefined)?.role, "manageTeam");
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -102,6 +104,7 @@ export default function TeamPage() {
 
       <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
         {/* Invite form */}
+        {canManageTeam && (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-base font-semibold text-gray-800">Invite a teammate</h2>
           <form onSubmit={invite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -129,6 +132,7 @@ export default function TeamPage() {
             </p>
           )}
         </div>
+        )}
 
         {/* Pending invites */}
         {invites.length > 0 && (
@@ -149,10 +153,12 @@ export default function TeamPage() {
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ROLE_COLOR[i.role] ?? "bg-gray-100 text-gray-600"}`}>
                       {ROLE_LABEL[i.role] ?? i.role}
                     </span>
-                    <button onClick={() => revoke(i.id)}
-                      className="text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors">
-                      Revoke
-                    </button>
+                    {canManageTeam && (
+                      <button onClick={() => revoke(i.id)}
+                        className="text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors">
+                        Revoke
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

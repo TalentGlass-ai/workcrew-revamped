@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import { auth } from '../../../../auth';
 import { getPrisma } from '../../../../lib/prisma';
 import { sendEmail, emailTemplates } from '../../../../lib/email';
+import { can } from '../../../../lib/employerAuth';
 
 const INVITABLE_ROLES = ['recruiter', 'hiring_manager', 'interviewer'] as const;
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { prisma, user } = actor;
 
-  if (!['admin', 'recruiter'].includes(user.role)) {
+  if (!can(user.role, 'manageTeam')) {
     return NextResponse.json({ error: 'Only recruiters and admins can invite teammates' }, { status: 403 });
   }
 
@@ -94,6 +95,10 @@ export async function DELETE(req: NextRequest) {
   const actor = await getActor();
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { prisma, user } = actor;
+
+  if (!can(user.role, 'manageTeam')) {
+    return NextResponse.json({ error: 'Only recruiters and admins can manage invites' }, { status: 403 });
+  }
 
   const inviteId = req.nextUrl.searchParams.get('inviteId');
   if (!inviteId) return NextResponse.json({ error: 'inviteId required' }, { status: 400 });

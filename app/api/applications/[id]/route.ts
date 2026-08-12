@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { prisma } from '../../../../lib/prisma';
 import { sendEmail, emailTemplates } from '../../../../lib/email';
+import { can } from '../../../../lib/employerAuth';
 
 const STAGES = ['applied', 'screening', 'interview', 'offer', 'hired'] as const;
 type Stage = typeof STAGES[number];
@@ -27,10 +28,13 @@ export async function PATCH(
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { organizationId: true },
+    select: { organizationId: true, role: true },
   });
-  if (user?.organizationId !== application.job.organizationId) {
+  if (!user?.organizationId || user.organizationId !== application.job.organizationId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  if (!can(user.role, 'managePipeline')) {
+    return NextResponse.json({ error: 'Your role does not permit changing application stages' }, { status: 403 });
   }
 
   const data: Record<string, string> = {};

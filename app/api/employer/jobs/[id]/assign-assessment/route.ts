@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../../../auth';
 import { getPrisma } from '../../../../../../lib/prisma';
 import { sendEmail, emailTemplates } from '../../../../../../lib/email';
+import { can } from '../../../../../../lib/employerAuth';
 
 const LANGUAGES = ['javascript', 'python', 'typescript'] as const;
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
@@ -26,9 +27,12 @@ export async function POST(
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { organizationId: true },
+    select: { organizationId: true, role: true },
   });
   if (!user?.organizationId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!can(user.role, 'managePipeline')) {
+    return NextResponse.json({ error: 'Your role does not permit assigning assessments' }, { status: 403 });
+  }
 
   const { id: jobId } = await params;
 

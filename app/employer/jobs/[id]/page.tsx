@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useState } from "react";
+import { can } from "../../../../lib/capabilities";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,11 @@ function CandidateCard({
   const [showSchedule, setShowSchedule] = useState(false);
   const [showCover, setShowCover] = useState(false);
 
+  const { data: session } = useSession();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const canPipeline = can(role, "managePipeline");
+  const canInterviews = can(role, "manageInterviews");
+
   const skills: string[] = Array.isArray(app.candidate.primarySkills)
     ? (app.candidate.primarySkills as string[])
     : Object.keys(app.candidate.primarySkills ?? {});
@@ -349,7 +355,7 @@ function CandidateCard({
       {!isTerminal && (
         <>
           <div className="flex gap-2">
-            {nextStage && (
+            {nextStage && canPipeline && (
               <button
                 onClick={() => onAction(app.id, { stage: nextStage })}
                 disabled={isBusy}
@@ -358,7 +364,7 @@ function CandidateCard({
                 {isBusy ? "…" : `→ ${STAGES.find(s => s.key === nextStage)?.label}`}
               </button>
             )}
-            {app.currentStage === "offer" && (
+            {app.currentStage === "offer" && canPipeline && (
               <button
                 onClick={() => onAction(app.id, { status: "hired" })}
                 disabled={isBusy}
@@ -367,7 +373,7 @@ function CandidateCard({
                 {isBusy ? "…" : "Hire"}
               </button>
             )}
-            {!hasAssessment && (
+            {!hasAssessment && canPipeline && (
               <button
                 onClick={() => setShowAssess(v => !v)}
                 className="rounded-lg border border-[#4D31EC]/40 px-2 py-1.5 text-xs font-semibold text-[#4D31EC] hover:bg-[#4D31EC]/5 transition-colors"
@@ -376,14 +382,16 @@ function CandidateCard({
                 📝
               </button>
             )}
-            <button
-              onClick={() => setShowSchedule(v => !v)}
-              className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors
-                ${showSchedule ? "border-[#4D31EC]/40 bg-[#4D31EC]/5 text-[#4D31EC]" : "border-gray-200 text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
-              title="Schedule interview"
-            >
-              📅
-            </button>
+            {canInterviews && (
+              <button
+                onClick={() => setShowSchedule(v => !v)}
+                className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors
+                  ${showSchedule ? "border-[#4D31EC]/40 bg-[#4D31EC]/5 text-[#4D31EC]" : "border-gray-200 text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
+                title="Schedule interview"
+              >
+                📅
+              </button>
+            )}
             <Link
               href={`/employer/messages?app=${app.id}`}
               className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-semibold text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC] transition-colors"
@@ -391,13 +399,15 @@ function CandidateCard({
             >
               💬
             </Link>
-            <button
-              onClick={() => onAction(app.id, { status: "rejected" })}
-              disabled={isBusy}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
-            >
-              ✕
-            </button>
+            {canPipeline && (
+              <button
+                onClick={() => onAction(app.id, { status: "rejected" })}
+                disabled={isBusy}
+                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
+              >
+                ✕
+              </button>
+            )}
           </div>
           {showAssess && !hasAssessment && (
             <AssessForm
@@ -440,6 +450,9 @@ export default function JobPipelinePage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const canJobs = can(role, "manageJobs");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -559,13 +572,15 @@ export default function JobPipelinePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => { setShowEdit(v => !v); setEditError(""); }}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
-                  ${showEdit ? "border-gray-300 bg-gray-100 text-gray-700" : "border-gray-200 bg-white text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
-              >
-                {showEdit ? "Cancel edit" : "✏️ Edit job"}
-              </button>
+              {canJobs && (
+                <button
+                  onClick={() => { setShowEdit(v => !v); setEditError(""); }}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
+                    ${showEdit ? "border-gray-300 bg-gray-100 text-gray-700" : "border-gray-200 bg-white text-gray-500 hover:border-[#4D31EC]/40 hover:text-[#4D31EC]"}`}
+                >
+                  {showEdit ? "Cancel edit" : "✏️ Edit job"}
+                </button>
+              )}
               {tab === "pipeline" && (
                 <button
                   onClick={() => setShowRejected((v) => !v)}

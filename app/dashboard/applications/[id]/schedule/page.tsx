@@ -112,12 +112,18 @@ export default function SchedulePage() {
             <p className="mt-1 text-sm text-emerald-700">
               {fmt(interview.confirmedSlot!)}
             </p>
-            {interview.meetingLink && (
-              <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
-                Join meeting ↗
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {interview.meetingLink && (
+                <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+                  Join meeting ↗
+                </a>
+              )}
+              <a href={`/api/applications/${applicationId}/interview/ics`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                📅 Add to calendar
               </a>
-            )}
+            </div>
           </div>
         ) : (
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

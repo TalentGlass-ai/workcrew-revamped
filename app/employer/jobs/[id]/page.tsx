@@ -295,9 +295,15 @@ function CandidateCard({
       {app.interview && (
         <div className={`mb-2 rounded-lg px-2 py-1 text-xs font-medium
           ${app.interview.status === "confirmed" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-          {app.interview.status === "confirmed"
-            ? `Interview: ${fmtSlot(app.interview.confirmedSlot!)}`
-            : `⏳ Awaiting confirmation (${app.interview.proposedSlots.length} slot${app.interview.proposedSlots.length !== 1 ? "s" : ""})`}
+          {app.interview.status === "confirmed" ? (
+            <span className="flex items-center justify-between gap-2">
+              <span>Interview: {fmtSlot(app.interview.confirmedSlot!)}</span>
+              <a href={`/api/applications/${app.id}/interview/ics`} title="Add to calendar"
+                className="flex-shrink-0 font-semibold hover:underline">📅</a>
+            </span>
+          ) : (
+            `⏳ Awaiting confirmation (${app.interview.proposedSlots.length} slot${app.interview.proposedSlots.length !== 1 ? "s" : ""})`
+          )}
         </div>
       )}
 

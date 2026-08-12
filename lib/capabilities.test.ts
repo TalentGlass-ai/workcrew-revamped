@@ -1,7 +1,9 @@
 // Run: npx tsx lib/capabilities.test.ts
 import assert from 'node:assert';
+import { test } from 'vitest';
 import { can } from './capabilities';
 
+test('capability matrix', () => {
 // interviewer: view + interviews only — NOT jobs/pipeline/team
 assert.equal(can('interviewer', 'manageInterviews'), true);
 assert.equal(can('interviewer', 'managePipeline'), false);
@@ -27,5 +29,4 @@ for (const r of ['candidate', 'nonsense', null, undefined]) {
   assert.equal(can(r, 'manageJobs'), false);
   assert.equal(can(r, 'manageInterviews'), false);
 }
-
-console.log('capabilities: all assertions passed');
+});

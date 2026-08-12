@@ -1,7 +1,9 @@
 // Run: npx tsx lib/seats.test.ts
 import assert from 'node:assert';
+import { test } from 'vitest';
 import { seatLimit, hasSeatAvailable } from './seats';
 
+test('seat limits + availability', () => {
 // tier → limit
 assert.equal(seatLimit('free'), 2);
 assert.equal(seatLimit('growth'), 5);
@@ -21,5 +23,4 @@ assert.equal(hasSeatAvailable('free', 3), false);
 
 // enterprise is effectively unlimited
 assert.equal(hasSeatAvailable('enterprise', 10_000), true);
-
-console.log('seats: all assertions passed');
+});

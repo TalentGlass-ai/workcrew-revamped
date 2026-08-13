@@ -44,7 +44,7 @@ The application is architecturally substantial (86 API routes, 61 pages, Prisma/
 | Secrets | ⚠️ | No secrets committed; `.env` gitignored. Ensure prod secrets set. |
 | Rate limiting | 🟡 | `lib/rateLimiter` used on signup/forgot-password; in-memory (won't span instances). |
 | Password handling | ✅ | scrypt with per-user salt; never logged. |
-| Security headers / CSP | ⚪ | Not found in `next.config`/middleware — **recommend adding**. |
+| Security headers / CSP | ✅ | Added in `next.config.mjs` `headers()`: CSP, HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, DNS-prefetch. CSP verified against landing / find-jobs / realtime-interviewer (jsdelivr MediaPipe allowed) — no violations. `connect-src` includes `wss:` for the interview socket. Weak spot: `'unsafe-inline'` script-src (nonce upgrade path noted in config). |
 
 ## Deployment
 
@@ -73,7 +73,7 @@ The application is architecturally substantial (86 API routes, 61 pages, Prisma/
 3. Baseline any pre-existing environment against the new squashed migration. **[blocker]**
 4. Run a full `next build` and fix any build-time errors. **[blocker]**
 5. Fix `npm test` exit code (convert or rename the two assert scripts) and add a CI workflow. **[high]**
-6. Add security headers / CSP. **[high]**
+6. ~~Add security headers / CSP.~~ ✅ DONE — `next.config.mjs` `headers()` (CSP + HSTS + 5 more), verified no violations on core flows.
 7. E2E-verify: assessment take/submit, Stripe checkout, AI interview, email delivery. **[high]**
 8. ~~Confirm cross-org isolation with a two-org test.~~ ✅ DONE — live two-org probe + `__tests__/tenant-isolation.test.ts` (CI-guarded).
 9. Replace in-memory rate limiter with a shared store if running >1 instance. **[medium]**

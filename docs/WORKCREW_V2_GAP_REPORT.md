@@ -20,7 +20,7 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Admin | 🔴 Thin | Stats + resume tooling only; no super-admin/mgmt |
 | AI functionality | 🔵 Code-complete, unverified | Needs OPENAI/Typesense keys |
 | Assessment | 🟡 Flow works, scoring broken | Take/submit/proctoring VERIFIED; coding auto-grade always 0% (P1-5) |
-| Security | 🟡 Solid primitives, gaps | RBAC ✅, tenant isolation ✅ PROVEN (2-org test), no CSP, in-mem rate limit |
+| Security | 🟡 Solid primitives | RBAC ✅, tenant isolation ✅ PROVEN (2-org test), CSP + security headers ✅, in-mem rate limit (single-instance) |
 | Production readiness | 🟡 Not yet | Config + build + CI + verification gaps |
 
 ---
@@ -46,7 +46,8 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Admin | Platform management | ⚪ | P2 | Absent | Build if in V2 scope |
 | Deploy | CI/CD | ⚪ | P1 | No workflows | Add pipeline |
 | Deploy | `npm test` green | 🔴 | P1 | Exits non-zero | Fix test files |
-| Security | CSP/headers | ⚪ | P2 | None | Add |
+| Security | CSP/headers | ✅ | P2 | next.config.mjs headers() | Done — verified no violations |
+| Frontend | Dead `localhost:5000` legacy API fetch (JobRoles, jobsApi via config.ts) | 🔴 | P2 | CSP now blocks it; page works via /api/jobs/search | Remove legacy fetch / repoint to /api/jobs |
 
 ---
 
@@ -174,7 +175,7 @@ Status:           OPEN (needs test keys to fully verify checkout)
 **Backend** — Typed error responses; fire-and-forget notifications. In-memory rate limiter won't span instances.
 **Database** — Now clean Postgres baseline; adapter correct. Confirm indexes/constraints under load.
 **Infrastructure** — Docker present but unbuilt; Vercel-cron won't run under self-host; websocket + rank/alert scripts run out-of-band.
-**Security** — Strong auth primitives + RBAC verified; cross-org tenant isolation **PROVEN** via a two-org live probe (all cross-org access 403/404, own-org 200) + `__tests__/tenant-isolation.test.ts` in CI. Remaining: **no CSP/security headers**; in-memory rate limiter (won't hold across instances).
+**Security** — Strong auth primitives + RBAC verified; cross-org tenant isolation **PROVEN** via a two-org live probe (all cross-org access 403/404, own-org 200) + `__tests__/tenant-isolation.test.ts` in CI; **CSP + security headers added** (`next.config.mjs`, verified no violations on core flows). Remaining: in-memory rate limiter (won't hold across instances); CSP script-src uses `'unsafe-inline'` (nonce upgrade path noted).
 **Performance** — Not load-tested; watch N+1 in pipeline/analytics aggregations (currently in-JS reductions over `findMany`).
 **AI/Integrations** — All gated behind keys with graceful fallbacks; none verified live.
 

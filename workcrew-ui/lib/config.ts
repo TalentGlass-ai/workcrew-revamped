@@ -4,12 +4,6 @@
  */
 
 export const config = {
-  /** API Configuration */
-  api: {
-    /** Base URL for the WorkCrew API server */
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000',
-  },
-
   /** Feature Flags */
   features: {
     /** Enable analytics tracking across the application */

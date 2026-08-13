@@ -47,7 +47,7 @@ The gap between "code exists" and "works" is wide here: the majority of features
 | Deploy | CI/CD | ⚪ | P1 | No workflows | Add pipeline |
 | Deploy | `npm test` green | 🔴 | P1 | Exits non-zero | Fix test files |
 | Security | CSP/headers | ✅ | P2 | next.config.mjs headers() | Done — verified no violations |
-| Frontend | Dead `localhost:5000` legacy API fetch (JobRoles, jobsApi via config.ts) | 🔴 | P2 | CSP now blocks it; page works via /api/jobs/search | Remove legacy fetch / repoint to /api/jobs |
+| Frontend | Dead `localhost:5000` legacy API fetch (JobRoles, jobsApi via config.ts) | ✅ | P2 | JobRoles repointed to /api/jobs/search; jobsApi.ts deleted; config baseUrl removed | Done — verified live |
 
 ---
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { config } from '@/workcrew-ui/lib/config';
 import type { Job } from '@/types/index';
 import { getCompanyName } from '@/workcrew-ui/lib/utils/jobUtils';
+import { formatPay } from '@/lib/pay';
 import GlassPill from "@/components/primitives/tags/GlassPill";
 import LayeredPill, { ArrowNortheastIcon } from "@/components/primitives/buttons/LayeredPill"; // ✅ new reusable pill
 
@@ -41,12 +41,19 @@ export default function JobRoles() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${config.api.baseUrl}/api/v2/jobs?page=1&limit=12`, {
-          cache: "no-store",
-        });
+        const res = await fetch(`/api/jobs/search?limit=12`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        const list: Job[] = json?.jobposts || json?.result || [];
+        const list: Job[] = (json?.jobs ?? []).map((j: any) => ({
+          id: j.id,
+          title: j.title,
+          company: j.organization?.name ?? null,
+          description: j.description ?? "",
+          location: j.location ?? "",
+          type: j.jobType ?? "",
+          tags: Array.isArray(j.requiredSkills) ? j.requiredSkills : [],
+          salaryRange: (j.salaryMin || j.salaryMax) ? formatPay(j.salaryMin, j.salaryMax, j.currency) : "",
+        }));
         if (!cancelled) setJobs(list);
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Failed to load jobs';
@@ -275,7 +282,7 @@ export default function JobRoles() {
                                 {job.location}
                               </span>
                             )}
-                            {job.salaryRange && <span>₹ {job.salaryRange}</span>}
+                            {job.salaryRange && <span>{job.salaryRange}</span>}
                           </div>
 
                           {!!job.tags?.length && (

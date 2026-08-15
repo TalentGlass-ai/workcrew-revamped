@@ -69,6 +69,9 @@ export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: true,          // no build-time noise when DSN is absent
-  disableLogger: true,
-  automaticVercelMonitors: false,
+  // Moved out of the deprecated top-level options (Sentry v10).
+  // automaticVercelMonitors defaults to false, so it's simply omitted.
+  webpack: {
+    treeshake: { removeDebugLogging: true }, // was disableLogger: true
+  },
 });
